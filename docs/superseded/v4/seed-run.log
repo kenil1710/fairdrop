@@ -1,0 +1,154 @@
+[2026-09-28T15:22:54.926Z] v4 demo seed on 0x9779afa39051286B9a1280f78d4d8EB32e491849 (round ticket TTL 600s, contest window 600s)
+[2026-09-28T15:23:07.032Z]   opA      create_drop(Base Quest Season , base, 086a08abdc5e69f419, 1790609214, 900, 600, 3000, 100000000000000000, 100000000000000000, DemoQuest, 0x3c83ef6119eb05ca) +3 GEN → ACCEPTED OK [12s] A: create tx=0xc087329a1b85745869f15ff6d3aa190dbe231efade5a57d9c63941f011b208f2
+[2026-09-28T15:23:18.475Z]   opB      create_drop(Silent Operator — , base, b1519b5b681a5057c5, 1790609227, 900, 600, 900, 400000000000000000, 50000000000000000, DemoQuest, 0x3c83ef6119eb05ca) +1 GEN → ACCEPTED OK [11s] B: create tx=0xfaf8889d20c80cd4fbd5ce26f7895332d2b4f76527e68cc23218310dce18870b
+[2026-09-28T15:23:29.898Z]   opC      create_drop(Thin Reserve — pro, base, efe42c7ecb7d52442b, 1790609238, 900, 600, 3000, 600000000000000000, 50000000000000000, DemoQuest, 0x3c83ef6119eb05ca) +1 GEN → ACCEPTED OK [11s] C: create tx=0x073052fe4c238d489015b0a50f65286930934d5827e8e0259200301386664df6
+[2026-09-28T15:23:37.382Z]   opD      create_drop(Borderline — round, base, b043cee02b5bd64d4f, 1790609249, 900, 600, 3600, 500000000000000000, 50000000000000000, DemoQuest, 0x3c83ef6119eb05ca) +1 GEN → ACCEPTED OK [7s] D: create tx=0x8bf1b0f7223e80e9ba7829d9e2db798bdd8b2a90d5cfa49af838ae08c8a993f3
+[2026-09-28T15:23:37.383Z] A: drop #1 snapshot 2026-09-28T15:26:54.000Z appeals until 2026-09-28T15:36:54.000Z reveal by 2026-09-28T16:26:54.000Z
+[2026-09-28T15:23:37.383Z] B: drop #2 snapshot 2026-09-28T15:27:07.000Z appeals until 2026-09-28T15:37:07.000Z reveal by 2026-09-28T15:52:07.000Z
+[2026-09-28T15:23:37.383Z] C: drop #3 snapshot 2026-09-28T15:27:18.000Z appeals until 2026-09-28T15:37:18.000Z reveal by 2026-09-28T16:27:18.000Z
+[2026-09-28T15:23:37.383Z] D: drop #4 snapshot 2026-09-28T15:27:29.000Z appeals until 2026-09-28T15:37:29.000Z reveal by 2026-09-28T16:37:29.000Z
+[2026-09-28T15:23:46.670Z]   deployer set_paused(true) → ACCEPTED OK [9s] owner PAUSES the contract for the rest of the run tx=0xe25f5d736ec449815b887bd1bcb81412ccac9b08182892d1cbec04ca7719bda0
+[2026-09-28T15:23:55.755Z]   prober   create_drop(Paused?, base, 000000000000000000, 1790609626, 10, 3600, 3600, 100000000000000000, 100000000000000000, , ) +1 GEN → ACCEPTED REJECTED new drops are paused [9s] create_drop while paused (must be refused) tx=0xc5419613d9de0794b12a411752a17455c10f66305bc8cd684d805f4c2671f5d4
+[2026-09-28T15:23:56.759Z]   … waiting until 2026-09-28T15:26:59.000Z (183s) A: for the snapshot
+[2026-09-28T15:27:10.636Z]   opA      commit_flagged(1, f65bcccb019dddf377, 4) → ACCEPTED OK [11s] A: commit the flagged list tx=0x70b489a48112d19d2d15785d5b0c58e7c10ca7622c500c5364b35fbc44a2c1d2
+[2026-09-28T15:27:11.540Z]   … waiting until 2026-09-28T15:27:12.000Z (1s) B: for the snapshot
+[2026-09-28T15:27:20.860Z]   opB      commit_flagged(2, 9f9e3be82455d7ef27, 2) → ACCEPTED OK [8s] B: commit the flagged list tx=0xccfa4ee32d03aef5f2e3cf42f3ab73f59c62f03e42f82ae1e8e0fc01af6708fa
+[2026-09-28T15:27:21.781Z]   … waiting until 2026-09-28T15:27:23.000Z (2s) C: for the snapshot
+[2026-09-28T15:27:32.433Z]   opC      commit_flagged(3, 9d64a50d2fb9c5b08a, 3) → ACCEPTED OK [9s] C: commit the flagged list tx=0x6a4baffb3746120836510af37f9ccec75948cbc0c3b82f32ff8bb5dc7c63c836
+[2026-09-28T15:27:33.314Z]   … waiting until 2026-09-28T15:27:34.000Z (1s) D: for the snapshot
+[2026-09-28T15:27:43.000Z]   opD      commit_flagged(4, 7a07ae31ab4c0c6006, 2) → ACCEPTED OK [9s] D: commit the flagged list tx=0x79717579d3be1b5ffa0f505bef4052a8021ac986ee2c33177173cd840a02f85f
+[2026-09-28T15:27:55.174Z]   opA      file_appeal(1, 0x0f2589542b6d5a50, aa6a2e7c09e96658b3, I have used this w) +0.1 GEN → ACCEPTED OK [11s] A/human tx=0xaae6ee8348c4a30002348a3d795e33ea7e08bae41c1ee885a012d91ea93a84fb
+[2026-09-28T15:27:56.807Z]   opC      file_appeal(3, 0x0f2589542b6d5a50, 29b7444c801a5c8a2e, Demo appeal on a t) +0.05 GEN → ACCEPTED OK [12s] C/long tx=0x8b8b164e79ca871ad1ba85fafcf375fe2007cd152eb00d63fd0e8a0268953d48
+[2026-09-28T15:27:59.656Z]   opB      file_appeal(2, 0x8cd35fc08b003fcd, 7772654d1e8d0f64e9, Demo appeal on a d) +0.05 GEN → ACCEPTED OK [14s] B/minter tx=0xa4fdd3c482fc34fffc1c350dfdd461d9497c956813d23d350c1eda4aae1acc1b
+[2026-09-28T15:28:01.988Z]   opD      file_appeal(4, 0x1c1ff5a779249371, 89d342ac5b29603c71, Demo appeal: a bor) +0.05 GEN → ACCEPTED OK [17s] D/split tx=0xc119568168f39717c4471a4dd9d6e2843e2b5a58294540da46f286471e6328e3
+[2026-09-28T15:28:19.815Z]   opA      file_appeal(1, 0x8410115b7ee1b359, bb84d0f9362b373263, Demo appeal filed ) +0.1 GEN → ACCEPTED OK [24s] A/farm tx=0x2f9f0852b7e25ba49f11ee72ec3fa0415405b8a89776a1067e52bac2632403ee
+[2026-09-28T15:28:21.910Z]   opC      file_appeal(3, 0x1c1ff5a779249371, bb84d0f9362b373263, Demo appeal on a t) +0.05 GEN → ACCEPTED OK [24s] C/diverse tx=0xe976cb70c18b14a14025a5993e17f9441b8bdd27cd8890192758658b7c6ae356
+[2026-09-28T15:28:36.844Z]   opB      file_appeal(2, 0x35b4a50f63f4beee, 55dbb391bf5626237a, Demo appeal on a d) +0.05 GEN → ACCEPTED OK [24s] B/swapper tx=0x7b7c61a05d086a9a9ba3e0356954b75a7f35485db36bad2f480441f7662a1301
+[2026-09-28T15:28:36.847Z]   … waiting until 2026-09-28T15:37:12.000Z (516s) B: for the appeal window to close
+[2026-09-28T15:28:45.142Z]   opC      file_appeal(3, 0x35b4a50f63f4beee, 9555408c7e998ff4cf, Demo appeal on a t) +0.05 GEN → ACCEPTED OK [22s] C/swapper tx=0xb1ef7628adeefe88baa1ea9084e4fa0a113d280c446485c05701e7d919e63fa6
+[2026-09-28T15:28:45.144Z]   … waiting until 2026-09-28T15:37:23.000Z (518s) C: for the appeal window to close
+[2026-09-28T15:28:55.687Z]   opD      file_appeal(4, 0xe288ddad7a2fdd7c, 29b7444c801a5c8a2e, Demo appeal whose ) +0.05 GEN → ACCEPTED OK [53s] D/stall tx=0xf69a79840d9e06e38f1e53a0e0fe4a08006e367889a67561b9152faa2c82e0ec
+[2026-09-28T15:28:55.690Z]   … waiting until 2026-09-28T15:37:34.000Z (519s) D: for the appeal window to close
+[2026-09-28T15:28:58.347Z]   opA      file_appeal(1, 0xd5512d138ea203c5, 29b7444c801a5c8a2e, Demo appeal filed ) +0.1 GEN → ACCEPTED OK [25s] A/active tx=0x492d87ba51adbd53d5f85151f0cdbb373e061201cd731a06c305d009b0319607
+[2026-09-28T15:29:13.095Z]   opA      file_appeal(1, 0x1c1ff5a779249371, 2b57a4a2a52846605c, Demo appeal: a lon) +0.1 GEN → ACCEPTED OK [14s] A/diverse tx=0x332868afb1df1f7734280dddbe698a3e96b4bad8b9dd11750bfd99ffaec644f8
+[2026-09-28T15:29:13.097Z]   … waiting until 2026-09-28T15:36:59.000Z (466s) A: for the appeal window to close
+[2026-09-28T15:33:43.080Z]   … still waiting 209s B: for the appeal window to close
+[2026-09-28T15:33:56.999Z]   … still waiting 207s C: for the appeal window to close
+[2026-09-28T15:33:57.102Z]   … still waiting 217s D: for the appeal window to close
+[2026-09-28T15:34:13.282Z]   … still waiting 166s A: for the appeal window to close
+[2026-09-28T15:37:11.320Z]   opA      reveal_rules(1, {"min_hits":4,"rul, a348c03d9f5ff84ede) → ACCEPTED REJECTED sha256(rules_json + salt) does not match the commitment; the reveal is refused [10s] A: DIFFERENT rules than committed (must be refused) tx=0x0d7bccfdeee831f54ca75bf261bec86742b4f34a21068909903d0daf39736f56
+[2026-09-28T15:37:20.214Z]   opA      reveal_rules(1, {"min_hits":2,"rul, 22becbe9c343bc3aa8) → ACCEPTED REJECTED sha256(rules_json + salt) does not match the commitment; the reveal is refused [9s] A: right rules, wrong salt (must be refused) tx=0x9bd8b940325667406604d34fabef37067e075fa1b036640bf74e18400e87ed24
+[2026-09-28T15:37:22.752Z]   trigger4 read_wallet(3) → ACCEPTED REJECTED reads start once the rules are revealed: each validator must compute the outcome from its own findings [9s] B: a read with the rules still sealed (must be refused) tx=0xe3d40c34426429c82f1909ee9b7d883329d796362e6d8a8eb3b1f74cdb94bb85
+[2026-09-28T15:37:22.753Z]   … waiting until 2026-09-28T15:52:12.000Z (890s) B: past the reveal deadline with no reveal
+[2026-09-28T15:37:30.558Z]   opA      reveal_rules(1, {"min_hits":2,"rul, a348c03d9f5ff84ede) → ACCEPTED (unreadable) [10s] A: the committed rules tx=0x1f262c1ed0aad9f2c4a9619f127e4e4ad0d438fdae31b54dbe71825e887c8a88
+[2026-09-28T15:37:32.388Z]   opC      reveal_rules(3, {"min_hits":2,"rul, bbaec84387b2ca9bb7) → ACCEPTED (unreadable) [11s] C: the committed rules tx=0x3c73a295574c6e3b2d1006c14a1de3b7659d837ce078208f0f55201a15e4bd23
+[2026-09-28T15:38:11.187Z]   opD      reveal_rules(4, {"min_hits":1,"rul, bb75321f7dde7fdad0) → ACCEPTED (unreadable) [24s] D: the committed rules tx=0x23ee6f109763c0018a70b492cdc61e61187fd9fe94c255adec1d93df36c78d3a
+[2026-09-28T15:38:14.363Z]   trigger2 read_wallet(1) → ACCEPTED OK [41s] A/human attempt 1: open a round ticket tx=0x9731ace2ce3045f8e247df02c1dc2d645451e38fd0d8c867f7adb0a95b6b4688
+[2026-09-28T15:38:22.719Z]   trigger5 read_wallet(9) → ACCEPTED OK [10s] D/stall: open round ticket 1 (it will never be run) tx=0x94e34673b03c22c50bfea0279322ef395e94ca58ffca55e176e1c504e38c9619
+[2026-09-28T15:38:23.800Z]   … waiting until 2026-09-28T15:48:21.000Z (598s) D/stall: ticket #1 to expire
+[2026-09-28T15:38:56.675Z]   trigger2 read_wallet(1) → ACCEPTED OK [41s] A/human attempt 1: run the round tx=0xc8c91601021b3e9b2f8f69277b821b79273831ba7bdc8df56dee6d382789ec17
+[2026-09-28T15:38:57.594Z]     A/human attempt 1: round ACCEPTED → READ {"WALLET_AGE_DAYS":"920","OUTBOUND_TX_COUNT":"6","DISTINCT_CONTRACTS_TOUCHED":"2","ACTIVE_DAYS":"5"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"YES","SCRIPTED_REPETITION":"SOME","SINGLE_PURPOSE_FARMING":"NONE","ORGANIC_DIVERSITY":"LOW"} agreed_outcome=HUMAN_PATTERN (tickets 1, unsettled 0, landed 1, last READ)
+[2026-09-28T15:39:42.041Z]   trigger2 read_wallet(2) → ACCEPTED OK [11s] C/2 attempt 1: open a round ticket tx=0x1cab0a9b362c579043101059cb4468684ced2201ee274dd1ae2c8bedf7c266fe
+[2026-09-28T15:40:38.567Z]   trigger2 read_wallet(2) → ACCEPTED OK [56s] C/2 attempt 1: run the round tx=0x2c9d1a81b23feaa851d18a2f56376ebe6b211e31a67878ab703effd5cad5b770
+[2026-09-28T15:40:40.073Z]     C/2 attempt 1: round ACCEPTED → READ {"WALLET_AGE_DAYS":"920","OUTBOUND_TX_COUNT":"6","DISTINCT_CONTRACTS_TOUCHED":"2","ACTIVE_DAYS":"5"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"YES","SCRIPTED_REPETITION":"NONE","SINGLE_PURPOSE_FARMING":"NONE","ORGANIC_DIVERSITY":"LOW"} agreed_outcome=HUMAN_PATTERN (tickets 1, unsettled 0, landed 1, last READ)
+[2026-09-28T15:41:22.044Z]   trigger2 read_wallet(4) → ACCEPTED OK [10s] D/split ticket 1: open a round ticket tx=0x7ce6d8853a739d2907a202be367bc77a57281409e7f3f9a6fef7dd5610904cc7
+[2026-09-28T15:42:19.946Z]   trigger2 read_wallet(4) → ACCEPTED OK [57s] D/split ticket 1: run the round tx=0xd2b8a51641c1ec7ff2118db1306f830ce8c1db1dbc5ffeb71604bd68e7b9384a
+[2026-09-28T15:42:20.964Z]     D/split ticket 1: round ACCEPTED → READ {"WALLET_AGE_DAYS":"920","OUTBOUND_TX_COUNT":"13","DISTINCT_CONTRACTS_TOUCHED":"5","ACTIVE_DAYS":"5"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"YES","SCRIPTED_REPETITION":"SOME","SINGLE_PURPOSE_FARMING":"NONE","ORGANIC_DIVERSITY":"LOW"} agreed_outcome=SYBIL_PATTERN (tickets 1, unsettled 0, landed 1, last READ)
+[2026-09-28T15:42:33.654Z]   … still waiting 579s B: past the reveal deadline with no reveal
+[2026-09-28T15:43:03.955Z]   prober   decide(4) → ACCEPTED (unreadable) [12s] D/split tx=0x9f50f863121b33ca4149d22c1abdcf2fd350bdb142d846daf0a93c6e65092ab0
+[2026-09-28T15:43:07.922Z]   trigger2 read_wallet(5) → ACCEPTED OK [14s] A/farm attempt 1: open a round ticket tx=0x607144c4c2821ebe3dadb75d86f5e310ea6cd438fbc7a8c8b433b5170b058d90
+[2026-09-28T15:43:23.844Z]   … still waiting 298s D/stall: ticket #1 to expire
+[2026-09-28T15:44:13.712Z]   trigger2 read_wallet(5) → ACCEPTED OK [65s] A/farm attempt 1: run the round tx=0x2769b6128d1b175880cfb7f4c6b8a02854ca59c4fc22911544694d8204f6fd8b
+[2026-09-28T15:44:14.733Z]     A/farm attempt 1: round ACCEPTED → READ {"WALLET_AGE_DAYS":"15","OUTBOUND_TX_COUNT":"5","DISTINCT_CONTRACTS_TOUCHED":"1","ACTIVE_DAYS":"5"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"UNCLEAR","SCRIPTED_REPETITION":"STRONG","SINGLE_PURPOSE_FARMING":"STRONG","ORGANIC_DIVERSITY":"LOW"} agreed_outcome=SYBIL_PATTERN (tickets 1, unsettled 0, landed 1, last READ)
+[2026-09-28T15:44:57.537Z]   trigger2 read_wallet(6) → ACCEPTED OK [11s] C/6 attempt 1: open a round ticket tx=0x10a1218d1bc53167805aec921576cabf7be685e4cf0007a4b9c13c95e7d3a5ef
+[2026-09-28T15:45:57.562Z]   trigger2 read_wallet(6) → ACCEPTED OK [59s] C/6 attempt 1: run the round tx=0x7187b5ef10462c79de22c83d4a4ff0205f83cc63cad7fdb378ff282c39fddc42
+[2026-09-28T15:45:58.554Z]     C/6 attempt 1: round ACCEPTED → READ {"WALLET_AGE_DAYS":"920","OUTBOUND_TX_COUNT":"13","DISTINCT_CONTRACTS_TOUCHED":"5","ACTIVE_DAYS":"5"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"YES","SCRIPTED_REPETITION":"SOME","SINGLE_PURPOSE_FARMING":"SOME","ORGANIC_DIVERSITY":"MEDIUM"} agreed_outcome=HUMAN_PATTERN (tickets 1, unsettled 0, landed 1, last READ)
+[2026-09-28T15:46:40.001Z]   trigger2 read_wallet(10) → ACCEPTED OK [8s] A/active attempt 1: open a round ticket tx=0x06e30a925a01a20c651187ec82f098b4cfcddd97825735f49936a6668462ee6f
+[2026-09-28T15:47:31.520Z]   trigger2 read_wallet(10) → ACCEPTED OK [50s] A/active attempt 1: run the round tx=0xa1477bf55f4e61fe9289e13140ee32d90bbbca296c70b3d2f5fb77bbb8659fed
+[2026-09-28T15:47:32.673Z]     A/active attempt 1: round ACCEPTED → FINAL INSUFFICIENT_HISTORY {} {} (tickets 1, unsettled 0, landed 1, last INSUFFICIENT)
+[2026-09-28T15:47:44.912Z]   … still waiting 268s B: past the reveal deadline with no reveal
+[2026-09-28T15:48:13.124Z]   trigger2 read_wallet(8) → ACCEPTED OK [7s] C/8 attempt 1: open a round ticket tx=0xdc5d6f7ce4eb6820833502a7968542aca17f615c0413eeff936b0565b88bac32
+[2026-09-28T15:48:31.408Z]   trigger5 settle_stalled(9) → ACCEPTED OK [10s] D/stall: settle_stalled while paused counts the unsettled round tx=0x47f5982418939b88e25ffc8f7223e3c964490018ab1b8983681a182d64f5be60
+[2026-09-28T15:48:33.494Z]     D/stall: FILED  unsettled 1/3 (OK)
+[2026-09-28T15:49:27.776Z]   trigger2 read_wallet(8) → ACCEPTED OK [74s] C/8 attempt 1: run the round tx=0xd4ec259662962707c50f970ec47f57a48c95bb5cf8635f799208d90f9e9144db
+[2026-09-28T15:49:28.696Z]   trigger5 read_wallet(9) → ACCEPTED OK [54s] D/stall: open round ticket 2 (it will never be run) tx=0xa49d925acabdcb014b01155c822cec47d593d4e3385c508bb9d133d59fbbb324
+[2026-09-28T15:49:28.705Z]     C/8 attempt 1: round ACCEPTED → READ {"WALLET_AGE_DAYS":"348","OUTBOUND_TX_COUNT":"13","DISTINCT_CONTRACTS_TOUCHED":"9","ACTIVE_DAYS":"5"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"YES","SCRIPTED_REPETITION":"STRONG","SINGLE_PURPOSE_FARMING":"NONE","ORGANIC_DIVERSITY":"LOW"} agreed_outcome=HUMAN_PATTERN (tickets 1, unsettled 0, landed 1, last READ)
+[2026-09-28T15:49:29.612Z]   … waiting until 2026-09-28T15:58:42.000Z (553s) D/stall: ticket #2 to expire
+[2026-09-28T15:50:15.390Z]   trigger2 read_wallet(11) → ACCEPTED OK [14s] A/diverse attempt 1: open a round ticket tx=0x3dde5259d8ed88eb306e3548e307e3855a567023b6d10478706ef28f701f2286
+[2026-09-28T15:50:19.166Z]   trigger3 decide(2) → ACCEPTED (unreadable) [18s] C/2 tx=0x942e72bcb38de40f2061a80a72322b75c5a3abb441ee4d85eb672741ebb7277e
+[2026-09-28T15:50:29.892Z]   trigger3 decide(6) → ACCEPTED (unreadable) [10s] C/6 tx=0xc8cab212746359a82e171d24de32bcdb75b5d42928876cf364149c3c2ab08365
+[2026-09-28T15:51:12.632Z]   trigger2 read_wallet(11) → ACCEPTED OK [56s] A/diverse attempt 1: run the round tx=0xfac246a7577e3565f57e2b22f52fa44fd8d14ba084f490f824c2a27d219fad64
+[2026-09-28T15:51:14.018Z]     A/diverse attempt 1: round ACCEPTED → READ {"WALLET_AGE_DAYS":"920","OUTBOUND_TX_COUNT":"13","DISTINCT_CONTRACTS_TOUCHED":"5","ACTIVE_DAYS":"5"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"YES","SCRIPTED_REPETITION":"SOME","SINGLE_PURPOSE_FARMING":"NONE","ORGANIC_DIVERSITY":"LOW"} agreed_outcome=HUMAN_PATTERN (tickets 1, unsettled 0, landed 1, last READ)
+[2026-09-28T15:51:15.806Z]   trigger3 decide(8) → ACCEPTED (unreadable) [45s] C/8 tx=0x62349e163cc0a4152faff5038877ef7cb837f121d68f4c20d081cd7264e6d6a3
+[2026-09-28T15:51:56.444Z]   opA      file_appeal(1, 0xd5512d138ea203c5, 29b7444c801a5c8a2e, Refiled after an I) +0.1 GEN → ACCEPTED OK [10s] A/refile tx=0xd2361681e15e62a1044deb62e686527adffd724f22dc29a14997945e8590a158
+[2026-09-28T15:52:07.520Z]   trigger2 read_wallet(12) → ACCEPTED OK [9s] A/refile attempt 1: open a round ticket tx=0xe68a2530f0fb24844309adaca1584f5091f29a10d68da119d8a018ff53f0003c
+[2026-09-28T15:52:39.368Z]   trigger2 read_wallet(12) → ACCEPTED OK [31s] A/refile attempt 1: run the round tx=0xe72b9121ce116fbd17c9e9e6c87230bf19c67e63557522dde5c4434d3da59a8b
+[2026-09-28T15:52:40.488Z]     A/refile attempt 1: round ACCEPTED → FINAL INSUFFICIENT_HISTORY {} {} (tickets 1, unsettled 0, landed 1, last INSUFFICIENT)
+[2026-09-28T15:52:42.741Z]   trigger4 decide(3) → ACCEPTED OK [32s] B: operator missed the reveal → default win tx=0x1daf324d95fb0b21d6e6ff5685d7745cbaea14cbe1904bf342698f7e89265656
+[2026-09-28T16:20:14.780Z] v4 demo seed on 0x9779afa39051286B9a1280f78d4d8EB32e491849 (round ticket TTL 600s, contest window 600s)
+[2026-09-28T16:20:14.790Z] A: drop #1 snapshot 2026-09-28T15:26:54.000Z appeals until 2026-09-28T15:36:54.000Z reveal by 2026-09-28T16:26:54.000Z
+[2026-09-28T16:20:14.790Z] B: drop #2 snapshot 2026-09-28T15:27:07.000Z appeals until 2026-09-28T15:37:07.000Z reveal by 2026-09-28T15:52:07.000Z
+[2026-09-28T16:20:14.790Z] C: drop #3 snapshot 2026-09-28T15:27:18.000Z appeals until 2026-09-28T15:37:18.000Z reveal by 2026-09-28T16:27:18.000Z
+[2026-09-28T16:20:14.790Z] D: drop #4 snapshot 2026-09-28T15:27:29.000Z appeals until 2026-09-28T15:37:29.000Z reveal by 2026-09-28T16:37:29.000Z
+[2026-09-28T16:23:35.839Z]   trigger4 read_wallet(3) → ACCEPTED REJECTED appeal #3 is FINAL, not waiting for a read [105s] B: a read with the rules still sealed (must be refused) tx=0x73f2925864d89a62c2e92470474180c437c4f0d7f27d8220672b92d19f0bca4f
+[2026-09-28T16:23:41.845Z]   trigger5 settle_stalled(9) → ACCEPTED OK [15s] D/stall: settle_stalled while paused counts the unsettled round tx=0xca57134012fb272262c37a9e404cd7ffeea8d7aec3de012ef1a975a87dfb59e6
+[2026-09-28T16:23:42.856Z]     D/stall: FILED  unsettled 2/3 (OK)
+[2026-09-28T16:23:50.007Z]   trigger4 decide(7) → ACCEPTED OK [12s] B: operator missed the reveal → default win tx=0x2acd8df8b3368e3599961161c34fdb229fcd478d7de12c76564fa56a460c3845
+[2026-09-28T16:23:56.468Z]   trigger5 read_wallet(9) → ACCEPTED OK [13s] D/stall: open round ticket 3 (it will never be run) tx=0x8ac00f33be59b4187d7c3377081bd8911dd05628bbb3d45d821f544c6348e4b4
+[2026-09-28T16:23:57.628Z]   … waiting until 2026-09-28T16:33:52.000Z (595s) D/stall: ticket #3 to expire
+[2026-09-28T16:27:55.855Z]   trigger  decide(1) → ACCEPTED (unreadable) [13s] A/human tx=0xb45601246558cfa64c4709f4424311ad46ad9d4356afd4ef1fb27e66f17133a7
+[2026-09-28T16:28:10.017Z]   trigger  decide(5) → ACCEPTED (unreadable) [13s] A/farm tx=0x3f0e9f519f2493817692a75e9709982bbea1adfabab2a42e115822292f817c58
+[2026-09-28T16:28:23.989Z]   trigger  decide(11) → ACCEPTED (unreadable) [13s] A/diverse tx=0xfb405a9b3d3c0c1e62f5a566e0e757be83af334bc6f01590c7890d031ea2f035
+[2026-09-28T16:28:39.613Z]   opA      contest(11, Our cluster analys) +0.05 GEN → ACCEPTED REJECTED contest evidence may not reach the model because it frames the case (flagged); describe the wallet only [13s] A/diverse contest text that FRAMES the case (must be refused: the model may not learn the wallet was flagged) tx=0x4af0757e7f851bdd681b8eb3b3b7d306f520d4c8eb5a14ac81771c30e0b35bc8
+[2026-09-28T16:28:57.666Z]   … still waiting 295s D/stall: ticket #3 to expire
+[2026-09-28T16:29:04.085Z]   opA      contest(11, Chain analysis lin) +0.05 GEN → ACCEPTED (unreadable) [24s] A/diverse contest tx=0xf4f5fc31f19210c8a8ba0426f0d47fda4d251e112b245bb8add84277d2b70962
+[2026-09-28T16:29:18.715Z]   opA      contest(5, Demo appeal filed ) +0.05 GEN → ACCEPTED REJECTED a contest must add NEW evidence; this text repeats the appeal [14s] A/farm contest that COPIES the statement (novelty gate must refuse) tx=0x9aff0fdaf130b5ac518cb84ee923722875a4931f2c1639f9812963b8953b42c8
+[2026-09-28T16:34:07.565Z]   trigger5 settle_stalled(9) → ACCEPTED OK [15s] D/stall: settle_stalled while paused counts the unsettled round tx=0xa1d30f79200e6ab1b865104040889948026f92d8562ed9bc8ca38824aaea33b5
+[2026-09-28T16:34:08.632Z]     D/stall: FINAL UNRESOLVED unsettled 3/3 (OK)
+[2026-09-28T16:34:25.690Z]   opD      file_appeal(4, 0xe288ddad7a2fdd7c, 29b7444c801a5c8a2e, Refiled after UNRE) +0.05 GEN → ACCEPTED OK [13s] D/stall: UNRESOLVED is refileable tx=0xca366a8c285a5ce850eeb4a75024624d4a700a703b032bb109731f731378bd11
+[2026-09-28T16:34:42.166Z]   trigger2 read_wallet(13) → ACCEPTED OK [14s] D/stall-refile attempt 1: open a round ticket tx=0xadbe3635dda0914a5143415934f886e5f7b0642a92f6527790520291e32c81a8
+[2026-09-28T16:35:35.642Z]   trigger2 read_wallet(13) → ACCEPTED OK [52s] D/stall-refile attempt 1: run the round tx=0xbb6d7f4f2507a8cddcc6bc9b05480456bc61b3d7fb54ba0a87adc1092b661e21
+[2026-09-28T16:35:36.585Z]     D/stall-refile attempt 1: round ACCEPTED → FILED {} {} (tickets 1, unsettled 0, landed 1, last UNAVAILABLE)
+[2026-09-28T16:36:19.293Z]   trigger2 read_wallet(13) → ACCEPTED OK [11s] D/stall-refile attempt 2: open a round ticket tx=0x0bd749875850cc639cae56b96963d53a06b06e439ad443058a6d8a59c7f6af5d
+[2026-09-28T16:36:38.847Z]   trigger2 read_wallet(13) → ACCEPTED OK [19s] D/stall-refile attempt 2: run the round tx=0xe6302568ec53a7ab5892db5ce2a244d15153e1ffc8b6f26a1d968d4e4e47bcb6
+[2026-09-28T16:36:39.745Z]     D/stall-refile attempt 2: round ACCEPTED → FILED {} {} (tickets 2, unsettled 0, landed 2, last UNAVAILABLE)
+[2026-09-28T16:37:25.442Z]   trigger2 read_wallet(13) → ACCEPTED OK [14s] D/stall-refile attempt 3: open a round ticket tx=0x65f2c851a49f813b90443d03441d4af8b2bf441b2ba324f11a21ec03c170597a
+[2026-09-28T16:37:49.404Z]   trigger2 read_wallet(13) → ACCEPTED OK [23s] D/stall-refile attempt 3: run the round tx=0x7c285fc32e41f6132de37d888f63d809ffbdea3eb78989287d24756a30e49b81
+[2026-09-28T16:37:50.418Z]     D/stall-refile attempt 3: round ACCEPTED → FILED {} {} (tickets 3, unsettled 0, landed 3, last UNAVAILABLE)
+[2026-09-28T16:38:40.502Z]   trigger2 read_wallet(13) → ACCEPTED OK [19s] D/stall-refile attempt 4: open a round ticket tx=0x82f90422910bdc95e6f6ea636a8e8c5a0b6159eaba147bde475403939db656fd
+[2026-09-28T16:39:21.606Z]   trigger2 read_wallet(13) → ACCEPTED OK [40s] D/stall-refile attempt 4: run the round tx=0x35fa0edea5fdadfbc6723d9320b80c183c146ddd7e3478b8687cea993bf07d56
+[2026-09-28T16:39:22.677Z]     D/stall-refile attempt 4: round ACCEPTED → FILED {} {} (tickets 4, unsettled 0, landed 4, last UNAVAILABLE)
+[2026-09-28T16:40:08.441Z]   trigger2 read_wallet(13) → ACCEPTED OK [14s] D/stall-refile attempt 5: open a round ticket tx=0x486a27a321216b9cda15280c7ffc86aa03dec54b877e723867645f2dc2a11e4b
+[2026-09-28T16:40:40.614Z]   trigger2 read_wallet(13) → ACCEPTED OK [31s] D/stall-refile attempt 5: run the round tx=0xa74d929a04f6f82b55f5b95fb0aeec3533db7f2c21067bb3714ee190200515d3
+[2026-09-28T16:40:41.691Z]     D/stall-refile attempt 5: round ACCEPTED → READ {"WALLET_AGE_DAYS":"175","OUTBOUND_TX_COUNT":"20","DISTINCT_CONTRACTS_TOUCHED":"1","ACTIVE_DAYS":"19"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"UNCLEAR","SCRIPTED_REPETITION":"STRONG","SINGLE_PURPOSE_FARMING":"SOME","ORGANIC_DIVERSITY":"LOW"} agreed_outcome=SYBIL_PATTERN (tickets 5, unsettled 0, landed 5, last READ)
+[2026-09-28T16:41:11.695Z] all drop flows done; settling (finish.mjs)
+[2026-09-28T16:41:31.509Z]   trigger  finalize_appeal(1) → ACCEPTED OK [14s] finish: finalize #1 tx=0x4cc1c9cf4f6fece667e3d2ac25b5ef30166c05abfb7cb35171703ba14085c7fb
+[2026-09-28T16:41:44.412Z]   trigger  finalize_appeal(5) → ACCEPTED OK [13s] finish: finalize #5 tx=0x934ce43fecdcef3e73d31ed42f6f8fa7ed6ee67962631168afbe5f4d1c3f703a
+[2026-09-28T16:41:57.835Z]   opA      close_drop(1) → ACCEPTED OK [12s] finish: close drop #1 tx=0x4fa74e9e343830e59e936258f5800ccb47896f2f1be5c2ebb9e6ca5f17df65e8
+[2026-09-28T16:42:13.166Z]   trigger  close_drop(2) → ACCEPTED OK [13s] finish: close drop #2 tx=0xe445e25e4b2e80579996218aa56f2d9d81e3a9ebca4e4c12380b54c2313bc7dd
+[2026-09-28T16:42:26.035Z]   trigger  finalize_appeal(2) → ACCEPTED OK [12s] finish: finalize #2 tx=0x29171b5558edfed208d1095b650a2d7fb69937650f989523343d766e0b24497c
+[2026-09-28T16:42:38.741Z]   trigger  finalize_appeal(6) → ACCEPTED OK [13s] finish: finalize #6 tx=0xc9a651e6fb9e6c2518935189713fe745b064fcaab4dff0e9ef120621b063cbcd
+[2026-09-28T16:42:51.646Z]   trigger  finalize_appeal(8) → ACCEPTED OK [13s] finish: finalize #8 tx=0x6e9f5a618a1d553f1ad6ab385afcfb276ee922eed19b91f6fc7fa17da3f01055
+[2026-09-28T16:43:05.310Z]   trigger  close_drop(3) → ACCEPTED OK [13s] finish: close drop #3 tx=0x8f31e1873181ca70813d672ce562f0ce2299042fedca986b39d9f954f9160784
+[2026-09-28T16:43:19.092Z]   trigger  finalize_appeal(4) → ACCEPTED OK [13s] finish: finalize #4 tx=0x9c2793fcc46aea5028568f4bbf960663e492390c441ea06cb1690f0b160ac6ef
+[2026-09-28T16:43:32.016Z]   trigger  decide(13) → ACCEPTED (unreadable) [13s] finish: decide #13 tx=0xab5abf6a5585cba91149d810f400556035ff01c7c3794e7f40f898f7bd9efa61
+[2026-09-28T16:44:12.795Z]   opA      claim_payout() → ACCEPTED OK [13s] opA claims 3.65 GEN (contract paused) tx=0xfd39807b065981dd80d2109f79c8ee57cda2635b14ada6e58fd4a1affd1332aa
+[2026-09-28T16:44:26.412Z]   opB      claim_payout() → ACCEPTED OK [12s] opB claims 1.10 GEN (contract paused) tx=0x31236ca23e9944aa82e2c3cbf512dd8c6b3c3a94e0567cf4dc1ed69f2e94e6ec
+[2026-09-28T16:44:39.826Z]   opC      claim_payout() → ACCEPTED OK [12s] opC claims 1.15 GEN (contract paused) tx=0x6cc15db4aeadc0bc7d87401c0a6b84756d77a38893f8882663c578193fece2c6
+[2026-09-28T16:44:54.870Z]   opD      claim_payout() → ACCEPTED OK [13s] opD claims 0.05 GEN (contract paused) tx=0x35297006b97116871d79b755302bc1ac8f1537560d0253fafe03400f66f7a900
+[2026-09-28T16:45:18.840Z]   prober   claim_payout() → ACCEPTED OK [13s] prober claims 1.00 GEN (contract paused) tx=0xece6640f23bea7ae32452ae8b17ad2ac61afc3ce11de69578cd26619fbd1534c
+[2026-09-28T16:45:20.885Z] STATS {"drops":4,"appeals":13,"outcomes":{"HUMAN_PATTERN":7,"SYBIL_PATTERN":2,"INSUFFICIENT_HISTORY":2,"UNRESOLVED":1},"reads":14,"contests":1,"rejected_calls":7,"ledger":{"balance_wei":"1100000000000000000","locked_wei":"1100000000000000000","payable_wei":"0","identity_holds":true,"identity":"balance_wei == locked_wei + payable_wei"},"on_chain_balance_wei":"8050000000000000000","undelivered_wei":"6950000000000000000","totals":{"deposited_wei":"6000000000000000000","allocations_paid_wei":"3799999999999999999","leftover_returned_wei":"1350000000000000001","bonds_forfeited_wei":"150000000000000000","claimed_wei":"6950000000000000000"}}
+[2026-09-28T16:46:13.215Z] wrote docs/seed-evidence.json
+[2026-09-28T16:46:14.898Z]   … waiting until 2026-09-28T16:48:19.000Z (125s) for the next settle pass
+[2026-09-28T16:49:12.013Z] STATS {"drops":4,"appeals":13,"outcomes":{"HUMAN_PATTERN":7,"SYBIL_PATTERN":2,"INSUFFICIENT_HISTORY":2,"UNRESOLVED":1},"reads":14,"contests":1,"rejected_calls":7,"ledger":{"balance_wei":"1100000000000000000","locked_wei":"1100000000000000000","payable_wei":"0","identity_holds":true,"identity":"balance_wei == locked_wei + payable_wei"},"on_chain_balance_wei":"8050000000000000000","undelivered_wei":"6950000000000000000","totals":{"deposited_wei":"6000000000000000000","allocations_paid_wei":"3799999999999999999","leftover_returned_wei":"1350000000000000001","bonds_forfeited_wei":"150000000000000000","claimed_wei":"6950000000000000000"}}
+[2026-09-28T16:50:22.869Z] wrote docs/seed-evidence.json
+[2026-09-28T16:50:25.862Z]   … waiting until 2026-09-28T16:52:30.000Z (125s) for the next settle pass
+[2026-09-28T16:53:16.953Z] STATS {"drops":4,"appeals":13,"outcomes":{"HUMAN_PATTERN":7,"SYBIL_PATTERN":2,"INSUFFICIENT_HISTORY":2,"UNRESOLVED":1},"reads":14,"contests":1,"rejected_calls":7,"ledger":{"balance_wei":"1100000000000000000","locked_wei":"1100000000000000000","payable_wei":"0","identity_holds":true,"identity":"balance_wei == locked_wei + payable_wei"},"on_chain_balance_wei":"8050000000000000000","undelivered_wei":"6950000000000000000","totals":{"deposited_wei":"6000000000000000000","allocations_paid_wei":"3799999999999999999","leftover_returned_wei":"1350000000000000001","bonds_forfeited_wei":"150000000000000000","claimed_wei":"6950000000000000000"}}
+[2026-09-28T16:54:21.271Z] wrote docs/seed-evidence.json
+[2026-09-28T16:54:22.606Z]   … waiting until 2026-09-28T16:56:27.000Z (125s) for the next settle pass
+[2026-09-28T16:56:46.152Z]   trigger  finalize_appeal(13) → ACCEPTED OK [13s] finish: finalize #13 tx=0xdf69b4a5dc4c2139d459a2b1d5b9036a1e5851d9c83ca1d1195b77eec0640a87
+[2026-09-28T16:56:59.169Z]   trigger  close_drop(4) → ACCEPTED OK [12s] finish: close drop #4 tx=0x0bcf1a12fd63057f143323c9c38698d094ba0042f8f62010730621372f4d6b52
+[2026-09-28T16:57:38.896Z]   opD      claim_payout() → ACCEPTED OK [13s] opD claims 1.10 GEN (contract paused) tx=0xe11b46a479f8cc2e0acb318e549f1085d719bb981ea3325511aa71d3c6bcffdd
+[2026-09-28T16:58:03.940Z]   deployer set_paused(false) → ACCEPTED OK [13s] owner unpauses (every drop closed, every balance claimed) tx=0x798682c4006e4c1fd210f6efe7091c9f83f6115881a57c97f2e9f425e222afcd
+[2026-09-28T16:58:04.896Z] STATS {"drops":4,"appeals":13,"outcomes":{"HUMAN_PATTERN":7,"SYBIL_PATTERN":3,"INSUFFICIENT_HISTORY":2,"UNRESOLVED":1},"reads":14,"contests":1,"rejected_calls":7,"ledger":{"balance_wei":"0","locked_wei":"0","payable_wei":"0","identity_holds":true,"identity":"balance_wei == locked_wei + payable_wei"},"on_chain_balance_wei":"8050000000000000000","undelivered_wei":"8050000000000000000","totals":{"deposited_wei":"6000000000000000000","allocations_paid_wei":"3799999999999999999","leftover_returned_wei":"2450000000000000001","bonds_forfeited_wei":"200000000000000000","claimed_wei":"8050000000000000000"}}
+[2026-09-28T16:58:56.010Z] wrote docs/seed-evidence.json

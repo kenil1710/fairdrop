@@ -41,6 +41,17 @@ export const verifyAppeal = (id: number) =>
   read<{ found: boolean; verified: boolean; checks: { check: string; ok: boolean }[] }>("verify_appeal", [id]);
 export const checkProof = (dropId: number, wallet: string, proof: string) =>
   read<{ ok: boolean; reason: string }>("check_proof", [dropId, wallet, proof]);
+/** The whole published flagged list, read page by page from the chain. */
+export async function getFlaggedList(dropId: number) {
+  const out: string[] = [];
+  let root = "";
+  for (let offset = 0; ; offset += 500) {
+    const page = await read<{ total: number; final: boolean; flagged_root: string; wallets: string[] }>("get_flagged", [dropId, offset, 500]);
+    root = page.flagged_root;
+    out.push(...page.wallets);
+    if (!page.wallets.length || out.length >= page.total) return { wallets: out, root, final: page.final, total: page.total };
+  }
+}
 export const payoutOf = (address: string) =>
   read<{ owed_wei: string; owed_gen: string }>("payout_of", [address]);
 export const appealsByWallet = (wallet: string) =>
@@ -88,13 +99,36 @@ export async function write(
   })) as TransactionHash;
 }
 
+const STATUS_NAMES = ["UNINITIALIZED", "PENDING", "PROPOSING", "COMMITTING", "REVEALING", "ACCEPTED",
+  "UNDETERMINED", "FINALIZED", "CANCELED", "APPEAL_REVEALING", "APPEAL_COMMITTING", "READY_TO_FINALIZE",
+  "VALIDATORS_TIMEOUT", "LEADER_TIMEOUT"];
+const statusName = (s: unknown) => (typeof s === "number" ? STATUS_NAMES[s] ?? String(s) : String(s ?? ""));
+
+/**
+ * Wait for a write to be DECIDED and return what the contract returned.
+ *
+ * Polls the transaction itself rather than `waitForTransactionReceipt({status:
+ * "ACCEPTED"})`: that call waits for the exact status ACCEPTED, and Studio can
+ * move a transaction to FINALIZED between two polls - the button then waited
+ * for ten minutes on a write that had long succeeded (found by the headless
+ * lifecycle walk, tools/ui_walk.mjs). ACCEPTED and FINALIZED both count; an
+ * UNDETERMINED or CANCELED round is reported as such, never as success.
+ */
 export async function waitForResult(hash: TransactionHash): Promise<WriteResult> {
-  const receipt = (await getReadClient().waitForTransactionReceipt({
-    hash: hash as never,
-    status: "ACCEPTED" as never,
-    retries: 200,
-    interval: 3000,
-  })) as Record<string, unknown>;
+  let receipt: Record<string, unknown> | null = null;
+  for (let i = 0; i < 200 && !receipt; i++) {
+    try {
+      const tx = (await getReadClient().getTransaction({ hash: hash as never })) as unknown as Record<string, unknown>;
+      const name = statusName(tx?.statusName ?? tx?.status);
+      if (name === "ACCEPTED" || name === "FINALIZED") receipt = tx;
+      else if (name === "UNDETERMINED" || name === "CANCELED")
+        return { status: "REJECTED", reason: `The validators did not reach consensus (${name}); nothing changed. Try again.` };
+    } catch {
+      /* not visible yet, or the relay had a bad second */
+    }
+    if (!receipt) await new Promise((r) => setTimeout(r, 3000));
+  }
+  if (!receipt) return { status: "REJECTED", reason: "No decision after 10 minutes; check the transaction and try again." };
   const consensus = receipt?.consensus_data as { leader_receipt?: Array<Record<string, unknown>> } | undefined;
   const payload = (consensus?.leader_receipt?.[0]?.result as { payload?: unknown } | undefined)?.payload;
   if (payload && typeof payload === "object") {

@@ -1,9 +1,9 @@
 {
-  "registry": "0x8E3E1c02C67FE445345D7A0Eee27019cb2D6405c",
-  "reads": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+  "registry": "0xA700843BD323D75E70d98070533fd57B57e3FBB4",
+  "reads": "0x4F34B9Dd883C58C25Fb79d6d25a8936421DCc6dD",
   "checks": [
     {
-      "label": "A/human (won)",
+      "label": "A/human (won by the rules)",
       "wallet": "0x0f2589542b6d5a506849e9425cd5c41f89b1d923",
       "drop": 1,
       "is_cleared": true,
@@ -13,7 +13,7 @@
         "outcome": "HUMAN_PATTERN",
         "status": "OK"
       },
-      "tx": "0x4604b35d96ab3737839d8cbaaa146b432025d0fa7f2fdaf41a2e20d22cc86390"
+      "tx": "0xff6af99995526434fc9eb6c8897e11b6ad24fb234578c8440df7a130d7264788"
     },
     {
       "label": "A/farm (lost)",
@@ -26,7 +26,7 @@
         "outcome": "SYBIL_PATTERN",
         "status": "OK"
       },
-      "tx": "0xfad57ab427f592a04475f01d1a9c4d2bce655afce99321ff2aed55bf76a2b176"
+      "tx": "0x1b4f26a2baf7b6f303be956b7586516f58b57b4cd9b75431936332f32aa47b52"
     },
     {
       "label": "A/too_active (insufficient)",
@@ -39,7 +39,7 @@
         "outcome": "INSUFFICIENT_HISTORY",
         "status": "OK"
       },
-      "tx": "0x6fb7414b0c4aabf2a24d20a565c3ce55e4ca8e780a9b8d5ca5d1b8c705ad772c"
+      "tx": "0x8d723ec9d2489454c9db76dc871055cb0647b13c0910a7474b37cb07a405fb4e"
     },
     {
       "label": "B/minter (default win)",
@@ -52,12 +52,12 @@
         "outcome": "HUMAN_PATTERN",
         "status": "OK"
       },
-      "tx": "0xd97e58f14b71ff7308f8c1aac405de2c1c62c6c137b9e0796f6864d221b9c709"
+      "tx": "0x189e72ae4847554009f44568e121da1bbc74be9130cab34287d388fa8c141fbb"
     },
     {
-      "label": "C/swapper (won, pro-rata)",
-      "wallet": "0x35b4a50f63f4beee621a8e5e97afcb2db0de63d8",
-      "drop": 3,
+      "label": "E/diverse (won, contest held)",
+      "wallet": "0x1c1ff5a779249371ec4862a1f88c187989a8983a",
+      "drop": 5,
       "is_cleared": true,
       "attest": {
         "attestation_id": 5,
@@ -65,28 +65,41 @@
         "outcome": "HUMAN_PATTERN",
         "status": "OK"
       },
-      "tx": "0x0100cd950e040ef3be61ca5ef6992252631cb87d313af851bed6c5ed7f515811"
+      "tx": "0x1db2f87fe248cb35cb9049ec0e3ae9a5d55c2d747ebb8330cfd89126449fa784"
     },
     {
-      "label": "D/farm_quester (UNRESOLVED, refiled, lost)",
-      "wallet": "0xe288ddad7a2fdd7cb9bdefc9bbe1ba90a47c3ac2",
+      "label": "F/long (default win, pro-rata)",
+      "wallet": "0x0f2589542b6d5a506849e9425cd5c41f89b1d923",
+      "drop": 11,
+      "is_cleared": true,
+      "attest": {
+        "attestation_id": 6,
+        "cleared": true,
+        "outcome": "HUMAN_PATTERN",
+        "status": "OK"
+      },
+      "tx": "0x6907b66635ac88edec1e0fb85466a425b32be9431a92fc96c1d089f9d8715f35"
+    },
+    {
+      "label": "D/swapper (griefed, then unread)",
+      "wallet": "0x35b4a50f63f4beee621a8e5e97afcb2db0de63d8",
       "drop": 4,
       "is_cleared": false,
       "attest": {
-        "attestation_id": 6,
+        "attestation_id": 7,
         "cleared": false,
-        "outcome": "SYBIL_PATTERN",
+        "outcome": "INSUFFICIENT_HISTORY",
         "status": "OK"
       },
-      "tx": "0xcbc50c020092349c7c50e3a965efd2e2e0c7de59be7ac7a3bd3b034f6932f273"
+      "tx": "0x1c14778921b691b693e4876c0a1aee312c3962bb651d052ad25dc787da5f0151"
     }
   ],
   "config": {
-    "fairdrop": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+    "fairdrop": "0x4F34B9Dd883C58C25Fb79d6d25a8936421DCc6dD",
     "custody": false,
     "payable_methods": 0,
-    "attestations": 6,
-    "cleared": 3,
+    "attestations": 7,
+    "cleared": 4,
     "refused": 3,
     "cleared_means": "the wallet's FairDrop appeal is FINAL with outcome HUMAN_PATTERN"
   }

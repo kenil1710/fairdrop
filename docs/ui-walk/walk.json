@@ -1,0 +1,222 @@
+[
+ {
+  "at": "2026-09-28T21:58:40.603Z",
+  "step": "accounts",
+  "operator": "0x180E6a1f4bb72ef1ae5CB5476BACD43B37088380",
+  "flagged": "0x07239437Adcc9f573A845a8aCDe753Dd67d42FA4",
+  "url": "https://fairdrop-six.vercel.app"
+ },
+ {
+  "at": "2026-09-28T21:58:43.884Z",
+  "step": "wallet connected",
+  "role": "walkOp",
+  "address_shown_in_header": true
+ },
+ {
+  "at": "2026-09-28T21:58:44.569Z",
+  "step": "sealed in the browser",
+  "rules_hash": "a804c4b551d22fe37e6209379c4208c7ba7895b66ea413225774d518cfdd1cb9"
+ },
+ {
+  "at": "2026-09-28T21:58:58.472Z",
+  "step": "tx Create drop and escrow",
+  "role": "walkOp",
+  "pending_shown": true,
+  "result": "ok",
+  "note": "the button was replaced by the next step; the caller checks the page",
+  "seconds": 14
+ },
+ {
+  "at": "2026-09-28T21:59:01.555Z",
+  "step": "drop created",
+  "dropId": 10,
+  "option": "#10 UI walk 21:58:44 \u2014 BEFORE_SNAPSHOT"
+ },
+ {
+  "at": "2026-09-28T22:00:25.756Z",
+  "step": "tx Publish chunk 1 (final)",
+  "role": "walkOp",
+  "pending_shown": true,
+  "result": "ok",
+  "seconds": 9
+ },
+ {
+  "at": "2026-09-28T22:00:30.086Z",
+  "step": "wallet connected",
+  "role": "walkFlag",
+  "address_shown_in_header": true
+ },
+ {
+  "at": "2026-09-28T22:00:35.504Z",
+  "step": "proof built in the browser from get_flagged",
+  "proof": "6fe4e21ef9a0bb1cf6c46be825436448132cdbd785e8a718326e8d0cf28033ed"
+ },
+ {
+  "at": "2026-09-28T22:00:46.200Z",
+  "step": "tx File appeal and post bond",
+  "role": "walkFlag",
+  "pending_shown": true,
+  "result": "ok",
+  "seconds": 11
+ },
+ {
+  "at": "2026-09-28T22:00:46.280Z",
+  "step": "appeal filed",
+  "appealId": 17
+ },
+ {
+  "at": "2026-09-28T22:00:55.345Z",
+  "step": "tx File appeal and post bond",
+  "role": "walkFlag",
+  "pending_shown": true,
+  "result": "refused: this wallet has already appealed this drop",
+  "seconds": 9
+ },
+ {
+  "at": "2026-09-28T22:01:01.204Z",
+  "step": "appeal page shows the pending state",
+  "text": "AWAITING REVEAL"
+ },
+ {
+  "at": "2026-09-28T22:07:35.077Z",
+  "step": "tx Reveal rules",
+  "role": "walkOp",
+  "pending_shown": true,
+  "result": "refused: sha256(rules_json + salt) does not match the commitment; the reveal is refused",
+  "seconds": 14
+ },
+ {
+  "at": "2026-09-28T22:07:35.221Z",
+  "step": "reveal with a wrong salt was refused; revealing the committed rules"
+ },
+ {
+  "at": "2026-09-28T22:07:44.301Z",
+  "step": "tx Reveal rules",
+  "role": "walkOp",
+  "pending_shown": true,
+  "result": "ok",
+  "seconds": 9
+ },
+ {
+  "at": "2026-09-28T22:08:07.107Z",
+  "step": "tx Run the blind read",
+  "role": "walkFlag",
+  "pending_shown": true,
+  "result": "ok",
+  "seconds": 20
+ },
+ {
+  "step": "read retried until a round landed (the explorer answered HTTP 500 on the first rounds); walk resumed at the read with --drop=10 --appeal=17"
+ },
+ {
+  "at": "2026-09-28T22:09:31.664Z",
+  "step": "accounts",
+  "operator": "0x180E6a1f4bb72ef1ae5CB5476BACD43B37088380",
+  "flagged": "0x07239437Adcc9f573A845a8aCDe753Dd67d42FA4",
+  "url": "https://fairdrop-six.vercel.app"
+ },
+ {
+  "at": "2026-09-28T22:09:31.667Z",
+  "step": "resuming at the read",
+  "dropId": 10,
+  "appealId": 17
+ },
+ {
+  "at": "2026-09-28T22:10:04.211Z",
+  "step": "wallet connected",
+  "role": "walkOp",
+  "address_shown_in_header": false
+ },
+ {
+  "at": "2026-09-28T22:10:36.747Z",
+  "step": "wallet connected",
+  "role": "walkFlag",
+  "address_shown_in_header": false
+ },
+ {
+  "at": "2026-09-28T22:11:01.548Z",
+  "step": "tx Run the blind read",
+  "role": "walkFlag",
+  "pending_shown": true,
+  "result": "ok",
+  "seconds": 20
+ },
+ {
+  "at": "2026-09-28T22:11:05.977Z",
+  "step": "after a read round",
+  "attempt": 1,
+  "header": "AWAITING READ"
+ },
+ {
+  "at": "2026-09-28T22:12:20.086Z",
+  "step": "tx Run the blind read",
+  "role": "walkFlag",
+  "pending_shown": true,
+  "result": "ok",
+  "seconds": 50
+ },
+ {
+  "at": "2026-09-28T22:12:24.871Z",
+  "step": "after a read round",
+  "attempt": 2,
+  "header": "READ \u00b7 OUTCOME AGREED"
+ },
+ {
+  "at": "2026-09-28T22:12:35.442Z",
+  "step": "tx Apply the rules",
+  "role": "walkFlag",
+  "pending_shown": true,
+  "result": "ok",
+  "note": "the button was replaced by the next step; the caller checks the page",
+  "seconds": 11
+ },
+ {
+  "at": "2026-09-28T22:12:39.963Z",
+  "step": "verdict on the page",
+  "verdict": "HUMAN_PATTERN"
+ },
+ {
+  "at": "2026-09-28T22:13:11.513Z",
+  "step": "tx Contest with bond",
+  "role": "walkOp",
+  "pending_shown": true,
+  "result": "ok",
+  "note": "the button was replaced by the next step; the caller checks the page",
+  "seconds": 29
+ },
+ {
+  "at": "2026-09-28T22:13:13.259Z",
+  "step": "after the contest",
+  "final": "HUMAN_PATTERN"
+ },
+ {
+  "at": "2026-09-28T22:21:26.674Z",
+  "step": "tx Close",
+  "role": "walkOp",
+  "pending_shown": true,
+  "result": "ok",
+  "seconds": 9
+ },
+ {
+  "at": "2026-09-28T22:21:41.857Z",
+  "step": "tx Claim payout",
+  "role": "walkOp",
+  "pending_shown": true,
+  "result": "ok",
+  "note": "the button was replaced by the next step; the caller checks the page",
+  "seconds": 14
+ },
+ {
+  "at": "2026-09-28T22:21:57.309Z",
+  "step": "tx Claim payout",
+  "role": "walkFlag",
+  "pending_shown": true,
+  "result": "ok",
+  "note": "the button was replaced by the next step; the caller checks the page",
+  "seconds": 14
+ },
+ {
+  "at": "2026-09-28T22:21:57.433Z",
+  "step": "walk complete"
+ }
+]

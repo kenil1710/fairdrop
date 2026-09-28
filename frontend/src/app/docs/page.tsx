@@ -29,7 +29,7 @@ export default function DocsPage() {
         <Section title="Commit-reveal" icon={<Hash size={18} className="text-coral" />}>
           <ol className="list-decimal space-y-2 pl-5 text-sm text-sand/90">
             <li><b>Seal.</b> The operator writes rules in a fixed vocabulary, serialises them canonically, and commits <span className="mono">sha256(rules_json + salt)</span> in <span className="mono">create_drop</span>, together with the allocation, bond, windows, chain and lookback. The snapshot time must be in the future, so the seal is provably older than the snapshot.</li>
-            <li><b>Flag.</b> After the snapshot, the operator commits the merkle root of the flagged list. (The list cannot exist before the snapshot, so this is the one commitment that comes after it.)</li>
+            <li><b>Flag.</b> After the snapshot, the operator publishes the whole flagged list on chain and the contract computes its merkle root (leaf = sha256(0x00‖address), node = sha256(0x01‖min‖max)). Any flagged wallet can build its own proof from that list, or file with none. (The list cannot exist before the snapshot, so this is the one step that comes after it.)</li>
             <li><b>Reveal.</b> After the appeal window, <span className="mono">reveal_rules</span> is accepted only if the text and salt hash to the seal exactly. A mismatch is refused and counted publicly. After the reveal deadline, unrevealed drops lose every pending appeal.</li>
           </ol>
           <pre className="snapshot mono mt-4 rounded-lg bg-[var(--bg-2)] p-3 text-[0.72rem] text-sand/80">{`{"min_hits":2,"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":60},{"condition":"GTE","finding":"SCRIPTED_REPETITION","threshold":"SOME"}]}`}</pre>
@@ -51,7 +51,8 @@ export default function DocsPage() {
             <li>Code computes the four deterministic findings from the snapshot text; validators must agree exactly.</li>
             <li>The model reads the snapshot and answers the four model findings with one word each. It never sees the rules, the flag or any threshold. Each finding may differ from the leader&apos;s by one bucket.</li>
             <li>Reads run only after the reveal, because each validator applies the revealed rules in code to its <b>own</b> findings, and the outcome must be <b>identical</b> to the leader&apos;s. A one-bucket difference that would flip the outcome means the round does not settle.</li>
-            <li>A read attempt is a ticket then a round: the ticket commits even if the round never settles, so failures are counted. Three unsettled rounds make the appeal <b>UNRESOLVED</b>: bond returned, refile allowed, never paid, never condemned.</li>
+            <li>A read that doesn&apos;t settle commits nothing. A failure is recorded only by <span className="mono">settle_stalled</span>, a consensus round validators accept only if they read the wallet, agreed on the evidence and computed a <b>different</b> outcome from the leader&apos;s. Three genuine splits make the appeal <b>UNRESOLVED</b>: bond returned, refile allowed, never paid, never condemned.</li>
+            <li>Everything read is bound to the snapshot: transactions after it, first activity after it and funding after it never count. A first funding that can&apos;t be proven is UNCLEAR, and a drop whose rules use it reads INSUFFICIENT_HISTORY.</li>
             <li><span className="mono">decide</span> then books the agreed outcome, line by line. It is provisional for the contest window.</li>
           </ol>
         </Section>
@@ -101,7 +102,8 @@ if IFairDropRegistry(REGISTRY).view().is_cleared(wallet, drop_id):
             <li>Reading behaviour is a judgement. The vocabulary bounds it to four one-word answers and validators must agree on each, but a model can still describe a real person as scripted.</li>
             <li>Blockscout is the only source. Its labels can be missing, its replicas lag by minutes, and internal transactions are not read (on Base the internal endpoint answers &quot;not yet processed&quot;). Wallet age is measured from the first visible normal transaction.</li>
             <li>Studio Dev queues value transfers and may not deliver them; the contract publishes the gap as <span className="mono">undelivered_wei</span>. Its books still drain to zero.</li>
-            <li>Anyone may open a read ticket; one nobody runs expires and counts as unsettled. A party wanting an appeal UNRESOLVED could open tickets and wait; anyone can defeat that by running the round inside the ticket&apos;s life, and UNRESOLVED can neither pay nor condemn.</li>
+            <li>A split round needs the validators&apos; own outcomes to differ from the leader&apos;s, which only happens one bucket from a threshold. There, a dishonest leader could help record splits; the worst result is UNRESOLVED, which neither pays nor condemns. A wallet the validators agree on can never be made UNRESOLVED.</li>
+            <li>Explorer labels (contract names, exchange tags) are today&apos;s, not the snapshot&apos;s. Validators agree on them, and they reach the model only as descriptive text.</li>
           </ul>
         </Section>
       </div>

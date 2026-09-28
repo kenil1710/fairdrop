@@ -19,9 +19,10 @@ import typing
 #   1. Before the snapshot, the operator commits sha256(rules_json + salt).
 #      The contract refuses a snapshot time that is not in the future, so the
 #      commitment is PROVABLY older than the snapshot.
-#   2. After the snapshot, the operator commits the merkle root of the flagged
-#      list. A flagged wallet appeals FROM ITSELF (sender == wallet) with a
-#      merkle proof and a bond.
+#   2. After the snapshot, the operator PUBLISHES the flagged list on chain and
+#      the contract computes its merkle root. A flagged wallet appeals FROM
+#      ITSELF (sender == wallet) with a bond, and with a merkle proof or none
+#      (membership is then checked against the published list).
 #   3. The operator reveals the rules. The reveal is accepted only if it hashes
 #      to the commitment exactly; if it never comes, every pending appeal wins.
 #   4. Validators read the wallet BLIND: each fetches its outbound history from
@@ -43,7 +44,9 @@ import typing
 #      differ by ONE bucket), and the RULE OUTCOME each validator computes in
 #      code from its own findings (exact). A one-bucket difference can
 #      therefore never move money: if it would change the outcome, the round
-#      does not settle. Three rounds that never settle make the appeal
+#      does not settle. Three COMMITTED split rounds (validators read the
+#      wallet, agreed on the evidence and genuinely computed a different
+#      outcome from the leader's; `settle_stalled`) make the appeal
 #      UNRESOLVED (bond back, refileable, never SYBIL). Nothing uncompared is
 #      stored; the snapshot text is bound by its sha256, which every validator
 #      recomputes over its own fetch.
@@ -138,6 +141,10 @@ QUESTIONS = {
 }
 CONDITIONS = ("LT", "LTE", "GT", "GTE", "EQ", "NEQ")
 MAX_RULES = 12
+# A reveal must always fit in one transaction: the document's exact byte size
+# and rule count are declared at create_drop and checked there (up front) and
+# at reveal.
+MAX_RULES_BYTES = 4000
 MAX_THRESHOLD = 100000
 MIN_SALT_HEX = 32
 
@@ -159,10 +166,12 @@ BY_NO_REVEAL = "NO_REVEAL"
 BY_CONTEST = "CONTEST"
 BY_COVERAGE = "COVERAGE"
 BY_UNREAD = "UNREAD_AT_DEADLINE"
-BY_UNSETTLED = "ROUNDS_NEVER_SETTLED"
-# A read round that has not landed when its ticket expires counts as one
-# unsettled attempt; this many make the appeal UNRESOLVED.
-MAX_UNSETTLED_ROUNDS = 3
+BY_SPLIT = "VALIDATORS_SPLIT"
+# A SPLIT ROUND is a committed consensus round in which the validators agree
+# on the evidence but a majority of them computed a DIFFERENT rule outcome from
+# the leader's (`settle_stalled`). It can only settle if validators actually
+# read the wallet and genuinely disagreed; this many make it UNRESOLVED.
+MAX_SPLIT_ROUNDS = 3
 
 # --- what a blind read can come back as
 R_READ = "READ"
@@ -180,16 +189,25 @@ MAX_VALUE_WEI = 10 ** 26
 
 # --- time (contract-level; per-drop windows are frozen at creation)
 CONTEST_WINDOW_S = 48 * 3600
-STALL_TTL_S = 3600           # life of one read-round ticket
+STALL_TTL_S = 3600           # read_wallet's priority window before split rounds
 MIN_PHASE_S = 3600
 MAX_PHASE_S = 365 * 86400
 MAX_LOOKBACK_DAYS = 3650
 
 # --- capacity
 MAX_DROPS = 2000
-MAX_APPEALS_PER_DROP = 100
+# Per WALLET, not per drop: a per-drop cap let whoever controls many flagged
+# wallets fill a drop with cheap appeals and lock honest ones out. Only
+# published flagged wallets can appeal, so a drop's appeals are bounded by
+# MAX_FLAGGED * MAX_APPEALS_PER_WALLET.
+MAX_APPEALS_PER_WALLET = 3
 MAX_PROTOCOL_CONTRACTS = 10
 MAX_PROOF = 32
+# The flagged list is PUBLISHED ON CHAIN (ascending, in chunks) and the root is
+# computed by the contract, so no appeal ever depends on the operator handing
+# out proofs.
+MAX_FLAGGED = 5000
+MAX_FLAGGED_CHUNK = 400
 MAX_TEXT = 1000
 MIN_NOVEL_CHARS = 20
 PAGE_CAP = 50
@@ -434,15 +452,24 @@ def _sha256(text: str) -> str:
 
 # --- merkle membership -------------------------------------------------------
 #
-# leaf  = sha256(20 address bytes)
-# node  = sha256(min(a, b) || max(a, b))      (sorted pairs, 32-byte halves)
-# Sorted pairs mean a proof is a plain list of siblings, with no index bits.
-# A leaf is 20 bytes and a node preimage is 64, so a node can never be passed
-# off as a leaf.
+# leaf  = sha256(0x00 || 20 address bytes)
+# node  = sha256(0x01 || min(a, b) || max(a, b))   (sorted pairs, 32-byte halves)
+# DOMAIN SEPARATED: a leaf hash and a node hash have different one-byte
+# prefixes, so no internal node can ever equal any leaf (second-preimage
+# attack), independently of the preimage lengths (21 vs 65 bytes). Sorted
+# pairs mean a proof is a plain list of siblings, with no index bits; an odd
+# node is carried up unchanged, and the client builds trees the same way.
+LEAF_PREFIX = b"\x00"
+NODE_PREFIX = b"\x01"
 
 
 def _leaf(wallet: str) -> bytes:
-    return bytes.fromhex(_sha256_bytes(bytes.fromhex(_lower(wallet)[2:])))
+    return bytes.fromhex(_sha256_bytes(LEAF_PREFIX + bytes.fromhex(_lower(wallet)[2:])))
+
+
+def _node(a: bytes, b: bytes) -> bytes:
+    pair = (a + b) if a <= b else (b + a)
+    return bytes.fromhex(_sha256_bytes(NODE_PREFIX + pair))
 
 
 def _parse_proof(proof: typing.Any) -> tuple:
@@ -475,13 +502,38 @@ def _parse_proof(proof: typing.Any) -> tuple:
     return (True, out)
 
 
+def _merkle_levels(wallets: list) -> list:
+    """Every level of the tree over `wallets` (in the given order), leaves
+    first. An odd node is carried up unchanged."""
+    level = [_leaf(w) for w in wallets]
+    levels = [level]
+    while len(level) > 1:
+        nxt = []
+        for i in range(0, len(level), 2):
+            nxt.append(_node(level[i], level[i + 1]) if i + 1 < len(level) else level[i])
+        level = nxt
+        levels.append(level)
+    return levels
+
+
+def _merkle_proof(wallets: list, index: int) -> list:
+    out = []
+    levels = _merkle_levels(wallets)
+    i = index
+    for level in levels[:-1]:
+        sib = i ^ 1
+        if sib < len(level):
+            out.append(level[sib].hex())
+        i = i // 2
+    return out
+
+
 def _merkle_ok(root: str, wallet: str, proof: list) -> bool:
     if not _is_h256(root) or not _is_addr(wallet):
         return False
     node = _leaf(wallet)
     for sib in proof:
-        pair = (node + sib) if node <= sib else (sib + node)
-        node = bytes.fromhex(_sha256_bytes(pair))
+        node = _node(node, sib)
     return node.hex() == _h256(root)
 
 
@@ -522,8 +574,9 @@ def _parse_rules(text: typing.Any) -> tuple:
     parse differently in two JSON libraries (duplicate keys, number spelling),
     and a commitment has to mean one thing."""
     raw = str(text if text is not None else "")
-    if len(raw) > 4000:
-        return (None, "the rules document is longer than 4000 characters")
+    if len(raw) > MAX_RULES_BYTES:
+        return (None, "the rules document is longer than "
+                + str(MAX_RULES_BYTES) + " characters")
     try:
         doc = json.loads(raw)
     except Exception:
@@ -634,6 +687,36 @@ def _evaluate(rules: dict, features_csv: str, findings_csv: str) -> tuple:
 # --- the explorer ------------------------------------------------------------
 
 
+def _mined(item: dict) -> bool:
+    """Whether a v2 item carries a block (current `block_number`, older
+    `block`). Pending transactions carry neither."""
+    for key in ("block_number", "block"):
+        v = item.get(key)
+        if v is not None and _as_int(v, -1) >= 0:
+            return True
+    return False
+
+
+def _funder_proven(snapshot: str) -> bool:
+    """Read back from the stored record, so the model call, `_coherent_read`,
+    the contest and `verify_appeal` all agree on it."""
+    lines = str(snapshot).split("\n")
+    # A label cannot forge this: `_safe` removes "=" and spaces from labels.
+    return len(lines) > 3 and lines[3].startswith("first_seen=") and \
+        lines[3].endswith(" funder_proven=1")
+
+
+def _funder_honest(findings: str, snapshot: str) -> str:
+    """An unproven first funding is not described by anyone: the funder
+    finding is UNCLEAR by code, whatever the model said. (A rule on UNCLEAR
+    never fires.)"""
+    if _funder_proven(snapshot) or not findings:
+        return findings
+    kv = _kv(findings)
+    kv[F_FUNDER] = UNCLEAR
+    return ",".join([f + "=" + kv.get(f, UNCLEAR) for f in MODEL_FINDINGS])
+
+
 def _url_out(host: str, wallet: str) -> str:
     return ("https://" + host + "/api/v2/addresses/" + wallet
             + "/transactions?filter=from")
@@ -740,7 +823,7 @@ def _out_line(item: dict, when: int) -> str:
 def _snapshot(wallet: str, chain: str, lookback: int, snap: int,
               protocol: str, contracts: str, window: list, first_ts: int,
               funder: str, fund_value: int, funder_label: str,
-              funder_contract: bool) -> str:
+              funder_contract: bool, funder_proven: bool) -> str:
     """The canonical history snapshot: what is hashed, stored, shown to the
     model, re-read on contest, and re-parsed by `verify_appeal`. Every line is
     built from fields every validator fetched for itself and reduced to a fixed
@@ -755,7 +838,8 @@ def _snapshot(wallet: str, chain: str, lookback: int, snap: int,
         + " funder=" + (funder if funder else "unknown")
         + " funding_value_wei=" + str(fund_value)
         + " funder_label=" + (funder_label if funder else "-")
-        + " funder_contract=" + ("1" if funder_contract else "0"),
+        + " funder_contract=" + ("1" if funder_contract else "0")
+        + " funder_proven=" + ("1" if funder_proven else "0"),
     ]
     for line in window:
         lines.append(line)
@@ -834,12 +918,25 @@ def _fetch(facts: dict) -> dict:
     window = []
     for item in items:
         if not isinstance(item, dict):
-            continue
+            return {"status": R_INSUFFICIENT, "why": "outbound history has an "
+                    "unreadable item", "snapshot": ""}
         when = _epoch_from_iso(item.get("timestamp"))
-        if when > 0 and (oldest == 0 or when < oldest):
-            oldest = when
-        if _hash_of(item.get("from")) != me or when <= 0:
+        if when <= 0:
+            # A transaction that is not mined yet has neither a block nor a
+            # timestamp, and is necessarily AFTER the (past) snapshot. A mined
+            # one whose time cannot be read could be inside the window, and
+            # silently dropping it would bias every count: not provable.
+            if _mined(item):
+                return {"status": R_INSUFFICIENT, "why": "outbound history has "
+                        "an unreadable timestamp", "snapshot": ""}
             continue
+        if oldest == 0 or when < oldest:
+            oldest = when
+        if _hash_of(item.get("from")) != me:
+            continue
+        # SNAPSHOT BINDING: only [lookback start, snapshot]. Anything the wallet
+        # did after the snapshot never reaches the record, the features or the
+        # model.
         if lookback <= when <= snap:
             window.append((when, _hash_of(item), _out_line(item, when)))
     complete = len(items) < TX_WINDOW and not has_next
@@ -873,42 +970,65 @@ def _fetch(facts: dict) -> dict:
         if not rising or stamps[0] == stamps[-1]:
             return {"status": R_INSUFFICIENT, "why": "earliest activity "
                     "ordering could not be verified", "snapshot": ""}
+    # FIRST SEEN, AT THE SNAPSHOT. Only activity at or before the snapshot
+    # counts; a wallet whose first visible transaction is later did not exist
+    # (visibly) at the snapshot, and its record says so ("-").
     first_ts = 0
     for t in stamps:
-        if first_ts == 0 or t < first_ts:
+        if t <= snap and (first_ts == 0 or t < first_ts):
             first_ts = t
-    if oldest > 0 and (first_ts == 0 or oldest < first_ts):
+    if 0 < oldest <= snap and (first_ts == 0 or oldest < first_ts):
         first_ts = oldest
 
-    # The first funding: the earliest inbound transfer with value. Its sender's
-    # public label rides along on the same item, so no third request is made.
+    # THE FIRST FUNDING, PROVEN OR NOT AT ALL. The earliest-activity page starts
+    # at the wallet's first transaction (complete, or ascending - checked above),
+    # so later inbound transfers cannot bury it: they come AFTER it on this
+    # page. The funding is the earliest inbound transfer with value at or before
+    # the snapshot. It is PROVEN only if it is on this page and no other sender
+    # funded the wallet in the same second (an unordered tie). Otherwise the
+    # record says funder_proven=0, the funder finding is forced to UNCLEAR, and
+    # a drop whose rules use it reads INSUFFICIENT_HISTORY (`_judged_read`).
     funder = ""
     fund_value = 0
     label = "-"
     is_contract = False
+    proven = False
     order = []
     for k in range(len(first)):
         order.append((stamps[k], k))
     order.sort()
-    for _, k in order:
+    fund_ts = 0
+    for when, k in order:
         x = first[k]
-        if not isinstance(x, dict):
+        if not isinstance(x, dict) or when > snap:
             continue
         src = x.get("from")
-        if _hash_of(x.get("to")) == me and _as_int(x.get("value"), 0) > 0 \
-                and _is_addr(_hash_of(src)):
+        if not (_hash_of(x.get("to")) == me and _as_int(x.get("value"), 0) > 0
+                and _is_addr(_hash_of(src))):
+            continue
+        if fund_ts == 0:
+            fund_ts = when
             funder = _hash_of(src)
             fund_value = _as_int(x.get("value"), 0)
             label = _label_of(src)
             is_contract = bool(src.get("is_contract")) if isinstance(src, dict) else False
+            proven = True
+        elif when == fund_ts and _hash_of(src) != funder:
+            proven = False
+        elif when > fund_ts:
             break
+    if not proven:
+        funder = ""
+        fund_value = 0
+        label = "-"
+        is_contract = False
 
     window.sort()
     lines = [w[2] for w in window]
     return {"status": R_READ, "why": "", "snapshot": _snapshot(
         me, str(facts["chain"]), lookback, snap, str(facts["protocol"]),
         str(facts["contracts"]), lines, first_ts, funder, fund_value, label,
-        is_contract)}
+        is_contract, proven)}
 
 
 # --- the model ---------------------------------------------------------------
@@ -971,16 +1091,21 @@ def _ask_model(snapshot: str, context: str) -> tuple:
                                     response_format="json")
     except Exception:
         return (False, "")
-    return _findings_of(raw)
+    ok, findings = _findings_of(raw)
+    return (ok, _funder_honest(findings, snapshot) if ok else findings)
 
 
-def _blind_read(facts: dict) -> dict:
+def _blind_read(facts: dict, funder_required: bool = False) -> dict:
     """What every node runs for `read_wallet`: fetch, canonicalise, then ask
     the model about the snapshot. INSUFFICIENT and UNAVAILABLE never reach the
-    model."""
+    model. `funder_required` (the drop's rules use the funder finding) turns an
+    unproven first funding into INSUFFICIENT_HISTORY instead of a guess."""
     got = _fetch(facts)
     if got["status"] != R_READ:
         return _read_vector(got["status"], got["why"], "", 0, "")
+    if funder_required and not _funder_proven(got["snapshot"]):
+        return _read_vector(R_INSUFFICIENT, "the first funding could not be "
+                            "proven at the snapshot", "", 0, "")
     ok, findings = _ask_model(got["snapshot"], "")
     if not ok:
         return _read_vector(R_UNAVAILABLE, "the model's answer was unreadable",
@@ -1025,7 +1150,10 @@ def _coherent_read(p: typing.Any, snap_ts: int) -> bool:
         return False
     if p["features"] != _features(p["snapshot"], snap_ts):
         return False
-    return _findings_ok(p["findings"])
+    if not _findings_ok(p["findings"]):
+        return False
+    # an unproven funding is UNCLEAR by code; a leader may not describe it
+    return p["findings"] == _funder_honest(p["findings"], p["snapshot"])
 
 
 def _findings_agree(theirs: typing.Any, mine: typing.Any) -> bool:
@@ -1093,9 +1221,16 @@ def _judged_read(facts: dict, rules: dict) -> dict:
     """One validator's whole contribution: its own blind read, and the outcome
     the revealed rules give on it. The rules go to `_evaluate` (code) and never
     to `_prompt` (the model): `_blind_read` is called with the facts alone."""
-    p = _blind_read(facts)
+    p = _blind_read(facts, _rules_use(rules, F_FUNDER))
     p["outcome"] = _outcome_of(rules, p)
     return p
+
+
+def _rules_use(rules: dict, finding: str) -> bool:
+    for r in rules.get("rules", []):
+        if r.get("finding") == finding:
+            return True
+    return False
 
 
 def _coherent_judged(p: typing.Any, snap_ts: int, rules: dict) -> bool:
@@ -1238,7 +1373,9 @@ class Drop:
     reserve_wei: u256          # the pool: reserve + forfeited appeal bonds
     held_bonds_wei: u256       # appeal and contest bonds still undecided
     rules_hash: str
-    flagged_root: str
+    rules_bytes: u32           # declared size of the canonical rules document
+    rules_count: u32           # declared number of rules
+    flagged_root: str          # computed by the contract from the published list
     flagged_count: u32
     flagged_at: u64
     revealed: bool
@@ -1273,8 +1410,7 @@ class Appeal:
     refile_of: u32
     # --- the blind read (all consensus-bound)
     read_attempts: u32         # rounds that LANDED (any read status)
-    rounds_opened: u32         # read-round tickets opened
-    unsettled_rounds: u32      # tickets that expired without a landed round
+    split_rounds: u32          # committed rounds whose validators split on the outcome
     read_at: u64
     last_read_status: str
     snapshot: str
@@ -1308,11 +1444,12 @@ class FairDrop(gl.contract.Contract):
     payout_wei: gl.storage.TreeMap[Address, u256]
 
     drops: gl.storage.DynArray[Drop]
+    flagged: gl.storage.TreeMap[str, gl.storage.DynArray[str]]
     appeals: gl.storage.DynArray[Appeal]
     drop_appeals: gl.storage.TreeMap[str, gl.storage.DynArray[u32]]
     latest_appeal: gl.storage.TreeMap[str, u32]
+    wallet_filings: gl.storage.TreeMap[str, u32]
     by_wallet: gl.storage.TreeMap[Address, gl.storage.DynArray[u32]]
-    in_flight: gl.storage.TreeMap[str, u64]
     outcome_counts: gl.storage.TreeMap[str, u32]
 
     total_rejected: u256
@@ -1427,16 +1564,38 @@ class FairDrop(gl.contract.Contract):
     def _wkey(self, drop_id: int, wallet: Address) -> str:
         return str(int(drop_id)) + ":" + wallet.as_hex
 
+    def _is_flagged(self, drop_id: int, wallet: str) -> bool:
+        """Binary search of the published, strictly ascending list."""
+        arr = self.flagged.get(str(int(drop_id)))
+        if arr is None:
+            return False
+        target = _lower(wallet)
+        lo = 0
+        hi = len(arr) - 1
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            v = str(arr[mid])
+            if v == target:
+                return True
+            if v < target:
+                lo = mid + 1
+            else:
+                hi = mid - 1
+        return False
+
     def _lookback_start(self, drop: Drop) -> int:
         return int(drop.snapshot_ts) - int(drop.lookback_days) * 86400
 
-    def _flight(self, appeal_id: int, now: int) -> int:
-        """When an in-flight consensus round on this appeal started, if it has
-        not yet stalled out; else 0."""
-        started = int(self.in_flight.get(str(int(appeal_id))) or 0)
-        if started > 0 and now - started < int(self.stall_ttl_s):
-            return started
-        return 0
+    def _read_until(self, d: Drop, a: Appeal) -> int:
+        """The last moment an appeal can be read: one contest window after the
+        reveal deadline, or after its own filing if it was (re)filed later -
+        so a refile always gets a full window to be read."""
+        return max(int(d.reveal_end_ts), int(a.filed_at)) + int(self.contest_window_s)
+
+    def _split_from(self, d: Drop, a: Appeal) -> int:
+        """When split rounds may start: read_wallet has priority for
+        `stall_ttl_s` after the appeal became readable."""
+        return max(int(d.revealed_at), int(a.filed_at)) + int(self.stall_ttl_s)
 
     def _bump(self, outcome: str) -> None:
         self.outcome_counts[outcome] = u32(
@@ -1461,7 +1620,6 @@ class FairDrop(gl.contract.Contract):
             self._release(ap.filer, bond)
         if outcome == O_HUMAN:
             drop.winners = u32(int(drop.winners) + 1)
-        self.in_flight[str(int(ap.appeal_id))] = u64(0)
         ap.status = S_FINAL
         ap.outcome = outcome
         ap.decided_by = by
@@ -1477,12 +1635,15 @@ class FairDrop(gl.contract.Contract):
                     snapshot_ts: typing.Any, lookback_days: typing.Any,
                     appeal_window_s: typing.Any, reveal_window_s: typing.Any,
                     allocation_wei: typing.Any, bond_wei: typing.Any,
+                    rules_bytes: typing.Any, rules_count: typing.Any,
                     protocol: str = "", protocol_contracts: str = "") -> typing.Any:
         """Open a drop. The GEN sent is the appeal reserve (at least 1 GEN).
 
         Frozen here for ever: the rules commitment, snapshot time, lookback,
         appeal and reveal windows, allocation per wallet, appeal bond, chain and
-        the protocol's contracts. There is no setter for any of them.
+        the protocol's contracts, and the rules document's exact byte size and
+        rule count (so an over-limit rules document is refused HERE, not at a
+        reveal that could never fit). There is no setter for any of them.
 
         `snapshot_ts` MUST be in the future. That single check is what makes
         the commitment provably older than the snapshot."""
@@ -1500,6 +1661,13 @@ class FairDrop(gl.contract.Contract):
             return self._refuse("chain must be one of " + ", ".join(CHAINS))
         if not _is_h256(rules_hash):
             return self._refuse("rules_hash must be a 32-byte sha256 hex digest")
+        nbytes = _as_int(rules_bytes, 0)
+        nrules = _as_int(rules_count, 0)
+        if nbytes < 1 or nbytes > MAX_RULES_BYTES:
+            return self._refuse("rules_bytes must be 1.." + str(MAX_RULES_BYTES)
+                                + ": the reveal must fit in one transaction")
+        if nrules < 1 or nrules > MAX_RULES:
+            return self._refuse("rules_count must be 1.." + str(MAX_RULES))
         snap = _as_int(snapshot_ts, 0)
         if snap <= now:
             return self._refuse("the snapshot must be in the future: the rules "
@@ -1565,6 +1733,8 @@ class FairDrop(gl.contract.Contract):
         d.reserve_wei = u256(value)
         d.held_bonds_wei = u256(0)
         d.rules_hash = _h256(rules_hash)
+        d.rules_bytes = u32(nbytes)
+        d.rules_count = u32(nrules)
         d.flagged_root = ""
         d.flagged_count = u32(0)
         d.flagged_at = u64(0)
@@ -1588,36 +1758,73 @@ class FairDrop(gl.contract.Contract):
                 "committed_before_snapshot_by_s": snap - now}
 
     @gl.public.write
-    def commit_flagged(self, drop_id: typing.Any, flagged_root: str,
-                       flagged_count: typing.Any) -> typing.Any:
-        """Commit the merkle root of the flagged list. Operator only, once,
-        AFTER the snapshot (the list cannot exist before it) and before the
-        appeal window ends."""
+    def publish_flagged(self, drop_id: typing.Any, wallets: str,
+                        done: typing.Any) -> typing.Any:
+        """PUBLISH the flagged list on chain. Operator only, AFTER the snapshot
+        (the list cannot exist before it) and before the appeal window ends.
+
+        Addresses come in chunks of at most MAX_FLAGGED_CHUNK, strictly
+        ascending across all chunks (so the list is canonical and duplicate-
+        free). With `done`, the contract computes the merkle root ITSELF from
+        the published list and appeals open. Anyone can then read the list
+        (`get_flagged`), build a proof, or ask the contract for one
+        (`flagged_proof`) - or file with no proof at all. An operator who never
+        publishes has no flagged list on chain: the drop is VOID and the
+        exclusion was never provable."""
         self._bank()
         now = self._now()
         d = self._drop(drop_id)
         if d is None:
             return self._refuse("no such drop")
         if gl.message.sender_address != d.operator:
-            return self._refuse("only the operator commits the flagged list")
+            return self._refuse("only the operator publishes the flagged list")
         if str(d.flagged_root):
-            return self._refuse("the flagged list is already committed")
+            return self._refuse("the flagged list is already final")
         if now < int(d.snapshot_ts):
             return self._refuse("the flagged list can only exist after the "
                                 "snapshot", {"snapshot_ts": int(d.snapshot_ts)})
         if now >= int(d.appeal_end_ts):
             return self._refuse("the appeal window has ended")
-        if not _is_h256(flagged_root):
-            return self._refuse("flagged_root must be a 32-byte hex digest")
-        n = _as_int(flagged_count, 0)
-        if n < 1 or n > 10 ** 9:
-            return self._refuse("flagged_count must be positive")
-        d.flagged_root = _h256(flagged_root)
-        d.flagged_count = u32(n)
-        d.flagged_at = u64(now)
-        return {"status": "OK", "drop_id": int(d.drop_id),
-                "flagged_root": d.flagged_root, "flagged_count": n,
-                "appeals_open_until": int(d.appeal_end_ts)}
+        key = str(int(d.drop_id))
+        have = self.flagged.get(key)
+        last = str(have[len(have) - 1]) if have is not None and len(have) > 0 else ""
+        buf = []
+        for ch in str(wallets if wallets is not None else ""):
+            buf.append(" " if ch in ",;\n\t" else ch)
+        batch = []
+        for w in "".join(buf).split():
+            if not _is_addr(w):
+                return self._refuse("the flagged list must be 0x addresses")
+            lw = _lower(w)
+            if lw <= last:
+                return self._refuse("the flagged list must be strictly "
+                                    "ascending (lowercase hex) and "
+                                    "duplicate-free", {"after": last})
+            batch.append(lw)
+            last = lw
+        if len(batch) > MAX_FLAGGED_CHUNK:
+            return self._refuse("at most " + str(MAX_FLAGGED_CHUNK)
+                                + " addresses per call")
+        total = (len(have) if have is not None else 0) + len(batch)
+        if total > MAX_FLAGGED:
+            return self._refuse("at most " + str(MAX_FLAGGED) + " flagged wallets")
+        finish = done if isinstance(done, bool) else bool(_as_int(done, 0))
+        if finish and total < 1:
+            return self._refuse("the flagged list is empty")
+        arr = self.flagged.get_or_insert_default(key)
+        for w in batch:
+            arr.append(w)
+        d.flagged_count = u32(total)
+        out = {"status": "OK", "drop_id": int(d.drop_id), "published": total,
+               "final": False}
+        if finish:
+            levels = _merkle_levels([str(x) for x in arr])
+            d.flagged_root = levels[-1][0].hex()
+            d.flagged_at = u64(now)
+            out["final"] = True
+            out["flagged_root"] = d.flagged_root
+            out["appeals_open_until"] = int(d.appeal_end_ts)
+        return out
 
     @gl.public.write
     def reveal_rules(self, drop_id: typing.Any, rules_json: str,
@@ -1659,6 +1866,12 @@ class FairDrop(gl.contract.Contract):
             d.bad_reveals = u32(int(d.bad_reveals) + 1)
             return self._refuse("the committed rules are not a valid rules "
                                 "document: " + err)
+        if len(raw) != int(d.rules_bytes) or len(doc["rules"]) != int(d.rules_count):
+            d.bad_reveals = u32(int(d.bad_reveals) + 1)
+            return self._refuse("the revealed document is not the declared "
+                                "size and rule count",
+                                {"rules_bytes": int(d.rules_bytes),
+                                 "rules_count": int(d.rules_count)})
         d.revealed = True
         d.rules_json = raw
         d.salt = s
@@ -1709,19 +1922,35 @@ class FairDrop(gl.contract.Contract):
                                     {"appeal_id": prev_id})
             refile = True
         if refile:
-            if now >= int(d.reveal_end_ts):
+            # REFILEABLE AFTER THE WINDOW: an INSUFFICIENT or UNRESOLVED
+            # outcome can only arise after the reveal (reads need the rules),
+            # so the refile window runs to the drop's read deadline, and the
+            # refiled appeal gets its own full read window (`_read_until`).
+            ends = int(d.reveal_end_ts) + int(self.contest_window_s)
+            if now >= ends:
                 return self._refuse("the refile window (until the reveal "
-                                    "deadline) has passed")
+                                    "deadline plus one contest window) has "
+                                    "passed", {"refile_until": ends})
         elif now >= int(d.appeal_end_ts):
             return self._refuse("the appeal window has ended")
-        ok, sibs = _parse_proof(proof)
-        if not ok:
-            return self._refuse("the merkle proof is malformed")
-        if not _merkle_ok(str(d.flagged_root), w.as_hex, sibs):
-            return self._refuse("this wallet is not in the flagged list "
-                                "(the merkle proof does not verify)")
-        if int(d.appeals) >= MAX_APPEALS_PER_DROP:
-            return self._refuse("this drop has reached its appeal capacity")
+        if str(proof if proof is not None else "").strip() in ("", "[]"):
+            # No proof: membership is checked against the list published on
+            # chain, so no appellant depends on the operator for a proof.
+            if not self._is_flagged(int(d.drop_id), w.as_hex):
+                return self._refuse("this wallet is not in the published "
+                                    "flagged list")
+        else:
+            ok, sibs = _parse_proof(proof)
+            if not ok:
+                return self._refuse("the merkle proof is malformed")
+            if not _merkle_ok(str(d.flagged_root), w.as_hex, sibs):
+                return self._refuse("this wallet is not in the flagged list "
+                                    "(the merkle proof does not verify)")
+        filed = int(self.wallet_filings.get(key) or 0)
+        if filed >= MAX_APPEALS_PER_WALLET:
+            return self._refuse("this wallet has filed " + str(filed)
+                                + " times on this drop; the limit is "
+                                + str(MAX_APPEALS_PER_WALLET))
         bond = int(d.bond_wei)
         if value < bond:
             return self._refuse("the appeal bond is " + _gen(bond) + " GEN",
@@ -1744,8 +1973,7 @@ class FairDrop(gl.contract.Contract):
         a.decided_by = ""
         a.refile_of = u32(prev_id if refile else 0)
         a.read_attempts = u32(0)
-        a.rounds_opened = u32(0)
-        a.unsettled_rounds = u32(0)
+        a.split_rounds = u32(0)
         a.read_at = u64(0)
         a.last_read_status = ""
         a.snapshot = ""
@@ -1765,6 +1993,7 @@ class FairDrop(gl.contract.Contract):
         self.drop_appeals.get_or_insert_default(str(int(d.drop_id))).append(u32(aid))
         self.by_wallet.get_or_insert_default(w).append(u32(aid))
         self.latest_appeal[key] = u32(aid)
+        self.wallet_filings[key] = u32(filed + 1)
         d.appeals = u32(int(d.appeals) + 1)
         d.open_appeals = u32(int(d.open_appeals) + 1)
         d.held_bonds_wei = u256(int(d.held_bonds_wei) + bond)
@@ -1779,15 +2008,9 @@ class FairDrop(gl.contract.Contract):
     def read_wallet(self, appeal_id: typing.Any) -> typing.Any:
         """Run the blind read. PERMISSIONLESS and ungated on pause. Only after
         the rules are revealed, because every validator must compute the
-        OUTCOME from its own findings and agree on it exactly.
-
-        TICKETS. A round that never settles (UNDETERMINED) commits nothing, so
-        it cannot count itself. The first call therefore only OPENS a ticket
-        (a committed, deterministic write); calls while the ticket is live run
-        the consensus round, and a landed round closes it. A ticket that
-        expires without a landed round counts as one unsettled attempt - here,
-        or through `settle_stalled` - and the third makes the appeal
-        UNRESOLVED."""
+        OUTCOME from its own findings and agree on it exactly. A round that
+        does not settle commits nothing; if validators genuinely split on the
+        outcome, `settle_stalled` records that as a committed split round."""
         self._bank()
         now = self._now()
         a = self._appeal(appeal_id)
@@ -1808,21 +2031,10 @@ class FairDrop(gl.contract.Contract):
                                 "each validator must compute the outcome from "
                                 "its own findings",
                                 {"reveal_opens_at": int(d.appeal_end_ts)})
-        if now >= int(d.reveal_end_ts) + int(self.contest_window_s):
+        if now >= self._read_until(d, a):
             return self._refuse("the read deadline has passed; call "
                                 "finalize_appeal(" + str(int(a.appeal_id)) + ")")
         aid = int(a.appeal_id)
-        opened = int(self.in_flight.get(str(aid)) or 0)
-        if opened > 0 and now - opened >= int(self.stall_ttl_s):
-            return self._expire_round(d, a, now)
-        if opened <= 0:
-            self.in_flight[str(aid)] = u64(now)
-            a.rounds_opened = u32(int(a.rounds_opened) + 1)
-            return {"status": "OK", "appeal_id": aid, "round": "OPENED",
-                    "attempt": int(a.rounds_opened),
-                    "unsettled_rounds": int(a.unsettled_rounds),
-                    "run_until": now + int(self.stall_ttl_s),
-                    "next": "read_wallet(" + str(aid) + ") runs the round"}
 
         rules, err = _parse_rules(str(d.rules_json))
         if rules is None:
@@ -1851,7 +2063,6 @@ class FairDrop(gl.contract.Contract):
             return self._refuse("the validators did not return a usable "
                                 "reading; nothing changed, read again")
 
-        self.in_flight[str(aid)] = u64(0)
         self.total_reads = u256(int(self.total_reads) + 1)
         a.read_attempts = u32(int(a.read_attempts) + 1)
         a.last_read_status = str(out["status"])
@@ -1878,29 +2089,6 @@ class FairDrop(gl.contract.Contract):
                 "findings": a.findings, "agreed_outcome": str(out["outcome"]),
                 "next": "decide(" + str(aid) + ")"}
 
-    def _expire_round(self, d: Drop, a: Appeal, now: int) -> dict:
-        """A read-round ticket outlived its TTL without a landed round: count
-        it. The third makes the appeal UNRESOLVED - bond returned, no payout,
-        refileable until the reveal deadline, and never SYBIL_PATTERN."""
-        aid = int(a.appeal_id)
-        started = int(self.in_flight.get(str(aid)) or 0)
-        self.in_flight[str(aid)] = u64(0)
-        a.unsettled_rounds = u32(int(a.unsettled_rounds) + 1)
-        n = int(a.unsettled_rounds)
-        if n >= MAX_UNSETTLED_ROUNDS:
-            self._finish(d, a, O_UNRESOLVED, BY_UNSETTLED, now)
-            return {"status": "OK", "appeal_id": aid, "round": "EXPIRED",
-                    "stalled_for_s": now - started, "unsettled_rounds": n,
-                    "outcome": O_UNRESOLVED, "final": True,
-                    "note": str(n) + " read rounds never settled; UNRESOLVED "
-                            "returns the bond, pays nothing, condemns nobody, "
-                            "and the wallet may refile until the reveal "
-                            "deadline", "claim_with": "claim_payout()"}
-        return {"status": "OK", "appeal_id": aid, "round": "EXPIRED",
-                "stalled_for_s": now - started, "unsettled_rounds": n,
-                "left": MAX_UNSETTLED_ROUNDS - n,
-                "next": "read_wallet(" + str(aid) + ") opens a new round"}
-
     # --- writes: decision -----------------------------------------------------
 
     @gl.public.write
@@ -1918,8 +2106,6 @@ class FairDrop(gl.contract.Contract):
         st = str(a.status)
         if st not in (S_FILED, S_READ):
             return self._refuse("appeal #" + str(aid) + " is already " + st)
-        if self._flight(aid, now) > 0:
-            return self._refuse("a consensus round on this appeal is in flight")
         if not bool(d.revealed):
             if now < int(d.reveal_end_ts):
                 return self._refuse("the rules are not revealed yet",
@@ -1968,8 +2154,6 @@ class FairDrop(gl.contract.Contract):
             return self._refuse("this appeal has already been contested once")
         if now >= int(a.decided_at) + int(self.contest_window_s):
             return self._refuse("the contest window has closed")
-        if self._flight(aid, now) > 0:
-            return self._refuse("a consensus round on this appeal is in flight")
         loser = d.operator if str(a.outcome) == O_HUMAN else a.filer
         if sender != loser:
             return self._refuse("only the losing side may contest: "
@@ -2083,8 +2267,6 @@ class FairDrop(gl.contract.Contract):
         d = self._drop(int(a.drop_id))
         aid = int(a.appeal_id)
         st = str(a.status)
-        if self._flight(aid, now) > 0:
-            return self._refuse("a consensus round on this appeal is in flight")
         if st == S_PROVISIONAL:
             ends = int(a.decided_at) + int(self.contest_window_s)
             if now < ends:
@@ -2096,7 +2278,7 @@ class FairDrop(gl.contract.Contract):
                     "final": True, "next": "close_drop(" + str(int(d.drop_id))
                     + ") after every appeal is final"}
         if st == S_FILED and bool(d.revealed):
-            ends = int(d.reveal_end_ts) + int(self.contest_window_s)
+            ends = self._read_until(d, a)
             if now < ends:
                 return self._refuse("this appeal can still be read",
                                     {"read_until": ends})
@@ -2189,29 +2371,86 @@ class FairDrop(gl.contract.Contract):
 
     @gl.public.write
     def settle_stalled(self, appeal_id: typing.Any) -> typing.Any:
-        """Close a read-round ticket that outlived its TTL without a landed
-        round, and count it as unsettled (the third makes the appeal
-        UNRESOLVED). PERMISSIONLESS and works while paused. No money moves
-        unless that third count finalizes the appeal, which returns the bond."""
+        """Record that the validators GENUINELY SPLIT on an appeal's outcome.
+        PERMISSIONLESS, works while paused.
+
+        An UNDETERMINED read commits nothing, so a failed read cannot be counted
+        by the read itself. This is a separate consensus round that CAN only
+        settle on a real split: the leader submits its own judged read, and a
+        validator accepts only if the evidence agrees with its own (history hash
+        and features exact, findings within one bucket) AND the rule outcome it
+        computed from its own findings is DIFFERENT from the leader's. On a
+        wallet where the validators agree, no validator accepts, the round does
+        not settle, and nothing is counted - so opening, calling or spamming
+        this cannot push an honest appeal toward UNRESOLVED. Split rounds open
+        only after read_wallet has had `stall_ttl_s` of priority. The third
+        committed split makes the appeal UNRESOLVED: bond returned, no payout,
+        never SYBIL_PATTERN, refileable until the drop's read deadline."""
         self._bank()
         now = self._now()
         a = self._appeal(appeal_id)
         if a is None:
             return self._refuse("no such appeal")
         aid = int(a.appeal_id)
-        started = int(self.in_flight.get(str(aid)) or 0)
-        if started <= 0:
-            return self._refuse("nothing is in flight on appeal #" + str(aid))
-        age = now - started
-        if age < int(self.stall_ttl_s):
-            return self._refuse("in flight for " + str(age) + "s; clearable "
-                                "after " + str(int(self.stall_ttl_s)) + "s")
         if str(a.status) != S_FILED:
-            self.in_flight[str(aid)] = u64(0)
-            return {"status": "OK", "appeal_id": aid, "stalled_for_s": age,
-                    "appeal_status": str(a.status)}
+            return self._refuse("appeal #" + str(aid) + " is " + str(a.status)
+                                + "; only an unread appeal can be stalled")
         d = self._drop(int(a.drop_id))
-        return self._expire_round(d, a, now)
+        if not bool(d.revealed):
+            return self._refuse("the rules are not revealed; nothing can be read")
+        if now >= self._read_until(d, a):
+            return self._refuse("the read deadline has passed; call "
+                                "finalize_appeal(" + str(aid) + ")")
+        opens = self._split_from(d, a)
+        if now < opens:
+            return self._refuse("read_wallet has priority until the split "
+                                "window opens", {"split_from": opens})
+        rules, err = _parse_rules(str(d.rules_json))
+        if rules is None:
+            return self._refuse("stored rules unreadable: " + err)
+        facts = {
+            "chain": str(d.chain), "wallet": a.wallet.as_hex,
+            "lookback_start": self._lookback_start(d),
+            "snapshot_ts": int(d.snapshot_ts), "protocol": str(d.protocol),
+            "contracts": str(d.protocol_contracts),
+        }
+        snap_ts = int(d.snapshot_ts)
+
+        def leader_fn() -> dict:
+            return _judged_read(facts, rules)
+
+        def validator_fn(leader_result: gl.vm.Result) -> bool:
+            if not isinstance(leader_result, gl.vm.Return):
+                return False
+            theirs = leader_result.calldata
+            if not _coherent_judged(theirs, snap_ts, rules) or \
+                    theirs.get("status") != R_READ:
+                return False
+            mine = _judged_read(facts, rules)
+            if mine.get("status") != R_READ or not _agree_read(theirs, mine):
+                return False
+            # accept ONLY a real disagreement on what the rules decide
+            return str(mine.get("outcome")) != str(theirs.get("outcome"))
+
+        out = gl.vm.run_nondet(leader_fn, validator_fn)
+        if not _coherent_judged(out, snap_ts, rules) or out.get("status") != R_READ:
+            return self._refuse("the split round did not produce a coherent "
+                                "reading; nothing changed")
+        a.split_rounds = u32(int(a.split_rounds) + 1)
+        n = int(a.split_rounds)
+        if n >= MAX_SPLIT_ROUNDS:
+            self._finish(d, a, O_UNRESOLVED, BY_SPLIT, now)
+            return {"status": "OK", "appeal_id": aid, "split_rounds": n,
+                    "outcome": O_UNRESOLVED, "final": True,
+                    "refile_until": int(d.reveal_end_ts) + int(self.contest_window_s),
+                    "note": "the validators split on the outcome " + str(n)
+                            + " times; UNRESOLVED returns the bond, pays "
+                            "nothing, condemns nobody, and the wallet may "
+                            "refile", "claim_with": "claim_payout()"}
+        return {"status": "OK", "appeal_id": aid, "split_rounds": n,
+                "left": MAX_SPLIT_ROUNDS - n,
+                "note": "a genuine split was recorded; read_wallet may still "
+                        "settle the appeal"}
 
     @gl.public.write
     def set_paused(self, paused: typing.Any) -> typing.Any:
@@ -2277,6 +2516,8 @@ class FairDrop(gl.contract.Contract):
             "rules_hash": str(d.rules_hash),
             "flagged_root": str(d.flagged_root),
             "flagged_count": int(d.flagged_count),
+            "flagged_final": bool(str(d.flagged_root)),
+            "rules_bytes": int(d.rules_bytes), "rules_count": int(d.rules_count),
             "flagged_at": int(d.flagged_at),
             "revealed": bool(d.revealed),
             "rules_json": str(d.rules_json), "salt": str(d.salt),
@@ -2313,9 +2554,9 @@ class FairDrop(gl.contract.Contract):
             "status": str(a.status), "outcome": str(a.outcome),
             "decided_by": str(a.decided_by), "refile_of": int(a.refile_of),
             "read_attempts": int(a.read_attempts), "read_at": int(a.read_at),
-            "rounds_opened": int(a.rounds_opened),
-            "unsettled_rounds": int(a.unsettled_rounds),
-            "round_open_at": int(self.in_flight.get(str(int(a.appeal_id))) or 0),
+            "split_rounds": int(a.split_rounds),
+            "read_until": self._read_until(d, a) if bool(d.revealed) else 0,
+            "split_from": self._split_from(d, a) if bool(d.revealed) else 0,
             "last_read_status": str(a.last_read_status),
             "snapshot": str(a.snapshot), "snapshot_hash": str(a.snapshot_hash),
             "features": _kv(str(a.features)), "findings": _kv(str(a.findings)),
@@ -2328,7 +2569,6 @@ class FairDrop(gl.contract.Contract):
             "contest_findings": _kv(str(a.contest_findings)),
             "contest_at": int(a.contest_at), "final_at": int(a.final_at),
             "payout_wei": str(int(a.payout_wei)),
-            "in_flight": self._flight(int(a.appeal_id), now) > 0,
             "trace": trace, "contest_trace": contest_trace,
         }
 
@@ -2407,6 +2647,44 @@ class FairDrop(gl.contract.Contract):
                     and str(a.outcome) == O_HUMAN)
 
     @gl.public.view
+    def get_flagged(self, drop_id: typing.Any, offset: typing.Any,
+                    count: typing.Any) -> typing.Any:
+        """The published flagged list, ascending, a page at a time. With the
+        whole list anyone can rebuild the root and every proof."""
+        d = self._drop(drop_id)
+        arr = self.flagged.get(str(_as_int(drop_id, 0)))
+        total = len(arr) if arr is not None else 0
+        start = _clamp(_as_int(offset, 0), 0, total)
+        want = _clamp(_as_int(count, 500), 1, 500)
+        out = []
+        for i in range(start, min(total, start + want)):
+            out.append(str(arr[i]))
+        return json.dumps({"drop_id": _as_int(drop_id, 0), "total": total,
+                           "final": bool(d is not None and str(d.flagged_root)),
+                           "flagged_root": str(d.flagged_root) if d is not None else "",
+                           "offset": start, "wallets": out,
+                           "leaf": "sha256(0x00 || address)",
+                           "node": "sha256(0x01 || min || max)",
+                           "order": "ascending lowercase hex; odd node carried up"})
+
+    @gl.public.view
+    def flagged_proof(self, drop_id: typing.Any, wallet: str) -> typing.Any:
+        """A merkle proof for `wallet`, computed from the published list."""
+        d = self._drop(drop_id)
+        arr = self.flagged.get(str(_as_int(drop_id, 0)))
+        if d is None or arr is None or not str(d.flagged_root) or not _is_addr(wallet):
+            return json.dumps({"found": False})
+        wallets = [str(x) for x in arr]
+        target = _lower(wallet)
+        if target not in wallets:
+            return json.dumps({"found": False, "reason": "not in the flagged list"})
+        proof = _merkle_proof(wallets, wallets.index(target))
+        return json.dumps({"found": True, "wallet": target, "proof": ",".join(proof),
+                           "flagged_root": str(d.flagged_root),
+                           "verifies": _merkle_ok(str(d.flagged_root), target,
+                                                  [bytes.fromhex(x) for x in proof])})
+
+    @gl.public.view
     def check_proof(self, drop_id: typing.Any, wallet: str,
                     proof: typing.Any) -> typing.Any:
         d = self._drop(drop_id)
@@ -2470,9 +2748,9 @@ class FairDrop(gl.contract.Contract):
                                     "history", "ok": bool(str(a.snapshot))})
         if str(a.outcome) == O_UNRESOLVED:
             checks.append({"check": "UNRESOLVED only after "
-                                    + str(MAX_UNSETTLED_ROUNDS) + " unsettled "
-                                    "rounds, paying nothing",
-                           "ok": int(a.unsettled_rounds) >= MAX_UNSETTLED_ROUNDS
+                                    + str(MAX_SPLIT_ROUNDS) + " committed "
+                                    "split rounds, paying nothing",
+                           "ok": int(a.split_rounds) >= MAX_SPLIT_ROUNDS
                            and int(a.payout_wei) == 0})
         checks.append({"check": "the drop committed its rules before the "
                                 "snapshot",
@@ -2549,15 +2827,16 @@ class FairDrop(gl.contract.Contract):
             "min_phase_s": int(self.min_phase_s),
             "contest_bond_bps": CONTEST_BOND_BPS,
             "min_reserve_wei": str(MIN_RESERVE_WEI),
-            "max_appeals_per_drop": MAX_APPEALS_PER_DROP,
+            "max_appeals_per_wallet": MAX_APPEALS_PER_WALLET,
+            "max_flagged": MAX_FLAGGED,
             "chains": list(CHAINS), "explorer_hosts": dict(CHAIN_HOSTS),
             "vocabulary": vocab, "conditions": list(CONDITIONS),
             "unclear": UNCLEAR, "unclear_note": "a rule on an UNCLEAR model "
             "finding never fires",
             "max_rules": MAX_RULES,
             "commitment": "sha256(canonical_rules_json + salt), salt >= 32 hex",
-            "merkle": "leaf = sha256(20 address bytes); node = "
-                      "sha256(min(a,b) || max(a,b))",
+            "merkle": "leaf = sha256(0x00 || 20 address bytes); node = "
+                      "sha256(0x01 || min(a,b) || max(a,b))",
             "coverage": ("outbound page complete (fewer than 50 items, no next "
                          "page) or reaching back to the lookback start; "
                          "earliest-activity page complete or verifiably "
@@ -2569,8 +2848,13 @@ class FairDrop(gl.contract.Contract):
                                    "its own findings must be identical, or the "
                                    "round does not settle"),
             "outcome_compared": "exact",
-            "max_unsettled_rounds": MAX_UNSETTLED_ROUNDS,
-            "round_ttl_s": int(self.stall_ttl_s),
+            "max_split_rounds": MAX_SPLIT_ROUNDS,
+            "read_priority_s": int(self.stall_ttl_s),
+            "unresolved_rule": ("UNRESOLVED only after " + str(MAX_SPLIT_ROUNDS)
+                                + " committed split rounds, each settled only "
+                                "if validators read the wallet, agreed on the "
+                                "evidence and computed a different outcome "
+                                "from the leader's"),
             "model_sees": "the stored history snapshot only (plus contest "
                           "context on a contest); never the rules, flag or "
                           "thresholds",

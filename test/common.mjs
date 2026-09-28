@@ -72,28 +72,17 @@ export async function waitUntil(ts, label = "", check = null) {
 }
 
 /**
- * One read ATTEMPT, as the v4 contract defines it: make sure a live round
- * ticket exists (the first call only opens one - a committed write that an
- * UNDETERMINED round cannot erase), then run the round. Success is judged
- * from STATE, never from the leader's return value.
- * Returns { appeal, round } where round is the run's tx status.
+ * One read attempt: a single read_wallet round. Success is judged from STATE,
+ * never from the leader's return value (an UNDETERMINED round can still carry
+ * a leader payload in its receipt).
  */
-const CFG = {};
 export async function readAttempt(role, FD, aid, label) {
   let a = (await view(FD, "get_appeal", [aid])).appeal;
   if (a.status !== "FILED") return { appeal: a, round: "ALREADY" };
-  const cfg = CFG[FD] ??= await view(FD, "get_config");
-  const live = a.round_open_at > 0 && nowS() - a.round_open_at < cfg.round_ttl_s - 60;
-  if (!live) {
-    const o = await tx(role, FD, "read_wallet", [aid], 0n, `${label}: open a round ticket`);
-    a = (await view(FD, "get_appeal", [aid])).appeal;
-    if (a.status !== "FILED") return { appeal: a, round: "EXPIRED_FINAL" };
-    if (o.json?.round === "EXPIRED") await tx(role, FD, "read_wallet", [aid], 0n, `${label}: open a round ticket`);
-  }
-  const r = await tx(role, FD, "read_wallet", [aid], 0n, `${label}: run the round`);
+  const r = await tx(role, FD, "read_wallet", [aid], 0n, `${label}: read round`);
   a = (await view(FD, "get_appeal", [aid])).appeal;
   const agreed = r.json?.agreed_outcome ? ` agreed_outcome=${r.json.agreed_outcome}` : "";
-  log(`    ${label}: round ${r.out?.status} → ${a.status}${a.outcome ? " " + a.outcome : ""} ${JSON.stringify(a.features)} ${JSON.stringify(a.findings)}${agreed} (tickets ${a.rounds_opened}, unsettled ${a.unsettled_rounds}, landed ${a.read_attempts}${a.last_read_status ? ", last " + a.last_read_status : ""})`);
+  log(`    ${label}: round ${r.out?.status} → ${a.status}${a.outcome ? " " + a.outcome : ""} ${JSON.stringify(a.features)} ${JSON.stringify(a.findings)}${agreed} (landed ${a.read_attempts}, splits ${a.split_rounds}${a.last_read_status ? ", last " + a.last_read_status : ""})`);
   return { appeal: a, round: r.out?.status, hash: r.hash };
 }
 

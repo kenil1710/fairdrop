@@ -51,3 +51,36 @@ Status: `[ ]` open · `[~]` in progress · `[x]` done and verified (evidence not
 - [x] 5 PASS — books drain to 0 (canonical excluded: window open)
 - [x] 6 PASS — source byte-identical; README == deployments.json
 - [x] 7 PASS — no assistant name or co-author trailer in history, blobs, messages (tools/final_check.py)
+
+---
+
+# Binding audit (v5)
+
+| # | item | initial | action |
+|---|---|---|---|
+| 1 | snapshot binding | FAIL (funder/first_seen could be post-snapshot) | [x] fixed: first_seen/funding ≤ snapshot; TestBinding.test_01_* |
+| 2 | age at snapshot | PASS | [x] TestBinding.test_02_* |
+| 3 | coverage vs post-snapshot activity | PASS | [x] TestBinding.test_03_* (60 post-snapshot tx → INSUFFICIENT, model never asked) |
+| 4 | ticket griefing | FAIL (anyone opens; unrun ticket counts) | [x] tickets removed; settle_stalled = split round that only settles on a real outcome split; TestUnresolved griefing tests; on-chain griefing attempt in seed D |
+| 5 | refile after UNRESOLVED | FAIL (refile window can close first) | [x] refile until reveal_end + contest window; per-appeal read deadline; test_refile_after_unresolved_after_the_reveal_deadline |
+| 6 | first funder | FAIL (unproven funder guessed) | [x] funder_proven; UNCLEAR by code; INSUFFICIENT when rules use it; TestBinding.test_06_* |
+| 7 | merkle | FAIL (no domain prefixes) | [x] 0x00 leaf / 0x01 node in contract, lib.mjs, frontend, fixtures (roots cross-checked); TestBinding.test_07_* |
+| 8 | rules JSON | PASS | [x] 23 malformed documents refused at reveal (TestBinding.test_08_*) |
+| 9 | commit before snapshot | PASS | [x] TestBinding.test_09_late_commit_is_refused |
+| 10 | chain binding | PASS | [x] TestBinding.test_10_* (only the drop's host; no chain argument anywhere) |
+| 11 | other bindings | FAIL (unreadable outbound timestamps dropped) | [x] mined+unreadable → INSUFFICIENT, pending skipped; live labels documented; TestBinding.test_11_* |
+- [x] redeploy v5 (verified byte-identical), Vercel env → v5
+- [x] superseded by the v6 line below
+
+| # | item | initial | action |
+|---|---|---|---|
+| 12 | frontend lifecycle | FAIL (no claim_payout UI; homepage "example" seal was hardcoded) | [x] ClaimBar added; homepage shows newest revealed drop from chain · [x] headless walk of the live app (tools/ui_walk.mjs, docs/ui-walk/): every step pending→ok/refused; found + fixed a wait bug (exact-ACCEPTED match missed FINALIZED) |
+| 13 | docs match code | FAIL (old tolerance/tickets/root wording) | [x] README, ARTICLE, X_POST, docs page aligned to v6, seed section from chain evidence |
+| 14 | demo isolation | PASS | [x] TestEdges.test_14_* ; UI banner driven by live get_config |
+| 15 | proof availability | FAIL (root only) | [x] publish_flagged: list on chain, root computed by contract; get_flagged / flagged_proof; file with no proof; app builds proof from list; TestFlagged |
+| 16 | reserve lock | PASS | [x] TestEdges.test_16_* (no cancel/withdraw method; close refused until every window closes) |
+| 17 | limits and edges | FAIL (rules size not declared up front) | [x] rules_bytes/rules_count at create; boundary tests appeal/reveal/contest/read ±1 s |
+| 18 | bond economics | FAIL (per-drop appeal cap could be filled) | [x] per-wallet cap (3); README "Bond economics" |
+- [x] v6 deployed + verified (0xecEe…1A58 / 0x4F34…c6dD / 0xA700…FBB4); Vercel env + prod on v6
+- [x] v6 reseed (A–D + E, F), drain (demo 0/0/0; canonical payable claimed, 1.05 GEN locked under its open 48 h window), registry demo, UI walk, audit 51/51, README fill
+- [ ] 7-point check, push

@@ -14,7 +14,7 @@ import {
   commitment, gen, isModelFinding, merkle, newSalt, toWei, type Rule, type WriteResult,
 } from "@/lib/fairdrop";
 
-const STEPS = ["Rules", "Seal", "Drop", "Flagged list", "Reveal"];
+const STEPS = ["Rules", "Seal", "Drop", "Publish flagged list", "Reveal"];
 
 export default function OperatorPage() {
   const { account } = useWallet();
@@ -29,7 +29,7 @@ export default function OperatorPage() {
   const [hash, setHash] = useState("");
   const [form, setForm] = useState({ name: "", chain: "base", protocol: "", contracts: "", snapIn: 60, lookback: 365, appealH: 24, revealH: 24, alloc: "0.5", bond: "0.05", reserve: "1" });
   const [flaggedText, setFlaggedText] = useState("");
-  const [tree, setTree] = useState<{ root: string; proofs: Record<string, string> } | null>(null);
+  const [tree, setTree] = useState<{ root: string; wallets: string[]; proofs: Record<string, string> } | null>(null);
   const [created, setCreated] = useState<number | null>(null);
   const [revealDrop, setRevealDrop] = useState(0);
   const [revealJson, setRevealJson] = useState("");
@@ -152,7 +152,7 @@ export default function OperatorPage() {
             <TxButton
               label={`Create drop and escrow ${form.reserve} GEN`}
               disabled={!hash}
-              send={(acct) => write(acct, "create_drop", [form.name, form.chain, hash, Math.floor(Date.now() / 1000) + form.snapIn * 60, form.lookback, form.appealH * 3600, form.revealH * 3600, toWei(form.alloc), toWei(form.bond), form.protocol, form.contracts], toWei(form.reserve))}
+              send={(acct) => write(acct, "create_drop", [form.name, form.chain, hash, Math.floor(Date.now() / 1000) + form.snapIn * 60, form.lookback, form.appealH * 3600, form.revealH * 3600, toWei(form.alloc), toWei(form.bond), canon.length, doc.rules.length, form.protocol, form.contracts], toWei(form.reserve))}
               onDone={(r: WriteResult) => { if (r.status === "OK" && typeof r.drop_id === "number") { setCreated(r.drop_id); setStep(3); } }}
             />
           </div>
@@ -160,7 +160,8 @@ export default function OperatorPage() {
       )}
 
       {step === 3 && (
-        <Section title="Commit the flagged list (after the snapshot)" icon={<Users size={18} className="text-sand" />}>
+        <Section title="Publish the flagged list (after the snapshot)" icon={<Users size={18} className="text-sand" />}>
+          <p className="mb-3 text-sm text-muted">The whole list goes on chain, ascending, in chunks of up to 400. The contract computes the merkle root itself when the last chunk arrives, and every flagged wallet can then build its own proof. Nobody has to wait for you to hand one out.</p>
           <label className="label" htmlFor="dropSel">Drop</label>
           <select id="dropSel" className="input mt-1" value={created ?? 0} onChange={(e) => setCreated(Number(e.target.value))}>
             <option value={0}>Choose…</option>
@@ -168,13 +169,18 @@ export default function OperatorPage() {
           </select>
           <textarea className="input mono mt-3 min-h-32 text-xs" value={flaggedText} onChange={(e) => { setFlaggedText(e.target.value); setTree(null); }} placeholder="Flagged wallets, one per line" />
           <div className="mt-3 flex flex-wrap gap-3">
-            <button type="button" className="btn btn-ghost" disabled={!wallets.length} onClick={async () => setTree(await merkle(wallets))}>Build merkle tree ({wallets.length})</button>
-            {tree && <TxButton label="Commit root" send={(acct) => write(acct, "commit_flagged", [created, tree.root, wallets.length])} />}
+            <button type="button" className="btn btn-ghost" disabled={!wallets.length} onClick={async () => setTree(await merkle(wallets))}>Sort and preview the root ({wallets.length})</button>
           </div>
           {tree && (
             <div className="mt-4 space-y-2">
-              <div className="text-xs text-muted">root <Hash value={tree.root} /> — publish every wallet&apos;s proof:</div>
-              <pre className="snapshot mono max-h-64 overflow-auto rounded-lg bg-[var(--bg-2)] p-3 text-[0.65rem] text-sand/80">{JSON.stringify(tree.proofs, null, 1)}</pre>
+              <div className="text-xs text-muted">expected root <Hash value={tree.root} /> — the contract must compute the same one.</div>
+              <div className="flex flex-wrap gap-2">
+                {Array.from({ length: Math.ceil(tree.wallets.length / 400) }, (_, i) => {
+                  const chunk = tree.wallets.slice(i * 400, i * 400 + 400);
+                  const last = (i + 1) * 400 >= tree.wallets.length;
+                  return <TxButton key={i} label={`Publish chunk ${i + 1}${last ? " (final)" : ""}`} send={(acct) => write(acct, "publish_flagged", [created, chunk.join(","), last])} />;
+                })}
+              </div>
             </div>
           )}
         </Section>

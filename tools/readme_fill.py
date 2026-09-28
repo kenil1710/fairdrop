@@ -49,16 +49,18 @@ def render_outcomes() -> str:
     rows = ["| drop | appeal | wallet | outcome | decided by | payout (GEN) | note |", "|---|---|---|---|---|---|---|"]
     for key in sorted(ev["drops"]):
         drop = ev["drops"][key]["drop"]
+        if not ev["drops"][key]["appeals"]:
+            rows.append(f"| {key if key.isalpha() else 'UI walk'} #{drop['drop_id']} | — | — | {drop['phase']} (no appeals; reserve returned) | — | 0 | an abandoned walk attempt |")
         for a in ev["drops"][key]["appeals"]:
             notes = []
             if a.get("refile_of"):
                 notes.append(f"refile of #{a['refile_of']}")
             if a.get("contested"):
                 notes.append(f"contested: {a['provisional_outcome']} → {a['outcome']}")
-            if a.get("unsettled_rounds"):
-                notes.append(f"{a['unsettled_rounds']} unsettled round(s)")
+            if a.get("split_rounds"):
+                notes.append(f"{a['split_rounds']} recorded validator split(s)")
             payout = int(a.get("payout_wei") or 0) / 1e18
-            rows.append(f"| {key} #{drop['drop_id']} | #{a['appeal_id']} | `{a['wallet'][:10]}…` | {a['outcome'] or a['status']} "
+            rows.append(f"| {key if key.isalpha() else 'UI walk'} #{drop['drop_id']} | #{a['appeal_id']} | `{a['wallet'][:10]}…` | {a['outcome'] or a['status']} "
                         f"| {a['decided_by'] or '—'} | {payout:g} | {'; '.join(notes)} |")
     ledger = ev["stats"]["ledger"]
     rows += ["", f"Contract `{ev['contract']}` after every drop closed and every account claimed: "

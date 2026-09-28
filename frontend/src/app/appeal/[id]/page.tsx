@@ -91,7 +91,7 @@ export default function AppealDetail() {
               ) : a.outcome === "INSUFFICIENT_HISTORY" ? (
                 <p className="text-sm text-muted">The history could not be proven complete back to the lookback start, so nothing was read and nothing was decided against this wallet. The bond was returned; the wallet may refile until the reveal deadline.</p>
               ) : a.outcome === "UNRESOLVED" ? (
-                <p className="text-sm text-muted">{a.unsettled_rounds} read rounds never settled: the validators could not agree on the outcome. UNRESOLVED never pays and never condemns. The bond was returned; the wallet may refile until the reveal deadline.</p>
+                <p className="text-sm text-muted">The validators genuinely split on the outcome {a.split_rounds} times. UNRESOLVED never pays and never condemns. The bond was returned; the wallet may refile until the reveal deadline.</p>
               ) : a.status !== "FILED" ? (
                 <p className="text-sm text-muted">Never read. {a.decided_by === "NO_REVEAL" ? "The operator never revealed, so no read was needed." : ""}</p>
               ) : d && !d.revealed ? (
@@ -99,8 +99,8 @@ export default function AppealDetail() {
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm text-muted">Not read yet{a.last_read_status ? ` (last landed round: ${a.last_read_status})` : ""}. Anyone may trigger the read: every validator fetches the wallet&apos;s outbound history itself and they must agree on all of it, and on the outcome.</p>
-                  <p className="text-xs text-muted">A read attempt is two transactions. The first opens a round ticket, which commits even if the round later fails to settle; the second runs the round. Tickets {a.rounds_opened} · unsettled {a.unsettled_rounds} of 3.</p>
-                  <TxButton label={a.in_flight ? "Run the blind read" : "Open a read round"} icon={<FileSearch size={16} />} send={(acct) => write(acct, "read_wallet", [a.appeal_id])} onDone={reload} />
+                  <p className="text-xs text-muted">Readable until {when(a.read_until)}. Recorded validator splits: {a.split_rounds} of 3.</p>
+                  <TxButton label="Run the blind read" icon={<FileSearch size={16} />} send={(acct) => write(acct, "read_wallet", [a.appeal_id])} onDone={reload} />
                 </div>
               )}
               {a.snapshot_hash && (
@@ -169,8 +169,11 @@ export default function AppealDetail() {
             {a.status === "FINAL" && a.outcome === "HUMAN_PATTERN" && (
               <p className="mt-3 text-sm text-human">Cleared. {a.payout_wei !== "0" ? `Paid ${gen(a.payout_wei, 4)} GEN at close.` : "The allocation is paid when the drop closes."} Distributors can check <span className="mono">is_cleared(wallet, {a.drop_id})</span>.</p>
             )}
-            {a.status === "FILED" && a.round_open_at > 0 && !a.in_flight && (
-              <div className="mt-3"><TxButton label="Count the expired round (settle_stalled)" className="btn btn-ghost" send={(acct) => write(acct, "settle_stalled", [a.appeal_id])} onDone={reload} /></div>
+            {a.status === "FILED" && a.split_from > 0 && now >= a.split_from && now < a.read_until && (
+              <div className="mt-3">
+                <TxButton label="Record a validator split (settle_stalled)" className="btn btn-ghost" send={(acct) => write(acct, "settle_stalled", [a.appeal_id])} onDone={reload} />
+                <p className="mt-1 text-xs text-muted">Settles only if the validators genuinely disagree on the outcome; on an agreeing wallet it records nothing.</p>
+              </div>
             )}
           </Section>
           {a.statement && <p className="text-xs text-muted">Appellant&apos;s statement (the model never reads it): “{a.statement}”</p>}

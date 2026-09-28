@@ -1,13 +1,15 @@
-[2026-09-28T16:59:28.294Z]   is_cleared(A/human (won)) = true
-[2026-09-28T16:59:41.852Z]   outsider attest(0x0f2589542b6d5a50, 1) → ACCEPTED OK [13s] attest A/human (won) tx=0x4604b35d96ab3737839d8cbaaa146b432025d0fa7f2fdaf41a2e20d22cc86390
-[2026-09-28T16:59:42.929Z]   is_cleared(A/farm (lost)) = false
-[2026-09-28T16:59:55.884Z]   outsider attest(0x8410115b7ee1b359, 1) → ACCEPTED OK [13s] attest A/farm (lost) tx=0xfad57ab427f592a04475f01d1a9c4d2bce655afce99321ff2aed55bf76a2b176
-[2026-09-28T16:59:57.061Z]   is_cleared(A/too_active (insufficient)) = false
-[2026-09-28T17:00:10.628Z]   outsider attest(0xd5512d138ea203c5, 1) → ACCEPTED OK [14s] attest A/too_active (insufficient) tx=0x6fb7414b0c4aabf2a24d20a565c3ce55e4ca8e780a9b8d5ca5d1b8c705ad772c
-[2026-09-28T17:00:11.830Z]   is_cleared(B/minter (default win)) = true
-[2026-09-28T17:00:30.517Z]   outsider attest(0x8cd35fc08b003fcd, 2) → ACCEPTED OK [19s] attest B/minter (default win) tx=0xd97e58f14b71ff7308f8c1aac405de2c1c62c6c137b9e0796f6864d221b9c709
-[2026-09-28T17:00:31.771Z]   is_cleared(C/swapper (won, pro-rata)) = true
-[2026-09-28T17:00:51.620Z]   outsider attest(0x35b4a50f63f4beee, 3) → ACCEPTED OK [20s] attest C/swapper (won, pro-rata) tx=0x0100cd950e040ef3be61ca5ef6992252631cb87d313af851bed6c5ed7f515811
-[2026-09-28T17:00:52.886Z]   is_cleared(D/farm_quester (UNRESOLVED, refiled, lost)) = false
-[2026-09-28T17:01:05.866Z]   outsider attest(0xe288ddad7a2fdd7c, 4) → ACCEPTED OK [13s] attest D/farm_quester (UNRESOLVED, refiled, lost) tx=0xcbc50c020092349c7c50e3a965efd2e2e0c7de59be7ac7a3bd3b034f6932f273
-[2026-09-28T17:01:06.796Z] wrote docs/registry-evidence.json
+[2026-09-28T22:42:56.468Z]   is_cleared(A/human (won by the rules)) = true
+[2026-09-28T22:43:17.654Z]   outsider attest(0x0f2589542b6d5a50, 1) → ACCEPTED OK [21s] attest A/human (won by the rules) tx=0xff6af99995526434fc9eb6c8897e11b6ad24fb234578c8440df7a130d7264788
+[2026-09-28T22:43:18.947Z]   is_cleared(A/farm (lost)) = false
+[2026-09-28T22:43:30.635Z]   outsider attest(0x8410115b7ee1b359, 1) → ACCEPTED OK [12s] attest A/farm (lost) tx=0x1b4f26a2baf7b6f303be956b7586516f58b57b4cd9b75431936332f32aa47b52
+[2026-09-28T22:43:31.726Z]   is_cleared(A/too_active (insufficient)) = false
+[2026-09-28T22:43:44.406Z]   outsider attest(0xd5512d138ea203c5, 1) → ACCEPTED OK [13s] attest A/too_active (insufficient) tx=0x8d723ec9d2489454c9db76dc871055cb0647b13c0910a7474b37cb07a405fb4e
+[2026-09-28T22:43:45.688Z]   is_cleared(B/minter (default win)) = true
+[2026-09-28T22:43:57.500Z]   outsider attest(0x8cd35fc08b003fcd, 2) → ACCEPTED OK [12s] attest B/minter (default win) tx=0x189e72ae4847554009f44568e121da1bbc74be9130cab34287d388fa8c141fbb
+[2026-09-28T22:43:58.620Z]   is_cleared(E/diverse (won, contest held)) = true
+[2026-09-28T22:44:11.719Z]   outsider attest(0x1c1ff5a779249371, 5) → ACCEPTED OK [13s] attest E/diverse (won, contest held) tx=0x1db2f87fe248cb35cb9049ec0e3ae9a5d55c2d747ebb8330cfd89126449fa784
+[2026-09-28T22:44:12.955Z]   is_cleared(F/long (default win, pro-rata)) = true
+[2026-09-28T22:44:26.310Z]   outsider attest(0x0f2589542b6d5a50, 11) → ACCEPTED OK [13s] attest F/long (default win, pro-rata) tx=0x6907b66635ac88edec1e0fb85466a425b32be9431a92fc96c1d089f9d8715f35
+[2026-09-28T22:44:27.425Z]   is_cleared(D/swapper (griefed, then unread)) = false
+[2026-09-28T22:44:40.267Z]   outsider attest(0x35b4a50f63f4beee, 4) → ACCEPTED OK [13s] attest D/swapper (griefed, then unread) tx=0x1c14778921b691b693e4876c0a1aee312c3962bb651d052ad25dc787da5f0151
+[2026-09-28T22:44:41.018Z] wrote docs/registry-evidence.json

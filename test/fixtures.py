@@ -62,12 +62,14 @@ def h(b: bytes) -> bytes:
 
 
 def leaf(a) -> bytes:
-    return h(bytes.fromhex(str(a).lower()[2:]))
+    return h(b"\x00" + bytes.fromhex(str(a).lower()[2:]))
 
 
 def build_tree(wallets):
-    """(root_hex, {wallet_lower: [sibling_hex...]}) with sorted-pair nodes and
-    an odd node carried up unchanged."""
+    """(root_hex, {wallet_lower: [sibling_hex...]}) over the wallets in
+    ASCENDING lowercase order (the order the contract publishes them in), with
+    sorted-pair nodes and an odd node carried up unchanged."""
+    wallets = sorted({str(w).lower() for w in wallets})
     level = [leaf(w) for w in wallets]
     paths = {str(w).lower(): [] for w in wallets}
     index = {str(w).lower(): i for i, w in enumerate(wallets)}
@@ -78,7 +80,7 @@ def build_tree(wallets):
         for i in range(0, len(level), 2):
             if i + 1 < len(level):
                 a, b = level[i], level[i + 1]
-                nxt.append(h(a + b) if a <= b else h(b + a))
+                nxt.append(h(b"\x01" + (a + b if a <= b else b + a)))
             else:
                 nxt.append(level[i])
         for w, pos in list(index.items()):
@@ -133,6 +135,7 @@ def v2_item(wallet, ts, to=None, is_contract=True, name=None, method="swap",
         "to": None if to == "create" else {
             "hash": str(to or ("0x" + format(ts % (16 ** 40), "040x"))),
             "is_contract": is_contract, "name": name},
+        "block_number": int(ts) // 2,
         "method": method, "value": str(value), "status": status,
         "result": "success" if status == "ok" else "error",
     }
@@ -302,7 +305,8 @@ class World:
         snap = self.now + lead
         out = self.call(operator, "create_drop", "Test drop", chain,
                         commit(rules, salt), snap, lookback_days, appeal,
-                        reveal, alloc, bond, protocol, contracts, value=reserve)
+                        reveal, alloc, bond, len(canon(rules)), len(rules["rules"]),
+                        protocol, contracts, value=reserve)
         assert out["status"] == "OK", out
         info = {"id": out["drop_id"], "snap": snap, "appeal_end": snap + appeal,
                 "reveal_end": snap + appeal + reveal, "rules": rules,
@@ -312,12 +316,14 @@ class World:
         root, paths = build_tree(list(flagged))
         info["root"] = root
         info["proofs"] = paths
+        info["flagged"] = sorted({str(w).lower() for w in flagged})
         self.infos[info["id"]] = info
         if commit_now:
             self.at(snap + 1)
-            r = self.call(operator, "commit_flagged", info["id"], root,
-                          len(flagged))
+            r = self.call(operator, "publish_flagged", info["id"],
+                          ",".join(info["flagged"]), True)
             assert r["status"] == "OK", r
+            assert r["flagged_root"] == root, (r, root)
         return info
 
     def proof(self, info, wallet):
@@ -343,21 +349,22 @@ class World:
         return info
 
     def read(self, aid, who=None, reveal=True):
-        """One read ATTEMPT as a client makes it: open a round ticket if none
-        is live, then run the round. Returns the round's result."""
+        """One read_wallet call, after revealing the drop's rules if needed
+        (reads need the rules)."""
         who = who or STRANGER
         a = self.view("get_appeal", aid)
         if a.get("found") and reveal:
             self.ensure_revealed(a["appeal"]["drop_id"])
-        out = self.call(who, "read_wallet", aid)
-        if isinstance(out, dict) and out.get("round") in ("OPENED", "EXPIRED"):
-            if out.get("final"):
-                return out
-            if out.get("round") == "EXPIRED":
-                out = self.call(who, "read_wallet", aid)
-                if out.get("round") != "OPENED":
-                    return out
-            out = self.call(who, "read_wallet", aid)
+        return self.call(who, "read_wallet", aid)
+
+    def split(self, aid, leader, validator, who=None):
+        """One settle_stalled round in which the leader's model reads
+        `leader` and the validator's reads `validator` (dicts of findings)."""
+        MODEL.reset()
+        base = dict(MODEL.answer)
+        MODEL.queue = [dict(base, **leader), dict(base, **validator)]
+        out = self.call(who or STRANGER, "settle_stalled", aid)
+        MODEL.reset()
         return out
 
     def appeal(self, aid):

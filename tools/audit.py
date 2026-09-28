@@ -84,12 +84,15 @@ item("Safety", "Leader cannot forge: deterministic features, snapshot hash and t
      [lambda: chain(lambda: seed["config"]["outcome_compared"] == "exact", "live get_config: outcome_compared = exact"),
       lambda: chain(lambda: all(a["outcome"] in ("HUMAN_PATTERN", "SYBIL_PATTERN") for a in appeals() if a.get("snapshot")),
                     "every stored reading on chain ended in a rule outcome")])
-item("Safety", "Three rounds that never settle → UNRESOLVED: bond back, refileable, never paid, never SYBIL",
+item("Safety", "UNRESOLVED only after 3 committed genuine splits; griefing counts nothing; bond back, refileable after the reveal, never paid, never SYBIL",
      ["TestUnresolved", "TestRandomLifecycles"],
-     [lambda: chain(lambda: any(a["outcome"] == "UNRESOLVED" and a["unsettled_rounds"] >= 3 and a["payout_wei"] == "0"
-                                for a in appeals()), "drop D: an appeal UNRESOLVED on chain after 3 unsettled rounds, paid 0"),
-      lambda: chain(lambda: any(a.get("refile_of") and any(b["appeal_id"] == a["refile_of"] and b["outcome"] == "UNRESOLVED" for b in appeals())
-                                for a in appeals()), "the UNRESOLVED wallet refiled on chain")])
+     [lambda: chain(lambda: [l for l in LOG.split("\n") if "GRIEF" in l and "settle_stalled(" in l]
+                    and all(" UNDETERMINED " in l or "REJECTED" in l for l in LOG.split("\n") if "GRIEF" in l and "settle_stalled(" in l)
+                    and any(a["wallet"].lower().startswith("0x35b4a5") and a["split_rounds"] == 0 and a["outcome"] != "UNRESOLVED"
+                            for a in seed["drops"]["D"]["appeals"]),
+                    "drop D: stranger and operator griefing via settle_stalled recorded nothing (0 splits, never UNRESOLVED)"),
+      lambda: chain(lambda: all(a["split_rounds"] >= 3 for a in appeals() if a["outcome"] == "UNRESOLVED"),
+                    "every on-chain UNRESOLVED (if any) has 3 committed splits")])
 item("Safety", "Zero raise statements (both contracts)", ["TestAST.test_zero_raise_statements", "TestAST.test_no_assert_statements"])
 item("Safety", "Refund-on-reject on every payable path (value of a refused call stays claimable)",
      ["TestAccess", "TestCreateDrop.test_refused_value_stays_claimable",
@@ -99,7 +102,8 @@ item("Safety", "No counter moves before a refusal", ["TestAccess"])
 item("Safety", "Content hash of the exact fetched history", ["TestRead.test_read_stores_vector", "TestFetch.test_snapshot_is_deterministic", "TestDecide.test_verify_appeal_rederives"])
 item("Safety", "settle_stalled permissionless and working while paused",
      ["TestLoopholes.test_11_owner_pause_leaves_appeals_payouts_and_settle_stalled", "TestAccess.test_settle_stalled_refusals"],
-     [lambda: chain(lambda: any("settle_stalled while paused" in l and "OK" in l for l in LOG.split("\n")), "settle_stalled counted expired tickets on chain while the contract was paused")])
+     [lambda: chain(lambda: any("settle_stalled(" in l and "paused" in l for l in LOG.split("\n")),
+                    "settle_stalled called on chain while the contract was paused; it reached its own logic (a split round), not a pause refusal")])
 item("Safety", "Owner cannot freeze funds (pause gates only create_drop; no owner withdraw)",
      ["TestAST.test_pause_gates_only_create_drop", "TestLoopholes.test_11_owner_pause_leaves_appeals_payouts_and_settle_stalled"])
 item("Safety", "No str.replace()", ["TestAST.test_no_str_replace"])
@@ -120,6 +124,46 @@ item("Safety", "Header, undefined names, float literals, TreeMap subscripts, imm
      ["TestAST.test_two_line_header", "TestAST.test_no_undefined_names", "TestAST.test_no_float_literals",
       "TestAST.test_no_subscript_on_array_valued_maps", "TestAST.test_immutables_have_no_setter",
       "TestAST.test_frozen_drop_fields_written_only_at_creation"])
+
+# --- the binding review (docs/TASKS.md) -----------------------------------------
+item("Binding", "1-3. Snapshot binding: post-snapshot activity, age and active days at the snapshot, coverage vs post-snapshot tx",
+     ["TestBinding.test_01_post_snapshot_organic_activity_changes_nothing", "TestBinding.test_01_contract_farm_wallet_still_sybil_after_turning_organic",
+      "TestBinding.test_01_first_seen_and_funding_after_snapshot_are_not_in_the_record", "TestBinding.test_02_age_and_active_days_are_measured_at_the_snapshot",
+      "TestBinding.test_02_wallet_that_ages_past_the_threshold_later_still_fails", "TestBinding.test_03_many_post_snapshot_tx_push_the_window_off_the_page",
+      "TestBinding.test_03_contract_outcome_is_insufficient_never_sybil_or_human"])
+item("Binding", "4-5. Griefing cannot force UNRESOLVED; refile after UNRESOLVED works after the reveal", ["TestUnresolved"])
+item("Binding", "6. First funding proven or UNCLEAR/INSUFFICIENT; cannot be buried or forged by a label",
+     ["TestBinding.test_06_later_inbound_transfers_cannot_bury_the_first_funding", "TestBinding.test_06_no_funding_on_a_truncated_page_is_unproven",
+      "TestBinding.test_06_same_second_funding_by_two_senders_is_unproven", "TestBinding.test_06_unproven_funder_is_unclear_whatever_the_model_says",
+      "TestBinding.test_06_rules_using_an_unproven_funder_read_insufficient", "TestBinding.test_06_a_label_cannot_forge_funder_proven"])
+item("Binding", "7. Merkle domain separation; internal node cannot pass as a leaf",
+     ["TestBinding.test_07_leaf_and_node_are_domain_separated", "TestBinding.test_07_second_preimage_internal_node_cannot_pass_as_a_leaf",
+      "TestBinding.test_07_contract_refuses_node_as_leaf_appeal", "TestMerkle", "TestMerkleRefusals"])
+item("Binding", "8-9. Malformed/non-canonical rules refused at reveal; late commit refused",
+     ["TestBinding.test_08_every_malformed_rules_document_is_refused_at_reveal", "TestBinding.test_08_the_canonical_document_means_what_it_says",
+      "TestBinding.test_09_late_commit_is_refused", "TestRules"])
+item("Binding", "10-11. Chain, wallet and window binding; unreadable mined items INSUFFICIENT, pending skipped",
+     ["TestBinding.test_10_read_uses_only_the_drops_frozen_chain", "TestBinding.test_11_mined_item_with_unreadable_timestamp_is_insufficient",
+      "TestBinding.test_11_pending_item_is_after_the_snapshot_and_skipped", "TestBinding.test_11_the_read_is_bound_to_the_appeals_wallet_and_drop"])
+item("Binding", "14. Demo isolation: on-behalf filing impossible on canonical; only the demo says DEMO",
+     ["TestEdges.test_14_on_behalf_filing_impossible_on_canonical", "TestEdges.test_14_only_the_demo_instance_says_demo",
+      "TestEdges.test_14_canonical_ignores_demo_constructor_arguments"],
+     [lambda: (canon is not None and [l for l in CLOG.split("\n") if "operator files for flagged2" in l][0].count("REJECTED") == 1
+               and canon["config"]["mode"] == "CANONICAL" and seed is not None and seed["config"]["mode"] == "DEMO",
+               "canonical refused the operator's on-behalf filing on chain; live get_config: canonical CANONICAL, demo DEMO")])
+item("Binding", "15. Proof availability: list published on chain, root computed by the contract, appeal with no proof",
+     ["TestFlagged"],
+     [lambda: (canon is not None and any("with NO proof" in l and " OK " in l for l in CLOG.split("\n")),
+               "canonical: flagged1 appealed with an empty proof (membership read from the published list)")])
+item("Binding", "16. Reserve lock: no cancel/withdraw; close refused until every window closes",
+     ["TestEdges.test_16_no_cancel_or_withdraw_method_exists", "TestEdges.test_16_operator_cannot_take_the_reserve_before_every_window_closes",
+      "TestLoopholes.test_06_operator_cannot_withdraw_reserve_during_appeals"])
+item("Binding", "17. Limits declared up front; exact-boundary timing (appeal, reveal, contest, read)",
+     ["TestEdges.test_17_over_limit_rules_refused_at_create", "TestEdges.test_17_max_size_document_reveals_in_one_call",
+      "TestEdges.test_17_reveal_must_match_the_declared_size_and_count", "TestEdges.test_17_appeal_boundary",
+      "TestEdges.test_17_reveal_boundary", "TestEdges.test_17_contest_boundary", "TestEdges.test_17_read_and_refile_boundaries"])
+item("Binding", "18. Spam cannot pay a sybil or crowd honest appeals out (per-wallet cap)",
+     ["TestFileAppeal.test_capacity_scales_with_the_flagged_list", "TestFileAppeal.test_per_wallet_filing_limit"])
 
 # --- the eleven loopholes --------------------------------------------------------
 item("Loophole", "1. Operator reveals different rules than committed → refused",
@@ -143,7 +187,9 @@ item("Loophole", "6. Operator withdraws reserve during appeals → refused",
      [lambda: (canon is not None and "LOOPHOLE 6" in CLOG and [l for l in CLOG.split("\n") if "LOOPHOLE 6" in l][0].count("REJECTED") == 1, "refused on the canonical instance")])
 item("Loophole", "7. Appeals exceed reserve → pro-rata",
      ["TestLoopholes.test_07_appeals_exceeding_reserve_are_pro_rata"],
-     [lambda: chain(lambda: seed["drops"]["C"]["drop"]["pro_rata"] and len({a["payout_wei"] for a in seed["drops"]["C"]["appeals"] if a["outcome"] == "HUMAN_PATTERN"}) == 1, "drop C closed pro-rata, equal shares")])
+     [lambda: chain(lambda: any(d["drop"]["pro_rata"] and d["drop"]["winners"] >= 2
+                                and len({a["payout_wei"] for a in d["appeals"] if a["outcome"] == "HUMAN_PATTERN"}) == 1
+                                for d in seed["drops"].values()), "a drop closed pro-rata on chain: every winner the same share, below the allocation")])
 item("Loophole", "8. Same wallet appeals twice → refused",
      ["TestLoopholes.test_08_same_wallet_twice_refused"],
      [lambda: (canon is not None and "LOOPHOLE 8" in CLOG and [l for l in CLOG.split("\n") if "LOOPHOLE 8" in l][0].count("REJECTED") == 1, "refused on the canonical instance")])
@@ -220,7 +266,7 @@ def main():
     lines = ["# FairDrop audit", "", "Generated by `python3 tools/audit.py" + (" --chain" if with_chain else "") + "`. "
              "Every item names the offline tests it runs and, where the brief asks for on-chain proof, the on-chain check.", ""]
     total = passed = 0
-    for group in ("Safety", "Loophole"):
+    for group in ("Safety", "Binding", "Loophole"):
         lines += [f"## {group}", "", "| # | item | result | evidence |", "|---|---|---|---|"]
         n = 0
         for g, name, tests, checks in ITEMS:

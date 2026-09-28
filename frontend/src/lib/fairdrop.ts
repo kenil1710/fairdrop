@@ -89,9 +89,18 @@ function cmp(a: Uint8Array, b: Uint8Array) {
   return 0;
 }
 
-/** Sorted-pair merkle tree. leaf = sha256(20 address bytes). */
-export async function merkle(wallets: string[]) {
-  const leaves = await Promise.all(wallets.map((w) => sha256(fromHex(w.toLowerCase()))));
+/** Sorted-pair merkle tree, domain separated like the contract:
+ *  leaf = sha256(0x00 || 20 address bytes); node = sha256(0x01 || min || max). */
+export async function merkle(input: string[]) {
+  // ascending lowercase, duplicate-free: the order the contract publishes and hashes
+  const wallets = [...new Set(input.map((w) => w.toLowerCase()))].sort();
+  const leaves = await Promise.all(wallets.map((w) => {
+    const addr = fromHex(w.toLowerCase());
+    const pre = new Uint8Array(1 + addr.length);
+    pre.set([0x00], 0);
+    pre.set(addr, 1);
+    return sha256(pre);
+  }));
   let level = leaves;
   const idx: Record<string, number> = {};
   const proofs: Record<string, string[]> = {};
@@ -104,9 +113,10 @@ export async function merkle(wallets: string[]) {
     for (let i = 0; i < level.length; i += 2) {
       if (i + 1 < level.length) {
         const [a, b] = cmp(level[i], level[i + 1]) <= 0 ? [level[i], level[i + 1]] : [level[i + 1], level[i]];
-        const joined = new Uint8Array(64);
-        joined.set(a, 0);
-        joined.set(b, 32);
+        const joined = new Uint8Array(65);
+        joined.set([0x01], 0);
+        joined.set(a, 1);
+        joined.set(b, 33);
         next.push(await sha256(joined));
       } else next.push(level[i]);
     }
@@ -118,6 +128,7 @@ export async function merkle(wallets: string[]) {
     level = next;
   }
   return {
+    wallets,
     root: level.length ? hex(level[0]) : "",
     proofs: Object.fromEntries(Object.entries(proofs).map(([k, v]) => [k, v.join(",")])),
   };
@@ -181,15 +192,15 @@ export type Appeal = {
   features: Record<string, string>; findings: Record<string, string>; decided_at: number;
   provisional_outcome: string; contest_until: number; contested: boolean; contester: string;
   contest_bond_wei: string; contest_evidence: string; contest_findings: Record<string, string>;
-  contest_at: number; final_at: number; payout_wei: string; in_flight: boolean;
-  rounds_opened: number; unsettled_rounds: number; round_open_at: number;
+  contest_at: number; final_at: number; payout_wei: string;
+  split_rounds: number; read_until: number; split_from: number;
   trace: Trace | null; contest_trace: Trace | null;
 };
 
 export type Config = {
   rubric_version: string; mode: "DEMO" | "CANONICAL"; mode_note: string; owner: string;
   paused: boolean; contest_window_s: number; stall_ttl_s: number; min_phase_s: number;
-  round_ttl_s: number; max_unsettled_rounds: number;
+  read_priority_s: number; max_split_rounds: number;
   chains: string[]; max_appeals_per_drop: number;
 };
 

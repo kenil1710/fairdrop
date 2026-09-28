@@ -1,0 +1,10 @@
+[2026-09-28T19:21:08.660Z]   trigger  close_drop(1) → ACCEPTED OK [12s] v5 cleanup: close void drop #1 tx=0x2b57fbb6c78b103c1d7784a5999245f5e40024fa1305594500baae189537963a
+[2026-09-28T19:22:53.410Z]   trigger  close_drop(2) → ACCEPTED OK [105s] v5 cleanup: close void drop #2 tx=0x5b197431bb9ccca0cf5f3784d6dcc5cff3802eac5aba68a984232e5bc9cc3369
+[2026-09-28T19:23:06.212Z]   trigger  close_drop(3) → ACCEPTED OK [13s] v5 cleanup: close void drop #3 tx=0xef9a3dbcb761d374e6d352255edbe870a231fca09adad4096295e6843d6f5769
+[2026-09-28T19:26:24.220Z]   trigger  close_drop(4) → ACCEPTED OK [198s] v5 cleanup: close void drop #4 tx=0xee665cc3f001a3d7a6ca829a72bdcb25dc24d0b436bfe07cfa2ae780cfc82cf6
+[2026-09-28T19:29:43.530Z]   opA      claim_payout() → ACCEPTED OK [105s] v5 cleanup: opA claims 3.00 tx=0xb17f6469535d67f28a25ebf1fd735ee72b431f3d34e74824e3c4fc7a1643bca9
+[2026-09-28T19:31:28.800Z]   opB      claim_payout() → ACCEPTED OK [12s] v5 cleanup: opB claims 1.00 tx=0x3a3e323a7d8d2105948fcdb9d18983d0d2604072cbcd8978865656606f259d14
+[2026-09-28T19:33:15.496Z]   opC      claim_payout() → ACCEPTED OK [105s] v5 cleanup: opC claims 1.00 tx=0x93516bbfca2045f67b938984dad7a3d58c29151d9e7f92cf9155847f27f1c1d2
+[2026-09-28T19:35:02.061Z]   opD      claim_payout() → ACCEPTED OK [105s] v5 cleanup: opD claims 1.00 tx=0x0150943f0fc163b4786db956c8e94bed7880a28d3a324b7a3e9a77cfdbe09b04
+[2026-09-28T19:40:01.044Z]   prober   claim_payout() → ACCEPTED OK [105s] v5 cleanup: prober claims 1.00 tx=0x4f02f79edcd7de46edc2bc021bf3da0fc15462df14604873d15b64b63871c0a4
+[2026-09-28T19:43:21.826Z]   deployer set_paused(false) → ACCEPTED OK [106s] v5 cleanup: unpause tx=0x6333f3a033beaa5473a9e7d73dc4de74ec6f9e5b4671a25bd83623188207b323

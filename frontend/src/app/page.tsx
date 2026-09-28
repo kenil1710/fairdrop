@@ -7,21 +7,12 @@ import { AppShell } from "@/components/AppShell";
 import { Seal } from "@/components/Seal";
 import { CountUp } from "@/components/ui";
 import { useAsync } from "@/components/useAsync";
-import { getStats } from "@/lib/contract";
+import { getDrops, getStats } from "@/lib/contract";
 import { gen } from "@/lib/fairdrop";
-
-const DEMO_RULES = {
-  min_hits: 2,
-  rules: [
-    { finding: "WALLET_AGE_DAYS", condition: "LT", threshold: 60 },
-    { finding: "SCRIPTED_REPETITION", condition: "GTE", threshold: "SOME" },
-    { finding: "SINGLE_PURPOSE_FARMING", condition: "EQ", threshold: "STRONG" },
-  ],
-};
 
 const STEPS = [
   { icon: Hash, title: "Seal the rules", body: "Before the snapshot, the operator commits sha256(rules + salt). The contract refuses a snapshot that is not in the future, so the seal is provably older than the list it produces." },
-  { icon: Fingerprint, title: "Appeal from the wallet", body: "A flagged wallet appeals from itself with a merkle proof and a bond. No forms, no identity - the signature is the identity." },
+  { icon: Fingerprint, title: "Appeal from the wallet", body: "The flagged list is published on chain. A flagged wallet appeals from itself with a bond, building its own proof from that list. No forms, no identity - the signature is the identity." },
   { icon: Unlock, title: "Reveal the rules", body: "The reveal must hash to the seal or it is refused. Miss the reveal and every pending appeal wins by default." },
   { icon: Scale, title: "Read blind, rule in code", body: "Validators fetch the wallet's history, code computes the hard numbers, and a model describes the behaviour in a fixed vocabulary. It never sees the rules. Code applies them, and every validator must reach the same outcome." },
 ];
@@ -29,6 +20,9 @@ const STEPS = [
 export default function Home() {
   const stats = useAsync(getStats);
   const s = stats.data;
+  // The newest REVEALED drop, read from the contract - never a hardcoded example.
+  const drops = useAsync(() => getDrops());
+  const shown = [...(drops.data?.drops ?? [])].reverse().find((d) => d.revealed && d.rules);
   return (
     <AppShell>
       <section className="grid items-center gap-10 py-6 lg:grid-cols-[1.1fr_1fr] lg:py-14">
@@ -52,8 +46,15 @@ export default function Home() {
           </div>
         </div>
         <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.15 }} className="card p-4 sm:p-6">
-          <div className="label mb-3 flex items-center gap-2"><Lock size={12} /> Example: a sealed drop, then its reveal</div>
-          <Seal hash="469c90973d4baa8f27dd093443737059a9c6fcc107b790c329187e08e2c86d7f" rules={DEMO_RULES} revealed playOnMount />
+          {shown ? (
+            <>
+              <div className="label mb-3 flex items-center gap-2"><Lock size={12} /> On chain now: drop #{shown.drop_id}, sealed then revealed</div>
+              <Seal hash={shown.rules_hash} rules={shown.rules} revealed playOnMount />
+              <Link href={`/drop/${shown.drop_id}`} className="mt-3 inline-block text-xs text-coral underline">{shown.name}</Link>
+            </>
+          ) : (
+            <div className="label flex items-center gap-2"><Lock size={12} /> {drops.loading ? "Reading the contract…" : "No drop has revealed its rules yet."}</div>
+          )}
         </motion.div>
       </section>
 

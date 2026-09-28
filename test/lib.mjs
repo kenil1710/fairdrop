@@ -18,11 +18,15 @@ export function canonRules(doc) {
 export const commitment = (doc, salt) => sha256hex(Buffer.from(canonRules(doc) + salt, "utf8"));
 export const newSalt = () => randomBytes(32).toString("hex");
 
-const leaf = (a) => createHash("sha256").update(Buffer.from(a.toLowerCase().slice(2), "hex")).digest();
-const pair = (a, b) => createHash("sha256").update(Buffer.compare(a, b) <= 0 ? Buffer.concat([a, b]) : Buffer.concat([b, a])).digest();
+// Domain separated like the contract: 0x00 before a leaf, 0x01 before a node.
+const leaf = (a) => createHash("sha256").update(Buffer.concat([Buffer.from([0]), Buffer.from(a.toLowerCase().slice(2), "hex")])).digest();
+const pair = (a, b) => createHash("sha256").update(Buffer.concat([Buffer.from([1]), ...(Buffer.compare(a, b) <= 0 ? [a, b] : [b, a])])).digest();
 
-/** { root, proofs: { wallet_lower: "hex,hex,..." } } - sorted pairs, odd node carried up. */
-export function merkle(wallets) {
+/** { root, proofs, wallets } over the wallets in ASCENDING lowercase order -
+ *  the order the contract publishes and hashes them in. Sorted pairs, odd
+ *  node carried up. */
+export function merkle(input) {
+  const wallets = [...new Set(input.map((w) => w.toLowerCase()))].sort();
   let level = wallets.map(leaf);
   const idx = Object.fromEntries(wallets.map((w, i) => [w.toLowerCase(), i]));
   const proofs = Object.fromEntries(wallets.map((w) => [w.toLowerCase(), []]));
@@ -36,7 +40,7 @@ export function merkle(wallets) {
     }
     level = next;
   }
-  return { root: level[0].toString("hex"), proofs: Object.fromEntries(Object.entries(proofs).map(([k, v]) => [k, v.join(",")])) };
+  return { wallets, root: level[0].toString("hex"), proofs: Object.fromEntries(Object.entries(proofs).map(([k, v]) => [k, v.join(",")])) };
 }
 
 if (process.argv.includes("--self-test")) {

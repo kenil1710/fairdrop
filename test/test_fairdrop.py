@@ -716,6 +716,12 @@ class TestConsensusMore(unittest.TestCase):
 # ============================================================================
 
 
+# Under SYBIL_RULES on a long, varied history (no deterministic rule fires),
+# these two readings are one bucket apart on each finding but land on
+# opposite sides: the leader's fires 2 rules, the validator's none.
+EDGE_SYBIL = {"SCRIPTED_REPETITION": "SOME", "SINGLE_PURPOSE_FARMING": "STRONG"}
+EDGE_HUMAN = {"SCRIPTED_REPETITION": "NONE", "SINGLE_PURPOSE_FARMING": "SOME"}
+
 THRESHOLD_RULES = {"min_hits": 1, "rules": [
     {"finding": "SCRIPTED_REPETITION", "condition": "GTE", "threshold": "SOME"},
 ]}
@@ -852,55 +858,89 @@ class TestOutcomeIdentity(unittest.TestCase):
         self.assertFalse(a["contested"])
 
 
+SOME = {"SCRIPTED_REPETITION": "SOME"}
+NONE_ = {"SCRIPTED_REPETITION": "NONE"}
+
+
 class TestUnresolved(unittest.TestCase):
-    """Three read rounds that never settle make an appeal UNRESOLVED: bond
-    returned, refileable until the reveal deadline, no payout, never
-    SYBIL_PATTERN."""
+    """UNRESOLVED only after three COMMITTED split rounds: rounds that settle
+    only when validators read the wallet, agree on the evidence, and compute a
+    different outcome from the leader's. Bond returned, refileable, no payout,
+    never SYBIL_PATTERN."""
 
     def setUp(self):
         self.w = World()
         self.d = self.w.drop(rules=THRESHOLD_RULES, reserve=GEN, alloc=GEN // 2)
         self.assertTrue(ok(self.w.file(self.d, ALICE)))
         self.w.ensure_revealed(1)
-
-    def fail_round(self, aid=1):
-        FORGE["leader_dies"] = True
-        out = self.w.read(aid, reveal=False)
-        FORGE["leader_dies"] = False
-        self.w.later(int(self.w.c.stall_ttl_s))
-        return out
+        serve_history(ALICE, farm_outs(self.d["snap"]))
+        self.w.later(int(self.w.c.stall_ttl_s))   # past read_wallet's priority
 
     def unresolve(self, aid=1):
-        for _ in range(C.MAX_UNSETTLED_ROUNDS):
-            self.assertEqual(self.fail_round(aid)["status"], "UNDETERMINED")
-        return self.w.call(STRANGER, "settle_stalled", aid)
+        out = None
+        for _ in range(C.MAX_SPLIT_ROUNDS):
+            out = self.w.split(aid, SOME, NONE_)
+            self.assertTrue(ok(out), out)
+        return out
 
-    def test_three_undetermined_attempts_give_unresolved(self):
+    def test_three_genuine_splits_give_unresolved(self):
         out = self.unresolve()
         self.assertEqual(out["outcome"], "UNRESOLVED", out)
         a = self.w.appeal(1)
-        self.assertEqual(a["status"], "FINAL")
-        self.assertEqual(a["outcome"], "UNRESOLVED")
-        self.assertEqual(a["decided_by"], "ROUNDS_NEVER_SETTLED")
-        self.assertEqual(a["unsettled_rounds"], 3)
-        self.assertEqual(a["rounds_opened"], 3)
-        self.assertEqual(a["read_attempts"], 0)
+        self.assertEqual((a["status"], a["outcome"], a["decided_by"], a["split_rounds"]),
+                         ("FINAL", "UNRESOLVED", "VALIDATORS_SPLIT", 3))
         self.assertTrue(self.w.view("verify_appeal", 1)["verified"])
 
-    def test_expiry_through_read_wallet_counts_too(self):
-        for _ in range(C.MAX_UNSETTLED_ROUNDS):
-            self.fail_round()
-        out = self.w.call(STRANGER, "read_wallet", 1)
-        self.assertEqual(out["outcome"], "UNRESOLVED", out)
+    def test_a_split_needs_a_real_outcome_difference(self):
+        # leader SOME (SYBIL) vs validator STRONG (SYBIL): findings differ, outcome does not
+        out = self.w.split(1, SOME, {"SCRIPTED_REPETITION": "STRONG"})
+        self.assertEqual(out["status"], "UNDETERMINED")
+        self.assertEqual(self.w.appeal(1)["split_rounds"], 0)
 
-    def test_two_failures_then_a_landed_round_decides_normally(self):
-        self.fail_round()
-        self.fail_round()
-        serve_history(ALICE, farm_outs(self.d["snap"]))
-        MODEL.say(SCRIPTED_REPETITION="SOME")
+    def test_griefing_by_stranger_and_operator_counts_nothing(self):
+        """The attack: call settle_stalled over and over on an honest appeal
+        whose validators agree. No round can settle, nothing is committed, and
+        the honest read still lands afterwards."""
+        for who in (STRANGER, OPERATOR, NOBODY) * 5:
+            out = self.w.call(who, "settle_stalled", 1)
+            self.assertEqual(out["status"], "UNDETERMINED", out)
+            self.w.later(700)
+        a = self.w.appeal(1)
+        self.assertEqual((a["status"], a["split_rounds"]), ("FILED", 0))
         out = self.w.read(1, reveal=False)
         self.assertEqual(out["read"], "READ", out)
-        self.assertEqual(self.w.appeal(1)["unsettled_rounds"], 2)
+
+    def test_a_dishonest_leader_alone_cannot_split_an_agreeing_wallet(self):
+        # leader forges a coherent reading two buckets away: evidence disagrees
+        def forge(p):
+            kv = C._kv(p["findings"])
+            kv["SCRIPTED_REPETITION"] = "STRONG"
+            p["findings"] = _vec(kv)
+            p["outcome"] = "SYBIL_PATTERN"
+            return p
+        MODEL.say(SCRIPTED_REPETITION="NONE")
+        FORGE["mutate"] = forge
+        out = self.w.call(STRANGER, "settle_stalled", 1)
+        FORGE["mutate"] = None
+        self.assertEqual(out["status"], "UNDETERMINED")
+        self.assertEqual(self.w.appeal(1)["split_rounds"], 0)
+
+    def test_read_wallet_has_priority_window(self):
+        w = World()
+        d = w.drop(rules=THRESHOLD_RULES)
+        w.file(d, ALICE)
+        w.ensure_revealed(1)
+        out = w.call(OPERATOR, "settle_stalled", 1)
+        self.assertTrue(rej(out), out)
+        self.assertIn("priority", out["reason"])
+
+    def test_two_splits_then_a_settled_read_decides_normally(self):
+        self.w.split(1, SOME, NONE_)
+        self.w.split(1, SOME, NONE_)
+        MODEL.say(SCRIPTED_REPETITION="SOME")
+        self.assertEqual(self.w.read(1, reveal=False)["read"], "READ")
+        MODEL.reset()
+        self.assertEqual(self.w.appeal(1)["split_rounds"], 2)
         self.assertEqual(self.w.call(STRANGER, "decide", 1)["outcome"], "SYBIL_PATTERN")
 
     def test_unresolved_returns_bond_and_never_pays_or_condemns(self):
@@ -908,51 +948,490 @@ class TestUnresolved(unittest.TestCase):
         self.assertEqual(int(self.w.c.payout_wei.get(ALICE)), self.d["bond"])
         self.assertFalse(self.w.view("is_cleared", str(ALICE), 1))
         self.assertEqual(self.w.drop_view(self.d)["winners"], 0)
-        self.assertEqual(self.w.view("get_stats")["outcomes"]["SYBIL_PATTERN"], 0)
-        self.assertEqual(self.w.view("get_stats")["outcomes"]["UNRESOLVED"], 1)
-        self.w.at(self.d["reveal_end"] + 1)
+        stats = self.w.view("get_stats")["outcomes"]
+        self.assertEqual((stats["SYBIL_PATTERN"], stats["UNRESOLVED"]), (0, 1))
+        self.w.at(self.d["reveal_end"] + C.CONTEST_WINDOW_S + 1)
         out = self.w.call(STRANGER, "close_drop", 1)
         self.assertTrue(ok(out), out)
-        self.assertEqual(out["winners"], 0)
-        self.assertEqual(out["paid_winners_wei"], "0")
+        self.assertEqual((out["winners"], out["paid_winners_wei"]), (0, "0"))
         self.assertEqual(self.w.appeal(1)["payout_wei"], "0")
-        self.assertEqual(int(self.w.c.payout_wei.get(ALICE)), self.d["bond"])
         self.assertEqual(int(self.w.c.payout_wei.get(OPERATOR)), GEN)
         self.w.drain()
 
-    def test_unresolved_is_refileable_until_the_reveal_deadline(self):
+    def test_refile_after_unresolved_after_the_reveal_deadline(self):
+        """ITEM 5: the refile path is real even when UNRESOLVED lands after the
+        reveal deadline, and the refile gets a full read window."""
+        self.w.at(self.d["reveal_end"] + 10)
         self.unresolve()
         out = self.w.file(self.d, ALICE)
         self.assertTrue(ok(out), out)
         self.assertTrue(out["refile"])
-        self.assertEqual(self.w.appeal(out["appeal_id"])["refile_of"], 1)
+        rid = out["appeal_id"]
+        a = self.w.appeal(rid)
+        self.assertEqual(a["refile_of"], 1)
+        self.assertEqual(a["read_until"], a["filed_at"] + C.CONTEST_WINDOW_S)
+        self.w.at(self.d["reveal_end"] + C.CONTEST_WINDOW_S + 5)   # past the drop's read deadline
+        MODEL.say(SCRIPTED_REPETITION="NONE")
+        self.assertEqual(self.w.read(rid, reveal=False)["read"], "READ")
+        self.assertEqual(self.w.call(STRANGER, "decide", rid)["outcome"], "HUMAN_PATTERN")
 
-    def test_unresolved_refile_refused_after_reveal_deadline(self):
+    def test_refile_refused_after_the_drop_read_deadline(self):
         self.unresolve()
-        self.w.at(self.d["reveal_end"])
+        self.w.at(self.d["reveal_end"] + C.CONTEST_WINDOW_S)
         self.assertTrue(rej(self.w.file(self.d, ALICE)))
 
-    def test_settle_stalled_works_paused_and_waits_for_ttl(self):
+    def test_settle_stalled_works_paused(self):
         self.w.call(OWNER, "set_paused", True)
-        self.assertEqual(self.w.call(STRANGER, "read_wallet", 1)["round"], "OPENED")
-        self.assertTrue(rej(self.w.call(STRANGER, "settle_stalled", 1)))
-        self.w.later(int(self.w.c.stall_ttl_s))
-        out = self.w.call(NOBODY, "settle_stalled", 1)
+        out = self.w.split(1, SOME, NONE_, who=NOBODY)
         self.assertTrue(ok(out), out)
-        self.assertEqual(out["unsettled_rounds"], 1)
-        self.assertFalse(self.w.appeal(1)["in_flight"])
+        self.assertEqual(out["split_rounds"], 1)
 
-    def test_a_live_ticket_is_run_by_anyone(self):
-        self.assertEqual(self.w.call(NOBODY, "read_wallet", 1)["round"], "OPENED")
-        serve_history(ALICE, human_outs(self.d["snap"]))
-        out = self.w.call(STRANGER, "read_wallet", 1)
-        self.assertEqual(out["read"], "READ", out)
-        self.assertFalse(self.w.appeal(1)["in_flight"])
 
-    def test_a_live_ticket_blocks_nothing_it_should_not(self):
-        self.w.call(STRANGER, "read_wallet", 1)
-        self.assertTrue(rej(self.w.call(STRANGER, "settle_stalled", 1)))
-        self.assertEqual(self.w.appeal(1)["unsettled_rounds"], 0)
+# ============================================================================
+# THE BINDING AUDIT: every stored result tied to the drop, the snapshot, the
+# wallet and the committed rules (docs/TASKS.md "Binding audit").
+# ============================================================================
+
+
+def organic_after(snap, n=12):
+    """Varied, organic-looking activity strictly AFTER the snapshot."""
+    return [(snap + (2 + i * 5) * DAY + i * 97, "0x" + format(0xAF7E00 + i, "040x"), True,
+             ["Uniswap", "Aave", "ENS", "Zora"][i % 4], ["swap", "supply", "register", "mint"][i % 4],
+             (i + 3) * 10 ** 15) for i in range(n)]
+
+
+AGE_RULES = {"min_hits": 1, "rules": [
+    {"finding": "WALLET_AGE_DAYS", "condition": "LT", "threshold": 30}]}
+FUNDER_RULES = {"min_hits": 1, "rules": [
+    {"finding": "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE", "condition": "EQ", "threshold": "NO"}]}
+
+
+class TestBinding(unittest.TestCase):
+    def setUp(self):
+        World()
+
+    # --- 1. snapshot binding -------------------------------------------------
+    def test_01_post_snapshot_organic_activity_changes_nothing(self):
+        snap = T0
+        serve_history(ALICE, farm_outs(snap))
+        before = C._fetch(facts(snap=snap))
+        MODEL.reset()
+        p_before = C._prompt(before["snapshot"], "")
+        serve_history(ALICE, farm_outs(snap) + organic_after(snap))
+        after = C._fetch(facts(snap=snap))
+        self.assertEqual(after["status"], "READ")
+        self.assertEqual(after["snapshot"], before["snapshot"])
+        self.assertEqual(C._features(after["snapshot"], snap), C._features(before["snapshot"], snap))
+        self.assertEqual(C._prompt(after["snapshot"], ""), p_before)
+        for line in after["snapshot"].split("\n"):
+            if line.startswith("tx "):
+                self.assertLessEqual(C._epoch_from_iso(line[3:23]), snap)
+
+    def test_01_contract_farm_wallet_still_sybil_after_turning_organic(self):
+        w = World()
+        d = w.drop(appeal=30 * DAY, reveal=30 * DAY)
+        w.file(d, ALICE)
+        serve_history(ALICE, farm_outs(d["snap"]) + organic_after(d["snap"]))
+        MODEL.say(**FARM_FINDINGS)
+        out = w.read(1)
+        self.assertEqual(out["agreed_outcome"], "SYBIL_PATTERN", out)
+        self.assertEqual(w.appeal(1)["features"]["OUTBOUND_TX_COUNT"], "6")
+
+    def test_01_first_seen_and_funding_after_snapshot_are_not_in_the_record(self):
+        snap = T0
+        outs = [(snap - 5 * DAY, PROTO, True, "F", "m", 0)]
+        serve_history(ALICE, outs, first_ts=snap + 3 * DAY)   # funding only after the snapshot
+        got = C._fetch(facts(snap=snap))
+        head = got["snapshot"].split("\n")[3]
+        self.assertIn("funder=unknown", head)
+        self.assertIn("funder_proven=0", head)
+        self.assertTrue(head.startswith("first_seen=" + iso(snap - 5 * DAY)))
+
+    # --- 2. age at the snapshot ----------------------------------------------
+    def test_02_age_and_active_days_are_measured_at_the_snapshot(self):
+        snap = T0
+        outs = [(snap - 20 * DAY + i * DAY, PROTO, True, "F", "m", 0) for i in range(5)]
+        serve_history(ALICE, outs + organic_after(snap, 20), first_ts=snap - 20 * DAY)
+        feats = C._kv(C._features(C._fetch(facts(snap=snap))["snapshot"], snap))
+        self.assertEqual(feats["WALLET_AGE_DAYS"], "20")
+        self.assertEqual(feats["ACTIVE_DAYS"], "5")
+
+    def test_02_wallet_that_ages_past_the_threshold_later_still_fails(self):
+        w = World()
+        d = w.drop(rules=AGE_RULES, appeal=200 * DAY, reveal=30 * DAY)
+        w.file(d, ALICE)
+        outs = [(d["snap"] - 20 * DAY + i * DAY, "0x" + format(0xAB00 + i, "040x"), True, "X", "swap", 0)
+                for i in range(5)]
+        serve_history(ALICE, outs, first_ts=d["snap"] - 20 * DAY)
+        w.at(d["snap"] + 190 * DAY)          # the wallet is now 210 days old
+        out = w.read(1)
+        self.assertEqual(w.appeal(1)["features"]["WALLET_AGE_DAYS"], "20", out)
+        self.assertEqual(out["agreed_outcome"], "SYBIL_PATTERN")
+
+    # --- 3. coverage vs post-snapshot activity -------------------------------
+    def test_03_many_post_snapshot_tx_push_the_window_off_the_page(self):
+        snap = T0
+        pre = [(snap - (10 + i) * DAY, PROTO, True, "F", "m", 0) for i in range(5)]
+        post = [(snap + DAY + i * 3600, PROTO, True, "F", "m", 0) for i in range(60)]
+        serve_history(ALICE, pre + post)
+        got = C._fetch(facts(snap=snap))
+        self.assertEqual(got["status"], "INSUFFICIENT")
+
+    def test_03_contract_outcome_is_insufficient_never_sybil_or_human(self):
+        for findings in (FARM_FINDINGS, {}):
+            w = World()
+            d = w.drop()
+            w.file(d, ALICE)
+            pre = farm_outs(d["snap"])
+            post = [(d["snap"] + DAY + i * 3600, PROTO, True, "F", "m", 0) for i in range(60)]
+            serve_history(ALICE, pre + post)
+            MODEL.say(**findings)
+            out = w.read(1)
+            self.assertEqual(out.get("outcome"), "INSUFFICIENT_HISTORY", out)
+            self.assertEqual(MODEL.prompts, [])
+
+    # --- 6. the first funder ------------------------------------------------
+    def first_page(self, snap, items, full=True):
+        serve_first(items, {"index": 2} if full else None)
+
+    def test_06_later_inbound_transfers_cannot_bury_the_first_funding(self):
+        snap = T0
+        outs = [(snap - 30 * DAY, PROTO, True, "F", "m", 0)]
+        serve_history(ALICE, outs)
+        page = [first_item(str(ALICE), snap - 400 * DAY, sender=FUNDER, to=str(ALICE), value=10 ** 17,
+                           sender_name="Coinbase 1")]
+        for i in range(49):   # 49 later inbound transfers from other senders
+            page.append(first_item(str(ALICE), snap - (399 - i) * DAY, sender="0x" + format(0xBEE00 + i, "040x"),
+                                   to=str(ALICE), value=10 ** 18, sender_name="Other"))
+        self.first_page(snap, page)
+        head = C._fetch(facts(snap=snap))["snapshot"].split("\n")[3]
+        self.assertIn("funder=" + FUNDER, head)
+        self.assertIn("funder_proven=1", head)
+
+    def test_06_no_funding_on_a_truncated_page_is_unproven(self):
+        snap = T0
+        outs = [(snap - (60 - i) * DAY, PROTO, True, "F", "m", 0) for i in range(10)]
+        serve_history(ALICE, outs)
+        page = [first_item(str(ALICE), snap - (400 - i) * DAY, to=PROTO) for i in range(50)]
+        for it in page:
+            it["from"]["hash"] = str(ALICE)
+        self.first_page(snap, page)
+        got = C._fetch(facts(snap=snap))
+        self.assertIn("funder_proven=0", got["snapshot"].split("\n")[3])
+
+    def test_06_same_second_funding_by_two_senders_is_unproven(self):
+        snap = T0
+        serve_history(ALICE, [(snap - 30 * DAY, PROTO, True, "F", "m", 0)])
+        t = snap - 100 * DAY
+        page = [first_item(str(ALICE), t, sender=FUNDER, to=str(ALICE), value=5, sender_name="Binance"),
+                first_item(str(ALICE), t, sender="0x" + "ab" * 20, to=str(ALICE), value=7, sender_name="X")]
+        self.first_page(snap, page, full=False)
+        self.assertIn("funder_proven=0", C._fetch(facts(snap=snap))["snapshot"].split("\n")[3])
+
+    def test_06_unproven_funder_is_unclear_whatever_the_model_says(self):
+        snap = T0
+        serve_history(ALICE, [(snap - 30 * DAY, PROTO, True, "F", "m", 0)], funder=None)
+        MODEL.say(FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE="YES")
+        got = C._blind_read(facts(snap=snap))
+        self.assertEqual(C._kv(got["findings"])["FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE"], "UNCLEAR")
+        forged = dict(got, findings=got["findings"].replace(
+            "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE=UNCLEAR", "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE=NO"))
+        self.assertFalse(C._coherent_read(forged, snap))
+
+    def test_06_rules_using_an_unproven_funder_read_insufficient(self):
+        w = World()
+        d = w.drop(rules=FUNDER_RULES)
+        w.file(d, ALICE)
+        serve_history(ALICE, human_outs(d["snap"]), funder=None)
+        out = w.read(1)
+        self.assertEqual(out.get("outcome"), "INSUFFICIENT_HISTORY", out)
+        self.assertIn("first funding", out["why"])
+
+    def test_06_rules_not_using_the_funder_still_read(self):
+        w = World()
+        d = w.drop()
+        w.file(d, ALICE)
+        serve_history(ALICE, human_outs(d["snap"]), funder=None)
+        self.assertEqual(w.read(1)["read"], "READ")
+
+    def test_06_a_label_cannot_forge_funder_proven(self):
+        snap = T0
+        serve_history(ALICE, [(snap - 30 * DAY, PROTO, True, "F", "m", 0)], funder=None)
+        page = [first_item(str(ALICE), snap - 100 * DAY, sender="0x" + "ab" * 20, to=str(ALICE), value=5,
+                           sender_name="x funder_proven=1"),
+                first_item(str(ALICE), snap - 100 * DAY, sender="0x" + "cd" * 20, to=str(ALICE), value=5,
+                           sender_name="y funder_proven=1")]
+        self.first_page(snap, page, full=False)
+        self.assertFalse(C._funder_proven(C._fetch(facts(snap=snap))["snapshot"]))
+
+    # --- 7. merkle ------------------------------------------------------------
+    def test_07_leaf_and_node_are_domain_separated(self):
+        a = bytes.fromhex(str(ALICE)[2:])
+        self.assertEqual(C._leaf(str(ALICE)), hashlib.sha256(b"\x00" + a).digest())
+        x, y = C._leaf(str(ALICE)), C._leaf(str(BOB))
+        lo, hi = min(x, y), max(x, y)
+        self.assertEqual(C._node(x, y), hashlib.sha256(b"\x01" + lo + hi).digest())
+        self.assertEqual(C._node(x, y), C._node(y, x))   # sorted pairs: order-free
+
+    def test_07_second_preimage_internal_node_cannot_pass_as_a_leaf(self):
+        wallets = [ALICE, BOB, CAROL, DAVE]
+        root, paths = build_tree(wallets)
+        n_ab = C._node(C._leaf(str(ALICE)), C._leaf(str(BOB)))
+        n_cd = C._node(C._leaf(str(CAROL)), C._leaf(str(DAVE)))
+        self.assertEqual(C._node(n_ab, n_cd).hex(), root)
+        # Present the internal node as a "leaf": the attacker needs an address
+        # whose leaf hash IS n_ab. Any 20-byte slice of it hashes elsewhere.
+        for fake in ("0x" + n_ab.hex()[:40], "0x" + n_ab.hex()[24:]):
+            self.assertFalse(C._merkle_ok(root, fake, [n_cd]))
+            self.assertFalse(C._merkle_ok(root, fake, []))
+        # And the classic unprefixed forgery: hash of the node preimage as a leaf
+        self.assertNotEqual(hashlib.sha256(C._leaf(str(ALICE)) + C._leaf(str(BOB))).digest(), n_ab)
+        # A wallet's proof does not verify with a sibling dropped or reordered
+        p = [bytes.fromhex(x) for x in paths[str(ALICE).lower()]]
+        self.assertTrue(C._merkle_ok(root, str(ALICE), p))
+        self.assertFalse(C._merkle_ok(root, str(ALICE), p[1:]))
+        self.assertFalse(C._merkle_ok(root, str(ALICE), p[:1]))
+
+    def test_07_contract_refuses_node_as_leaf_appeal(self):
+        w = World()
+        d = w.drop(flagged=(ALICE, BOB, CAROL, DAVE))
+        n_ab = C._node(C._leaf(str(ALICE)), C._leaf(str(BOB)))
+        fake = "0x" + n_ab.hex()[:40]
+        n_cd = C._node(C._leaf(str(CAROL)), C._leaf(str(DAVE)))
+        out = w.call(STRANGER, "file_appeal", 1, fake, n_cd.hex(), "", value=d["bond"])
+        self.assertTrue(rej(out))
+
+    # --- 8. rules JSON ---------------------------------------------------------
+    BAD_RULES = [
+        '{"min_hits":1,"min_hits":2,"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":30}]}',
+        '{"min_hits":1,"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":30,"threshold":9}]}',
+        '{"min_hits":1,"rules":[{"condition":"LT","condition":"GT","finding":"WALLET_AGE_DAYS","threshold":30}]}',
+        '{"min_hits":1,"rules":[{"condition":"LT","finding":"KARMA","threshold":30}]}',
+        '{"min_hits":1,"rules":[{"condition":"ABOUT","finding":"WALLET_AGE_DAYS","threshold":30}]}',
+        '{"min_hits":1,"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":-1}]}',
+        '{"min_hits":1,"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":100001}]}',
+        '{"min_hits":1,"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":30.0}]}',
+        '{"min_hits":1,"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":3e1}]}',
+        '{"min_hits":1,"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":"30"}]}',
+        '{"min_hits":1,"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":true}]}',
+        '{"min_hits":1,"rules":[{"condition":"GTE","finding":"SCRIPTED_REPETITION","threshold":"UNCLEAR"}]}',
+        '{"min_hits":1,"rules":[{"condition":"GTE","finding":"SCRIPTED_REPETITION","threshold":"some"}]}',
+        '{"min_hits":1,"rules":[{"condition":"GTE","finding":"SCRIPTED_REPETITION","threshold":1}]}',
+        '{"min_hits":1, "rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":30}]}',
+        '{"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":30}],"min_hits":1}',
+        '{"min_hits":1,"rules":[{"finding":"WALLET_AGE_DAYS","condition":"LT","threshold":30}]}',
+        '{"min_hits":1,"rules":[{"condition":"\\u004cT","finding":"WALLET_AGE_DAYS","threshold":30}]}',
+        '{"min_hits":0,"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":30}]}',
+        '{"min_hits":2,"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":30}]}',
+        '{"min_hits":1,"rules":[]}',
+        '{"min_hits":1,"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":30}],"x":1}',
+        ' {"min_hits":1,"rules":[{"condition":"LT","finding":"WALLET_AGE_DAYS","threshold":30}]}',
+    ]
+
+    def test_08_every_malformed_rules_document_is_refused_at_reveal(self):
+        for raw in self.BAD_RULES:
+            w = World()
+            snap = w.now + 100
+            digest = hashlib.sha256((raw + SALT).encode()).hexdigest()
+            out = w.call(OPERATOR, "create_drop", "x", "base", digest, snap, 900, DAY, DAY,
+                         GEN // 2, GEN // 10, len(raw), 1, "", "", value=GEN)
+            self.assertTrue(ok(out), out)
+            w.at(snap + 1)
+            w.call(OPERATOR, "publish_flagged", 1, str(ALICE), True)
+            w.at(snap + DAY + 1)
+            r = w.call(OPERATOR, "reveal_rules", 1, raw, SALT)
+            self.assertTrue(rej(r), (raw, r))
+            self.assertIn("not a valid rules document", r["reason"], raw)
+            self.assertFalse(w.drop_view({"id": 1})["revealed"])
+
+    def test_08_the_canonical_document_means_what_it_says(self):
+        raw = canon(SYBIL_RULES)
+        doc, err = C._parse_rules(raw)
+        self.assertEqual(err, "")
+        self.assertEqual(json.loads(raw), doc)
+
+    # --- 9. commit before the snapshot ------------------------------------------
+    def test_09_late_commit_is_refused(self):
+        w = World()
+        for snap in (w.now, w.now - 1, w.now - DAY):
+            out = w.call(OPERATOR, "create_drop", "late", "base", commit(SYBIL_RULES, SALT), snap,
+                         900, DAY, DAY, GEN // 2, GEN // 10, len(canon(SYBIL_RULES)), 4, "", "", value=GEN)
+            self.assertTrue(rej(out), (snap, out))
+        d = w.drop()
+        v = w.drop_view(d)
+        self.assertLess(v["created_at"], v["snapshot_ts"])
+        self.assertGreater(v["committed_before_snapshot_s"], 0)
+        self.assertNotIn("rules_hash", [a.arg for a in METHODS["reveal_rules"].args.args])
+
+    # --- 10. chain binding --------------------------------------------------------
+    def test_10_read_uses_only_the_drops_frozen_chain(self):
+        for chain, host in (("base", "base.blockscout.com"), ("ethereum", "eth.blockscout.com")):
+            w = World()
+            d = w.drop(chain=chain)
+            w.file(d, ALICE)
+            serve_history(ALICE, human_outs(d["snap"]))
+            WEB.log.clear()
+            w.read(1)
+            self.assertTrue(WEB.log)
+            self.assertTrue(all(u.startswith("https://" + host + "/api/v2/") for u in WEB.log), WEB.log)
+        for m in ("file_appeal", "read_wallet", "settle_stalled", "contest", "decide"):
+            self.assertNotIn("chain", [a.arg for a in METHODS[m].args.args], m)
+
+    # --- 11. other bindings ---------------------------------------------------------
+    def test_11_mined_item_with_unreadable_timestamp_is_insufficient(self):
+        serve_history(ALICE, human_outs(T0))
+        body = json.loads(WEB.sticky["out"][1])
+        body["items"][0]["timestamp"] = None
+        WEB.serve("out", 200, json.dumps(body))
+        self.assertEqual(C._fetch(facts())["status"], "INSUFFICIENT")
+
+    def test_11_pending_item_is_after_the_snapshot_and_skipped(self):
+        serve_history(ALICE, human_outs(T0))
+        clean = C._fetch(facts())["snapshot"]
+        body = json.loads(WEB.sticky["out"][1])
+        pending = dict(body["items"][0], timestamp=None, block_number=None)
+        body["items"].insert(0, pending)
+        WEB.serve("out", 200, json.dumps(body))
+        self.assertEqual(C._fetch(facts())["snapshot"], clean)
+
+    def test_11_the_read_is_bound_to_the_appeals_wallet_and_drop(self):
+        w = World()
+        d = w.drop(lookback_days=200)
+        w.file(d, ALICE)
+        serve_history(ALICE, human_outs(d["snap"]))
+        WEB.log.clear()
+        w.read(1)
+        self.assertTrue(all(("/addresses/" + str(ALICE).lower() + "/") in u for u in WEB.log))
+        head = w.appeal(1)["snapshot"].split("\n")
+        self.assertEqual(head[0], "wallet=" + str(ALICE).lower() + " chain=base")
+        self.assertIn("window_start=" + iso(d["snap"] - 200 * DAY), head[1])
+        self.assertIn("snapshot=" + iso(d["snap"]), head[1])
+
+
+class TestEdges(unittest.TestCase):
+    """Items 14, 16 and 17 of the binding review."""
+
+    # --- 14. demo isolation --------------------------------------------------
+    def test_14_on_behalf_filing_impossible_on_canonical(self):
+        w = World()
+        d = w.drop()
+        for sender in (OPERATOR, STRANGER, OWNER):
+            out = w.file(d, ALICE, sender=sender)
+            self.assertTrue(rej(out), (sender, out))
+            self.assertIn("sent by the flagged wallet itself", out["reason"])
+        self.assertTrue(ok(w.file(d, ALICE)))
+        self.assertFalse(w.appeal(1)["on_behalf"])
+
+    def test_14_only_the_demo_instance_says_demo(self):
+        self.assertEqual(World().view("get_config")["mode"], "CANONICAL")
+        self.assertEqual(World(demo=True).view("get_config")["mode"], "DEMO")
+        w = World(demo=True)
+        d = w.drop()
+        self.assertTrue(ok(w.file(d, ALICE, sender=OPERATOR)))
+        self.assertTrue(w.appeal(1)["on_behalf"])
+        self.assertTrue(rej(w.file(d, BOB, sender=STRANGER)))   # only the operator, even on the demo
+
+    def test_14_canonical_ignores_demo_constructor_arguments(self):
+        c = MOD.FairDrop(False, 60, 60, 30)
+        self.assertFalse(c.demo_mode)
+        self.assertEqual(int(c.contest_window_s), 48 * 3600)
+
+    # --- 16. reserve lock ------------------------------------------------------
+    def test_16_no_cancel_or_withdraw_method_exists(self):
+        for name in METHODS:
+            low = name.lower()
+            self.assertFalse(any(k in low for k in ("cancel", "withdraw", "refund", "sweep", "rescue")), name)
+
+    def test_16_operator_cannot_take_the_reserve_before_every_window_closes(self):
+        w = World()
+        d = w.drop(reserve=2 * GEN)
+        w.file(d, ALICE)
+        for when in (d["snap"] + 1, d["appeal_end"] - 1, d["appeal_end"] + 1, d["reveal_end"] - 1):
+            w.at(when)
+            self.assertTrue(rej(w.call(OPERATOR, "close_drop", 1)), when)
+        w.ensure_revealed(1)
+        serve_history(ALICE, human_outs(d["snap"]))
+        w.read(1, reveal=False)
+        w.call(STRANGER, "decide", 1)
+        w.at(max(w.now, d["reveal_end"]) + 1)
+        # after the reveal deadline, but the contest window on #1 is still open
+        out = w.call(OPERATOR, "close_drop", 1)
+        self.assertTrue(rej(out), out)
+        self.assertIn("not final", out["reason"])
+        self.assertEqual(int(w.c.payout_wei.get(OPERATOR) or 0), 0)
+        self.assertEqual(w.drop_view(d)["reserve_wei"], str(2 * GEN))
+        w.later(C.CONTEST_WINDOW_S)
+        w.call(STRANGER, "finalize_appeal", 1)
+        self.assertTrue(ok(w.call(OPERATOR, "close_drop", 1)))
+
+    # --- 17. limits -----------------------------------------------------------------
+    def test_17_over_limit_rules_refused_at_create(self):
+        tc = TestCreateDrop()
+        tc.w = World()
+        for rb, rc in ((C.MAX_RULES_BYTES + 1, 1), (0, 1), (100, 0), (100, C.MAX_RULES + 1)):
+            self.assertTrue(rej(tc.mk(rb=rb, rc=rc)), (rb, rc))
+        self.assertTrue(ok(tc.mk(rb=C.MAX_RULES_BYTES, rc=C.MAX_RULES)))
+
+    def test_17_max_size_document_reveals_in_one_call(self):
+        rules = {"min_hits": 1, "rules": [
+            {"finding": "WALLET_AGE_DAYS", "condition": "LT", "threshold": 100000 - i} for i in range(C.MAX_RULES)]}
+        raw = canon(rules)
+        self.assertLessEqual(len(raw), C.MAX_RULES_BYTES)
+        w = World()
+        d = w.drop(rules=rules)
+        w.at(d["appeal_end"])
+        self.assertTrue(ok(w.reveal(d)))
+
+    def test_17_reveal_must_match_the_declared_size_and_count(self):
+        w = World()
+        snap = w.now + 100
+        raw = canon(SYBIL_RULES)
+        out = w.call(OPERATOR, "create_drop", "x", "base", commit(SYBIL_RULES, SALT), snap, 900, DAY, DAY,
+                     GEN // 2, GEN // 10, len(raw) + 1, 4, "", "", value=GEN)
+        self.assertTrue(ok(out))
+        w.at(snap + DAY + 1)
+        r = w.call(OPERATOR, "reveal_rules", 1, raw, SALT)
+        self.assertTrue(rej(r), r)
+        self.assertIn("declared size", r["reason"])
+
+    # --- 17. exact-boundary timing -------------------------------------------------------
+    def test_17_appeal_boundary(self):
+        for dt, want in ((-1, True), (0, False), (1, False)):
+            w = World()
+            d = w.drop()
+            w.at(d["appeal_end"] + dt)
+            self.assertEqual(ok(w.file(d, ALICE)), want, dt)
+
+    def test_17_reveal_boundary(self):
+        cases = [("appeal_end", -1, False), ("appeal_end", 0, True), ("reveal_end", -1, True),
+                 ("reveal_end", 0, False), ("reveal_end", 1, False)]
+        for key, dt, want in cases:
+            w = World()
+            d = w.drop()
+            w.at(d[key] + dt)
+            self.assertEqual(ok(w.reveal(d)), want, (key, dt))
+
+    def test_17_contest_boundary(self):
+        for dt, want in ((-1, True), (0, False), (1, False)):
+            w = World()
+            d = w.drop()
+            aid = to_decided(w, d, ALICE, farm_outs(d["snap"]), FARM_FINDINGS)
+            ends = w.appeal(aid)["contest_until"]
+            w.at(ends + dt)
+            bond = max(1, d["alloc"] * 500 // 10000)
+            out = w.call(ALICE, "contest", aid, "A payroll wallet paying the same staff every Friday.", value=bond)
+            self.assertEqual(ok(out), want, (dt, out))
+
+    def test_17_read_and_refile_boundaries(self):
+        for dt, want in ((-1, True), (0, False)):
+            w = World()
+            d = w.drop()
+            w.file(d, ALICE)
+            w.ensure_revealed(1)
+            serve_history(ALICE, human_outs(d["snap"]))
+            w.at(d["reveal_end"] + C.CONTEST_WINDOW_S + dt)
+            out = w.read(1, reveal=False)
+            self.assertEqual(out.get("read") == "READ", want, (dt, out))
 
 
 class TestCreateDrop(unittest.TestCase):
@@ -962,11 +1441,12 @@ class TestCreateDrop(unittest.TestCase):
     def mk(self, **kw):
         a = dict(name="d", chain="base", rh=commit(SYBIL_RULES, SALT),
                  snap=T0 + 100, lb=900, aw=DAY, rw=DAY, alloc=GEN // 2,
-                 bond=GEN // 10, proto="P", cs=PROTO, value=2 * GEN, who=OPERATOR)
+                 bond=GEN // 10, rb=len(canon(SYBIL_RULES)), rc=4, proto="P", cs=PROTO,
+                 value=2 * GEN, who=OPERATOR)
         a.update(kw)
         return self.w.call(a["who"], "create_drop", a["name"], a["chain"], a["rh"],
                            a["snap"], a["lb"], a["aw"], a["rw"], a["alloc"],
-                           a["bond"], a["proto"], a["cs"], value=a["value"])
+                           a["bond"], a["rb"], a["rc"], a["proto"], a["cs"], value=a["value"])
 
     def test_ok(self):
         out = self.mk()
@@ -1006,30 +1486,83 @@ gen_tests(TestCreateDrop, "refused", CREATE_REFUSALS, _create_refusal)
 
 
 class TestFlagged(unittest.TestCase):
+    """ITEM 15: the flagged list is PUBLISHED on chain; the contract computes
+    the root; nobody depends on the operator for a proof."""
+
     def setUp(self):
         self.w = World()
         self.d = self.w.drop(commit_now=False)
+        self.list = ",".join(self.d["flagged"])
+
+    def pub(self, text, done=True, who=OPERATOR):
+        return self.w.call(who, "publish_flagged", 1, text, done)
 
     def test_not_before_snapshot(self):
-        self.assertTrue(rej(self.w.call(OPERATOR, "commit_flagged", 1, self.d["root"], 3)))
+        self.assertTrue(rej(self.pub(self.list)))
 
     def test_operator_only(self):
         self.w.at(self.d["snap"] + 1)
-        self.assertTrue(rej(self.w.call(STRANGER, "commit_flagged", 1, self.d["root"], 3)))
+        self.assertTrue(rej(self.pub(self.list, who=STRANGER)))
 
-    def test_once(self):
+    def test_root_is_computed_by_the_contract_and_final_once(self):
         self.w.at(self.d["snap"] + 1)
-        self.assertTrue(ok(self.w.call(OPERATOR, "commit_flagged", 1, self.d["root"], 3)))
-        self.assertTrue(rej(self.w.call(OPERATOR, "commit_flagged", 1, "11" * 32, 3)))
+        out = self.pub(self.list)
+        self.assertTrue(ok(out), out)
+        self.assertEqual(out["flagged_root"], self.d["root"])
+        self.assertTrue(rej(self.pub("0x" + "f" * 40)))
+
+    def test_chunks_must_be_strictly_ascending(self):
+        self.w.at(self.d["snap"] + 1)
+        a, b, c = self.d["flagged"]
+        self.assertTrue(rej(self.pub(b + "," + a, done=False)))
+        self.assertTrue(rej(self.pub(a + "," + a, done=False)))
+        self.assertTrue(ok(self.pub(a, done=False)))
+        self.assertTrue(rej(self.pub(a, done=False)))          # duplicate across chunks
+        self.assertTrue(ok(self.pub(b + "," + c, done=True)))
+        self.assertEqual(self.w.view("get_flagged", 1, 0, 50)["wallets"], [a, b, c])
 
     def test_not_after_appeal_end(self):
         self.w.at(self.d["appeal_end"])
-        self.assertTrue(rej(self.w.call(OPERATOR, "commit_flagged", 1, self.d["root"], 3)))
+        self.assertTrue(rej(self.pub(self.list)))
 
-    def test_bad_root_and_count(self):
+    def test_bad_input(self):
         self.w.at(self.d["snap"] + 1)
-        self.assertTrue(rej(self.w.call(OPERATOR, "commit_flagged", 1, "xyz", 3)))
-        self.assertTrue(rej(self.w.call(OPERATOR, "commit_flagged", 1, self.d["root"], 0)))
+        self.assertTrue(rej(self.pub("xyz")))
+        self.assertTrue(rej(self.pub("", done=True)))
+        self.assertTrue(rej(self.pub(",".join("0x" + format(i, "040x") for i in range(1, C.MAX_FLAGGED_CHUNK + 2)))))
+
+    def test_operator_who_never_shares_proofs_cannot_block_appeals(self):
+        self.w.at(self.d["snap"] + 1)
+        self.assertTrue(ok(self.pub(self.list)))
+        # 1. no proof at all: membership is read from the published list
+        out = self.w.call(ALICE, "file_appeal", 1, str(ALICE), "", "No proof needed.", value=self.d["bond"])
+        self.assertTrue(ok(out), out)
+        # 2. a proof the wallet builds itself from get_flagged
+        listed = self.w.view("get_flagged", 1, 0, 500)
+        root, paths = build_tree(listed["wallets"])
+        self.assertEqual(root, listed["flagged_root"])
+        out = self.w.call(BOB, "file_appeal", 1, str(BOB), ",".join(paths[str(BOB).lower()]), "", value=self.d["bond"])
+        self.assertTrue(ok(out), out)
+        # 3. a proof the contract computes on request
+        pr = self.w.view("flagged_proof", 1, str(CAROL))
+        self.assertTrue(pr["found"] and pr["verifies"], pr)
+        out = self.w.call(CAROL, "file_appeal", 1, str(CAROL), pr["proof"], "", value=self.d["bond"])
+        self.assertTrue(ok(out), out)
+        # a wallet NOT on the list gets nothing either way
+        self.assertTrue(rej(self.w.call(NOT_FLAGGED, "file_appeal", 1, str(NOT_FLAGGED), "", "", value=self.d["bond"])))
+        self.assertFalse(self.w.view("flagged_proof", 1, str(NOT_FLAGGED))["found"])
+
+    def test_large_list_in_chunks_matches_an_independent_tree(self):
+        wallets = sorted("0x" + format(0xA000 + i * 7919, "040x") for i in range(900))
+        w = World()
+        d = w.drop(flagged=(ALICE,), commit_now=False)
+        w.at(d["snap"] + 1)
+        for i in range(0, 900, 400):
+            chunk = wallets[i:i + 400]
+            self.assertTrue(ok(w.call(OPERATOR, "publish_flagged", 1, ",".join(chunk), i + 400 >= 900)))
+        root, paths = build_tree(wallets)
+        self.assertEqual(w.drop_view(d)["flagged_root"], root)
+        self.assertTrue(w.view("check_proof", 1, wallets[777], ",".join(paths[wallets[777]]))["ok"])
 
     def test_no_appeals_before_flagged_list(self):
         self.w.at(self.d["snap"] + 1)
@@ -1081,13 +1614,26 @@ class TestFileAppeal(unittest.TestCase):
         self.w.file(self.d, ALICE, statement="a\nb" + "x" * 2000)
         self.assertEqual(len(self.w.appeal(1)["statement"]), C.MAX_TEXT)
 
-    def test_capacity(self):
-        wallets = [addr(200 + i) for i in range(C.MAX_APPEALS_PER_DROP + 1)]
+    def test_capacity_scales_with_the_flagged_list(self):
+        """ITEM 18: no per-drop cap an attacker could fill; 150 flagged wallets
+        can all appeal."""
+        wallets = [addr(200 + i) for i in range(150)]
         w = World()
-        d = w.drop(flagged=wallets)
-        for x in wallets[:-1]:
+        d = w.drop(flagged=wallets, bond=C.MIN_BOND_WEI)
+        for x in wallets:
             self.assertTrue(ok(w.file(d, x)))
-        self.assertTrue(rej(w.file(d, wallets[-1])))
+
+    def test_per_wallet_filing_limit(self):
+        w = World()
+        d = w.drop()
+        w.file(d, ALICE)
+        w.ensure_revealed(1)
+        for i in range(C.MAX_APPEALS_PER_WALLET):
+            aid = w.view("get_appeal_of", 1, str(ALICE))["appeal"]["appeal_id"]
+            serve_history(ALICE, [(d["snap"] - 3600 * j, PROTO, True, "F", "m", 0) for j in range(60)])
+            self.assertEqual(w.read(aid, reveal=False)["outcome"], "INSUFFICIENT_HISTORY")
+            out = w.file(d, ALICE)
+            self.assertEqual(ok(out), i + 1 < C.MAX_APPEALS_PER_WALLET, (i, out))
 
 
 class TestRead(unittest.TestCase):
@@ -1135,16 +1681,13 @@ class TestRead(unittest.TestCase):
 
     def test_round_that_never_settles_applies_nothing(self):
         FORGE["leader_dies"] = True
+        self.w.ensure_revealed(1)
         rejected = int(self.w.c.total_rejected)
         out = self.w.read(1)
         FORGE["leader_dies"] = False
         self.assertEqual(out["status"], "UNDETERMINED")
         a = self.w.appeal(1)
-        self.assertEqual(a["status"], "FILED")
-        self.assertEqual(a["read_attempts"], 0)
-        # the ticket opened by the committed first call is still live
-        self.assertTrue(a["in_flight"])
-        self.assertEqual(a["rounds_opened"], 1)
+        self.assertEqual((a["status"], a["read_attempts"], a["split_rounds"]), ("FILED", 0, 0))
         self.assertEqual(int(self.w.c.total_rejected), rejected)
 
     def test_no_read_before_reveal(self):
@@ -1161,15 +1704,6 @@ class TestRead(unittest.TestCase):
         self.w.ensure_revealed(1)
         self.w.at(self.d["reveal_end"] + C.CONTEST_WINDOW_S)
         self.assertTrue(rej(self.w.call(STRANGER, "read_wallet", 1)))
-
-    def test_first_call_only_opens_a_ticket(self):
-        self.w.ensure_revealed(1)
-        out = self.w.call(STRANGER, "read_wallet", 1)
-        self.assertEqual(out["round"], "OPENED")
-        self.assertEqual(out["attempt"], 1)
-        self.assertEqual(self.w.appeal(1)["status"], "FILED")
-        self.assertEqual(MODEL.prompts, [])
-
 
 class TestDecide(unittest.TestCase):
     def setUp(self):
@@ -1513,9 +2047,13 @@ class TestInsufficient(unittest.TestCase):
         out = self.w.file(self.d, ALICE)
         self.assertTrue(ok(out) and out["refile"], out)
 
-    def test_refile_closes_at_reveal_deadline(self):
-        self.w.at(self.d["reveal_end"])
+    def test_refile_open_after_reveal_deadline_closes_at_read_deadline(self):
+        self.w.at(self.d["reveal_end"] + C.CONTEST_WINDOW_S)
         self.assertTrue(rej(self.w.file(self.d, ALICE)))
+
+    def test_refile_still_open_after_reveal_deadline(self):
+        self.w.at(self.d["reveal_end"] + 1)
+        self.assertTrue(ok(self.w.file(self.d, ALICE)))
 
     def test_insufficient_is_not_cleared(self):
         self.assertFalse(self.w.view("is_cleared", str(ALICE), 1))
@@ -1706,21 +2244,17 @@ class TestLoopholes(unittest.TestCase):
         d = w.drop(reserve=GEN, alloc=GEN // 2)
         self.assertTrue(ok(w.call(OWNER, "set_paused", True)))
         self.assertTrue(rej(w.call(OPERATOR, "create_drop", "x", "base", "00" * 32,
-                                   w.now + 100, 10, DAY, DAY, GEN, GEN, "", "",
+                                   w.now + 100, 10, DAY, DAY, GEN, GEN, 100, 1, "", "",
                                    value=GEN)))
         self.assertTrue(ok(w.file(d, ALICE)))
         w.ensure_revealed(1)
-        # a round ticket whose round never lands, settled while paused
-        opened = w.call(STRANGER, "read_wallet", 1)
-        self.assertEqual(opened["round"], "OPENED")
-        FORGE["leader_dies"] = True
-        self.assertEqual(w.call(STRANGER, "read_wallet", 1)["status"], "UNDETERMINED")
-        FORGE["leader_dies"] = False
-        self.assertTrue(rej(w.call(STRANGER, "settle_stalled", 1)))
+        # a genuine split recorded by settle_stalled while paused
+        serve_history(ALICE, human_outs(d["snap"]))
+        self.assertTrue(rej(w.call(STRANGER, "settle_stalled", 1)))   # read priority
         w.later(C.STALL_TTL_S)
-        out = w.call(STRANGER, "settle_stalled", 1)
+        out = w.split(1, EDGE_SYBIL, EDGE_HUMAN)
         self.assertTrue(ok(out), out)
-        self.assertEqual(out["unsettled_rounds"], 1)
+        self.assertEqual(out["split_rounds"], 1)
         serve_history(ALICE, human_outs(d["snap"]))
         self.assertEqual(w.read(1)["read"], "READ")
         self.assertTrue(ok(w.call(STRANGER, "decide", 1)))
@@ -1812,23 +2346,20 @@ class TestAccess(unittest.TestCase):
 
     def test_settle_stalled_refusals(self):
         self.w.file(self.d, ALICE)
-        self.assertTrue(rej(self.w.call(STRANGER, "settle_stalled", 1)))
-        self.w.c.in_flight["1"] = self.w.now
-        self.assertTrue(rej(self.w.call(STRANGER, "settle_stalled", 1)))
+        self.assertTrue(rej(self.w.call(STRANGER, "settle_stalled", 1)))   # not revealed
+        self.w.ensure_revealed(1)
+        self.assertTrue(rej(self.w.call(STRANGER, "settle_stalled", 1)))   # read priority
         self.assertTrue(rej(self.w.call(STRANGER, "settle_stalled", 99)))
-
-    def test_in_flight_blocks_decide_contest_finalize(self):
-        self.w.file(self.d, ALICE)
-        self.w.at(self.d["reveal_end"])
-        self.w.c.in_flight["1"] = self.w.now
-        self.assertTrue(rej(self.w.call(STRANGER, "decide", 1)))
-        self.assertTrue(rej(self.w.call(STRANGER, "finalize_appeal", 1)))
+        serve_history(ALICE, human_outs(self.d["snap"]))
+        self.w.read(1, reveal=False)
+        self.w.later(C.STALL_TTL_S)
+        self.assertTrue(rej(self.w.call(STRANGER, "settle_stalled", 1)))   # already read
 
 
 REFUSAL_CALLS = [
-    ("create_drop", ("n", "mars", "00" * 32, T0 + 99, 1, DAY, DAY, GEN, GEN, "", "")),
-    ("commit_flagged", (99, "00" * 32, 1)),
-    ("commit_flagged", (1, "00" * 32, 1)),
+    ("create_drop", ("n", "mars", "00" * 32, T0 + 99, 1, DAY, DAY, GEN, GEN, 100, 1, "", "")),
+    ("publish_flagged", (99, str(ALICE), True)),
+    ("publish_flagged", (1, str(ALICE), True)),
     ("reveal_rules", (1, "{}", SALT)),
     ("reveal_rules", (99, "{}", SALT)),
     ("file_appeal", (1, str(NOBODY), "", "")),
@@ -1982,14 +2513,17 @@ def _lifecycle(self, seed):
             self.assertTrue(rej(w.read(aid, reveal=False)))
             continue
         if k == "split":
-            # every round on this appeal fails to settle
-            FORGE["leader_dies"] = True
-            for _ in range(C.MAX_UNSETTLED_ROUNDS):
-                w.read(aid, reveal=False)
-                w.later(int(w.c.stall_ttl_s))
-            FORGE["leader_dies"] = False
-            out = w.call(STRANGER, "settle_stalled", aid)
-            self.assertEqual(w.appeal(aid)["outcome"], "UNRESOLVED", (seed, out))
+            # validators genuinely split on the outcome, three times
+            # (a long, varied history: only the model findings decide)
+            serve_history(x, human_outs(d["snap"], r.randint(3, 12)))
+            w.later(int(w.c.stall_ttl_s))
+            if r.random() < 0.3:
+                # a griefer calls settle_stalled on a wallet the validators
+                # agree on: nothing settles, nothing is counted
+                self.assertEqual(w.call(NOBODY, "settle_stalled", aid)["status"], "UNDETERMINED")
+                self.assertEqual(w.appeal(aid)["split_rounds"], 0)
+            for _ in range(C.MAX_SPLIT_ROUNDS):
+                out = w.split(aid, EDGE_SYBIL, EDGE_HUMAN)
             continue
         if k == "human":
             serve_history(x, human_outs(d["snap"], r.randint(1, 12)))
@@ -2039,6 +2573,8 @@ def _lifecycle(self, seed):
             self.assertTrue(a["snapshot"], "SYBIL only from a covered read")
         if kinds.get(aid) == "split" and revealed:
             self.assertEqual(a["outcome"], "UNRESOLVED", (seed, a))
+        if a["outcome"] == "UNRESOLVED":
+            self.assertEqual(a["split_rounds"], C.MAX_SPLIT_ROUNDS)
     out = w.call(STRANGER, "close_drop", 1)
     self.assertTrue(ok(out), (seed, out))
     winners = [a for a in (w.appeal(i) for i, _ in filed)

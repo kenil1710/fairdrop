@@ -185,28 +185,140 @@
           "name": "FairDropRegistry",
           "superseded_by": "0x8E3E1c02C67FE445345D7A0Eee27019cb2D6405c",
           "superseded_because": "v3 let the leader shade a model finding one step toward HUMAN with no outcome check, so a borderline sybil could be moved across a rule threshold and paid from the reserve; v4 compares the rule outcome exactly and makes 3 unsettled rounds UNRESOLVED"
+        },
+        {
+          "address": "0xe206255a3639aFC60c77F0D8dCA42C2dac80f889",
+          "deploy_tx": "0xe143293adb5eefe166e21611cea19bec501aa11fcda8bf359552ec2689f21021",
+          "source_bytes": 111467,
+          "source_sha256": "1994adaad38669cd51d71d43a7e79f6123c6f1e3c744f47e3bbed0874d433bc5",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            false
+          ],
+          "deployed_at": "2026-09-28T15:20:10.196Z",
+          "mode": "CANONICAL",
+          "rubric_version": "1.0.0",
+          "contest_window_s": 172800,
+          "stall_ttl_s": 3600,
+          "name": "FairDrop",
+          "superseded_by": "0x13CC3573054bC574139A7ba0A37Abcd91f81b84e",
+          "superseded_because": "v4 binding audit: read tickets could be opened and left to expire (an operator could force an honest appeal to UNRESOLVED), first funding could be post-snapshot or unproven, merkle had no leaf/node domain prefixes, the refile window could close before UNRESOLVED, unreadable outbound timestamps were dropped"
+        },
+        {
+          "address": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+          "deploy_tx": "0x757f2ecb0d8ee1858480af0a9597d384b4c5cde0eec15213790ea48886e11f7b",
+          "source_bytes": 111467,
+          "source_sha256": "1994adaad38669cd51d71d43a7e79f6123c6f1e3c744f47e3bbed0874d433bc5",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            true,
+            600,
+            600,
+            30
+          ],
+          "deployed_at": "2026-09-28T15:20:22.485Z",
+          "mode": "DEMO",
+          "rubric_version": "1.0.0",
+          "contest_window_s": 600,
+          "stall_ttl_s": 600,
+          "name": "FairDropDemo",
+          "superseded_by": "0x5F714d149CfCEd6b6Eace01F41c0862D723F49Dd",
+          "superseded_because": "v4 binding audit: read tickets could be opened and left to expire (an operator could force an honest appeal to UNRESOLVED), first funding could be post-snapshot or unproven, merkle had no leaf/node domain prefixes, the refile window could close before UNRESOLVED, unreadable outbound timestamps were dropped"
+        },
+        {
+          "address": "0x8E3E1c02C67FE445345D7A0Eee27019cb2D6405c",
+          "deploy_tx": "0x0c245adfd4c389079b7c3aa5f640176dff3f5d7a7d07e057daf7031f1f4ad43d",
+          "source_bytes": 7044,
+          "source_sha256": "78d8c603b79bf93ec93fa8bee37f0d189941ffb82d8cee7531b7b232472f88ea",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            "0x9779afa39051286B9a1280f78d4d8EB32e491849"
+          ],
+          "deployed_at": "2026-09-28T15:20:27.864Z",
+          "reads": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+          "custody": false,
+          "payable_methods": 0,
+          "name": "FairDropRegistry",
+          "superseded_by": "0xfCc446d41dD178F83534c243C1A1896a02A4a459",
+          "superseded_because": "v4 binding audit: read tickets could be opened and left to expire (an operator could force an honest appeal to UNRESOLVED), first funding could be post-snapshot or unproven, merkle had no leaf/node domain prefixes, the refile window could close before UNRESOLVED, unreadable outbound timestamps were dropped"
+        },
+        {
+          "address": "0x13CC3573054bC574139A7ba0A37Abcd91f81b84e",
+          "deploy_tx": "0xa2038ba338d3fad077448e4210f2f67f111fd50b47e77311bc99a6681003a3e7",
+          "source_bytes": 117347,
+          "source_sha256": "3a178c31e403caefd5ea4b722b64e1df6eeba36c8d593670f3509859cb5c5178",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            false
+          ],
+          "deployed_at": "2026-09-28T17:45:41.384Z",
+          "mode": "CANONICAL",
+          "rubric_version": "1.0.0",
+          "contest_window_s": 172800,
+          "stall_ttl_s": 3600,
+          "name": "FairDrop",
+          "superseded_by": "0xecEeb9E569720BdEd3750A4e41C574642EEF1A58",
+          "superseded_because": "v5 committed only the flagged-list ROOT (appeals depended on the operator handing out proofs), had a per-drop appeal cap a flagged-wallet owner could fill, and did not declare the rules document's size up front"
+        },
+        {
+          "address": "0x5F714d149CfCEd6b6Eace01F41c0862D723F49Dd",
+          "deploy_tx": "0xbe77d9ee0652cce90ea269191136a5da187eaf6e6046f86acb0e955fa6d2684d",
+          "source_bytes": 117347,
+          "source_sha256": "3a178c31e403caefd5ea4b722b64e1df6eeba36c8d593670f3509859cb5c5178",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            true,
+            600,
+            600,
+            30
+          ],
+          "deployed_at": "2026-09-28T17:45:52.371Z",
+          "mode": "DEMO",
+          "rubric_version": "1.0.0",
+          "contest_window_s": 600,
+          "stall_ttl_s": 600,
+          "name": "FairDropDemo",
+          "superseded_by": "0x4F34B9Dd883C58C25Fb79d6d25a8936421DCc6dD",
+          "superseded_because": "v5 committed only the flagged-list ROOT (appeals depended on the operator handing out proofs), had a per-drop appeal cap a flagged-wallet owner could fill, and did not declare the rules document's size up front"
+        },
+        {
+          "address": "0xfCc446d41dD178F83534c243C1A1896a02A4a459",
+          "deploy_tx": "0x17abd116939e7f039bcb301ff5cc33ba6beac305a778e503a435375016de2a09",
+          "source_bytes": 7044,
+          "source_sha256": "78d8c603b79bf93ec93fa8bee37f0d189941ffb82d8cee7531b7b232472f88ea",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            "0x5F714d149CfCEd6b6Eace01F41c0862D723F49Dd"
+          ],
+          "deployed_at": "2026-09-28T17:45:58.174Z",
+          "reads": "0x5F714d149CfCEd6b6Eace01F41c0862D723F49Dd",
+          "custody": false,
+          "payable_methods": 0,
+          "name": "FairDropRegistry",
+          "superseded_by": "0xA700843BD323D75E70d98070533fd57B57e3FBB4",
+          "superseded_because": "v5 committed only the flagged-list ROOT (appeals depended on the operator handing out proofs), had a per-drop appeal cap a flagged-wallet owner could fill, and did not declare the rules document's size up front"
         }
       ],
       "FairDrop": {
-        "address": "0xe206255a3639aFC60c77F0D8dCA42C2dac80f889",
-        "deploy_tx": "0xe143293adb5eefe166e21611cea19bec501aa11fcda8bf359552ec2689f21021",
-        "source_bytes": 111467,
-        "source_sha256": "1994adaad38669cd51d71d43a7e79f6123c6f1e3c744f47e3bbed0874d433bc5",
+        "address": "0xecEeb9E569720BdEd3750A4e41C574642EEF1A58",
+        "deploy_tx": "0x66bd1289cae1bc222ca6b25d17793577dea8d1426a28b46424f9128447848af2",
+        "source_bytes": 125769,
+        "source_sha256": "8cdfe465704ff8af89a5f878a4be7e68e41763b309e0cfad46683b0ebebafb86",
         "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
         "constructor_args": [
           false
         ],
-        "deployed_at": "2026-09-28T15:20:10.196Z",
+        "deployed_at": "2026-09-28T17:55:56.327Z",
         "mode": "CANONICAL",
         "rubric_version": "1.0.0",
         "contest_window_s": 172800,
         "stall_ttl_s": 3600
       },
       "FairDropDemo": {
-        "address": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
-        "deploy_tx": "0x757f2ecb0d8ee1858480af0a9597d384b4c5cde0eec15213790ea48886e11f7b",
-        "source_bytes": 111467,
-        "source_sha256": "1994adaad38669cd51d71d43a7e79f6123c6f1e3c744f47e3bbed0874d433bc5",
+        "address": "0x4F34B9Dd883C58C25Fb79d6d25a8936421DCc6dD",
+        "deploy_tx": "0x630f2a055651522dafe1484be27d553ab7a5c9d21870e972160102c254492642",
+        "source_bytes": 125769,
+        "source_sha256": "8cdfe465704ff8af89a5f878a4be7e68e41763b309e0cfad46683b0ebebafb86",
         "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
         "constructor_args": [
           true,
@@ -214,23 +326,23 @@
           600,
           30
         ],
-        "deployed_at": "2026-09-28T15:20:22.485Z",
+        "deployed_at": "2026-09-28T17:56:07.056Z",
         "mode": "DEMO",
         "rubric_version": "1.0.0",
         "contest_window_s": 600,
         "stall_ttl_s": 600
       },
       "FairDropRegistry": {
-        "address": "0x8E3E1c02C67FE445345D7A0Eee27019cb2D6405c",
-        "deploy_tx": "0x0c245adfd4c389079b7c3aa5f640176dff3f5d7a7d07e057daf7031f1f4ad43d",
+        "address": "0xA700843BD323D75E70d98070533fd57B57e3FBB4",
+        "deploy_tx": "0x3b8f26dd02beb0f775c389ebb670146a1a00333179492279a177d0fe1c75c4f0",
         "source_bytes": 7044,
         "source_sha256": "78d8c603b79bf93ec93fa8bee37f0d189941ffb82d8cee7531b7b232472f88ea",
         "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
         "constructor_args": [
-          "0x9779afa39051286B9a1280f78d4d8EB32e491849"
+          "0x4F34B9Dd883C58C25Fb79d6d25a8936421DCc6dD"
         ],
-        "deployed_at": "2026-09-28T15:20:27.864Z",
-        "reads": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+        "deployed_at": "2026-09-28T17:56:15.752Z",
+        "reads": "0x4F34B9Dd883C58C25Fb79d6d25a8936421DCc6dD",
         "custody": false,
         "payable_methods": 0
       }

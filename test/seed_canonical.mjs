@@ -36,22 +36,22 @@ const RULES = { min_hits: 2, rules: [
 
 if (!st.id) {
   st.salt = newSalt();
-  const { root, proofs } = merkle([F1, F2]);
-  Object.assign(st, { root, proofs, snap: nowS() + 240 });
-  const r = await tx("canonOp", FD, "create_drop", ["Canonical — keys we control", "base", commitment(RULES, st.salt), st.snap, 365, 3600, 3600, GEN / 2n, GEN / 20n, "CanonProto", ""], GEN);
+  const { root, proofs, wallets } = merkle([F1, F2]);
+  Object.assign(st, { root, proofs, wallets, snap: nowS() + 240 });
+  const r = await tx("canonOp", FD, "create_drop", ["Canonical — keys we control", "base", commitment(RULES, st.salt), st.snap, 365, 3600, 3600, GEN / 2n, GEN / 20n, canonRules(RULES).length, RULES.rules.length, "CanonProto", ""], GEN);
   if (r.json?.status !== "OK") throw new Error(JSON.stringify(r.json));
   st.id = r.json.drop_id; st.appeal_end = st.snap + 3600; st.reveal_end = st.appeal_end + 3600; save();
 }
 log(`canonical drop #${st.id} on ${FD}`);
 const d0 = (await view(FD, "get_drop", [st.id])).drop;
-if (!d0.flagged_root) { await waitUntil(st.snap, "for the snapshot"); await tx("canonOp", FD, "commit_flagged", [st.id, st.root, 2]); }
+if (!d0.flagged_root) { await waitUntil(st.snap, "for the snapshot"); await tx("canonOp", FD, "publish_flagged", [st.id, st.wallets.join(","), true], 0n, "publish the flagged list on chain"); }
 if (!st.probed) {
   await tx("outsider", FD, "file_appeal", [st.id, F2, st.proofs[F2], "Filing for a wallet I do not control"], GEN / 20n, "LOOPHOLE 4: a stranger files for flagged2 (must be refused)");
   await tx("canonOp", FD, "file_appeal", [st.id, F2, st.proofs[F2], "Operator on behalf"], GEN / 20n, "canonical: the operator files for flagged2 (must be refused)");
   await tx("outsider", FD, "file_appeal", [st.id, acc.outsider.address, st.proofs[F1], "Not flagged"], GEN / 20n, "LOOPHOLE 3: a non-flagged wallet appeals (must be refused)");
 }
 if (!st.a1) {
-  const r = await tx("flagged1", FD, "file_appeal", [st.id, F1, st.proofs[F1], "This is my own wallet and I appeal from it."], GEN / 20n, "flagged1 appeals FROM ITSELF");
+  const r = await tx("flagged1", FD, "file_appeal", [st.id, F1, "", "This is my own wallet and I appeal from it."], GEN / 20n, "flagged1 appeals FROM ITSELF, with NO proof from the operator (membership read from the published list)");
   if (r.json?.status === "OK") { st.a1 = r.json.appeal_id; save(); }
   else { const of = await view(FD, "get_appeal_of", [st.id, F1]); if (of?.found) { st.a1 = of.appeal.appeal_id; save(); } }
 }

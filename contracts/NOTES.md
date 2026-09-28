@@ -6,26 +6,33 @@ where the build deliberately departs from the brief.
 
 ---
 
-## 1. Two commitments, not one
+## 1. Two commitments, and a published list
 
 The brief puts `rules_hash` **and** `flagged_root` into drop creation. They
 cannot both be committed at the same moment and both mean what they should:
 
-- the **rules** must be committed *before* the snapshot — that is the whole
+- the **rules** must be committed *before* the snapshot. That is the whole
   promise ("provably locked in advance");
-- the **flagged list** is the *output* of applying those rules to the snapshot,
-  so it cannot exist before the snapshot.
+- the **flagged list** is the *output* of those rules applied to the
+  snapshot, so it cannot exist before the snapshot.
 
-So `create_drop` commits the rules hash and **refuses a snapshot time that is
-not strictly in the future** (the contract's own block time is the clock). The
-flagged root is committed by `commit_flagged`, operator-only, once, at or after
-the snapshot and before the appeal window closes. Everything else the brief
-lists as frozen at creation — allocation, bond, windows, chain, lookback, the
-protocol's contracts — is frozen at creation; an AST test proves no method but
-`create_drop` writes any of them.
+So `create_drop` commits the rules hash, and the declared byte size and rule
+count of the rules document (≤ 4000 bytes, ≤ 12 rules, so an over-limit
+document is refused up front and every reveal fits in one transaction). It
+**refuses a snapshot time that is not strictly in the future**; the contract's
+own block time is the clock.
 
-If the operator never commits a flagged list, the drop is VOID after the appeal
-window: nobody could appeal, nobody is owed, and `close_drop` returns the
+The flagged list is **published on chain** by `publish_flagged`: operator
+only, at or after the snapshot, before the appeal window ends, in ascending
+chunks of ≤ 400 addresses (≤ 5000 in all). The contract computes the merkle
+root itself when the last chunk arrives. Anyone can read the list
+(`get_flagged`), rebuild every proof, ask for one (`flagged_proof`), or file
+with no proof (binary search of the published list). A review asked for
+exactly this: a root-only commitment left appeals dependent on the operator
+handing out proofs.
+
+If the operator never publishes, the drop is VOID after the appeal window:
+nobody was provably excluded, nobody is owed, and `close_drop` returns the
 reserve.
 
 ## 2. What the model sees, and why it cannot see the rules
@@ -121,30 +128,70 @@ A contest round is compared the same way: findings within one bucket, and the
 outcome from each validator's own contest findings identical. A contest round
 that does not settle consumes nothing; the provisional outcome stands.
 
-## 4a. Rounds that never settle: tickets and UNRESOLVED
+## 4a. Rounds that never settle: committed split rounds and UNRESOLVED
 
-An UNDETERMINED round commits **nothing** — not a counter, not a refusal
+An UNDETERMINED round commits **nothing**: not a counter, not a refusal
 (measured: `docs/superseded/seed-run-v1-exact-buckets.log`, "round
-UNDETERMINED → FILED (not applied)"). So a round cannot count its own failure.
+UNDETERMINED → FILED (not applied)"). So a failed `read_wallet` cannot count
+itself.
 
-`read_wallet` is therefore two committed steps. The first call on an appeal
-with no live ticket only **opens a ticket** (deterministic, always commits).
-Calls while the ticket is live run the consensus round; a landed round (READ,
-INSUFFICIENT or UNAVAILABLE) closes it. A ticket that outlives its TTL
-(`round_ttl_s`: 1 hour canonical, 10 minutes on the demo) without a landed
-round is counted as one **unsettled** attempt — by the next `read_wallet`, or
-by `settle_stalled` (permissionless, works while paused).
+v4 counted *tickets*: a committed write opened before each round, counted
+when it expired unrun. A binding review rejected that. Anyone could open a
+ticket and never run it, so the count did not prove a read had been
+attempted, let alone that validators disagreed. An operator could push an
+honest appeal to UNRESOLVED by neglect.
 
-The third unsettled attempt makes the appeal **UNRESOLVED**: final, bond back
-to the filer, no allocation, never SYBIL_PATTERN, and the wallet may refile
-until the reveal deadline. `verify_appeal` checks that an UNRESOLVED appeal
-had three unsettled rounds and paid nothing.
+v5 records a failed read only when the failure itself reaches consensus.
+`settle_stalled(appeal)` is a second consensus round:
 
-Honest limit: a ticket anyone may open, and a ticket nobody runs expires. A
-party that wants an appeal UNRESOLVED can open tickets and wait; the other
-party defeats that by running the round inside the ticket's TTL (anyone may),
-and UNRESOLVED can neither pay nor condemn, so the worst it does is send the
-wallet back to refile.
+- the leader submits its own judged read (evidence + findings + outcome);
+- a validator **accepts only if** the evidence agrees with its own (history
+  hash and features exact, findings within one bucket) **and** the rule
+  outcome it computed from its own findings is **different** from the
+  leader's.
+
+On a wallet the validators agree on, no validator accepts, the round does
+not settle, and nothing is counted, however many times anyone calls it
+(`TestUnresolved.test_griefing_by_stranger_and_operator_counts_nothing`). A
+dishonest leader alone cannot manufacture a split either: honest validators
+only accept when *their own* outcome differs, which only happens on a wallet
+genuinely one bucket from a threshold. `read_wallet` has priority for
+`stall_ttl_s` (1 h canonical, 10 min demo) after an appeal becomes readable.
+
+Three committed split rounds make the appeal **UNRESOLVED**: final, bond back
+to the filer, no allocation, never SYBIL_PATTERN. `verify_appeal` checks
+`split_rounds >= 3` and `payout == 0`.
+
+**Refile after UNRESOLVED.** INSUFFICIENT and UNRESOLVED can only arise after
+the reveal, so the refile window runs to the drop's read deadline (reveal
+deadline + one contest window). Each appeal has its own read deadline,
+`max(reveal deadline, filed_at) + contest window`. A refile filed at the last
+moment still gets a full window to be read, and the drop cannot close until
+it is final.
+
+## 4b. Snapshot binding, first funding, merkle domains
+
+- **Snapshot.** Outbound lines are kept only inside `[lookback start,
+  snapshot]`. `first_seen` counts only activity at or before the snapshot,
+  and the first funding must be at or before it. Activity after the snapshot
+  never reaches the record, the features, or the model. Age and active days
+  are measured at the snapshot (`snap_ts - first_seen`, and days inside the
+  window), whatever the clock says at read time.
+- **Unreadable items.** A mined outbound item whose timestamp cannot be read
+  makes the read INSUFFICIENT. It could be inside the window, and dropping it
+  would bias every count. A pending item (no block, no timestamp) is
+  necessarily after the snapshot and is skipped.
+- **First funding.** The earliest-activity page starts at the wallet's first
+  transaction (complete, or verifiably ascending), so later inbound
+  transfers come *after* the funding on that page and cannot bury it. The
+  funding is the earliest inbound transfer with value at or before the
+  snapshot. It is **proven** only if it is on that page and no other sender
+  funded the wallet in the same second. Otherwise the record says
+  `funder_proven=0`, the funder finding is `UNCLEAR` by code whatever the
+  model says, and a drop whose rules use it reads INSUFFICIENT_HISTORY.
+- **Merkle.** `leaf = sha256(0x00 || address)`,
+  `node = sha256(0x01 || min || max)`. An internal node can never equal a
+  leaf, and the contract only ever builds a leaf from a 20-byte address.
 
 ## 5. The coverage gate (the WillExecutor lesson)
 
@@ -163,8 +210,7 @@ are not counted as the wallet's activity, but they still count toward how far
 back the page reaches. So the gate holds whether or not the filter was honoured.
 
 Anything else is INSUFFICIENT_HISTORY: bond returned, and the wallet may refile
-until the reveal deadline ("refileable after the window": after the appeal
-window has closed, since reads only start once the rules are revealed). An appeal nobody
+until the drop's read deadline (§4a). An appeal nobody
 managed to read by the reveal deadline plus a contest window also resolves as
 INSUFFICIENT_HISTORY — infrastructure failure never condemns.
 

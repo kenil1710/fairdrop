@@ -9,8 +9,8 @@ import { useWallet } from "@/components/WalletProvider";
 import { TxButton } from "@/components/TxButton";
 import { ErrorNote, Loading, Section } from "@/components/ui";
 import { useAsync } from "@/components/useAsync";
-import { checkProof, getConfig, getDrops, write } from "@/lib/contract";
-import { gen, type WriteResult } from "@/lib/fairdrop";
+import { checkProof, getConfig, getDrops, getFlaggedList, write } from "@/lib/contract";
+import { gen, merkle, type WriteResult } from "@/lib/fairdrop";
 
 export default function AppealPage() {
   const { account } = useWallet();
@@ -22,6 +22,32 @@ export default function AppealPage() {
   const [statement, setStatement] = useState("");
   const [preview, setPreview] = useState<{ ok: boolean; reason: string } | null>(null);
   const [checking, setChecking] = useState(false);
+  const [building, setBuilding] = useState(false);
+
+  /** Build this wallet's proof from the flagged list PUBLISHED ON CHAIN, and
+   *  check the rebuilt root against the contract's. No operator involved. */
+  async function buildProof() {
+    setBuilding(true);
+    setPreview(null);
+    try {
+      const list = await getFlaggedList(dropId);
+      if (!list.final) throw new Error("The operator has not published a final flagged list for this drop.");
+      const tree = await merkle(list.wallets);
+      if (tree.root !== list.root) throw new Error("The published list does not hash to the on-chain root.");
+      const mine = tree.proofs[walletValue.trim().toLowerCase()];
+      if (mine === undefined) {
+        setProof("");
+        setPreview({ ok: false, reason: `Not on the published flagged list (${list.total} wallets).` });
+        return;
+      }
+      setProof(mine);
+      setPreview(await checkProof(dropId, walletValue.trim(), mine));
+    } catch (e) {
+      setPreview({ ok: false, reason: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setBuilding(false);
+    }
+  }
   const [filed, setFiled] = useState<number | null>(null);
 
   useEffect(() => {
@@ -75,7 +101,10 @@ export default function AppealPage() {
         </Section>
 
         <Section title="2 · Merkle proof" icon={<ShieldCheck size={18} className="text-sand" />}>
-          <p className="mb-2 text-xs text-muted">The operator publishes the flagged list and each wallet&apos;s proof: a list of 32-byte sibling hashes, comma separated. The contract checks it against the committed root.</p>
+          <p className="mb-2 text-xs text-muted">The flagged list is published on chain and the contract computed its root, so you never need the operator for a proof. Build yours here from the published list, paste one, or file with none: the contract then checks the published list itself.</p>
+          <button type="button" className="btn btn-primary mb-3" disabled={!dropId || !walletValue || building} onClick={() => void buildProof()}>
+            {building ? "Reading the published list…" : "Build my proof from the on-chain list"}
+          </button>
           <textarea className="input mono min-h-24 text-xs" value={proof} onChange={(e) => { setProof(e.target.value); setPreview(null); }} placeholder="a3f1…,9c07…" />
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <button type="button" className="btn btn-ghost" disabled={!dropId || !walletValue || checking} onClick={() => void runPreview()}>

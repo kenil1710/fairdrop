@@ -1,0 +1,12 @@
+[2026-09-28T17:46:41.185Z] v5 demo seed on 0x5F714d149CfCEd6b6Eace01F41c0862D723F49Dd (read priority 600s, contest window 600s)
+[2026-09-28T17:46:55.050Z]   opA      create_drop(Base Quest Season , base, bc586b4f785b97f664, 1790617841, 900, 600, 3000, 100000000000000000, 100000000000000000, DemoQuest, 0x3c83ef6119eb05ca) +3 GEN → ACCEPTED OK [13s] A: create tx=0x49c8f208f54175888fc1f0a4744631e3571966dc660e132f8e6886bfebea133e
+[2026-09-28T17:47:06.808Z]   opB      create_drop(Silent Operator — , base, 6fe6d89ed0af85ceff, 1790617855, 900, 600, 900, 400000000000000000, 50000000000000000, DemoQuest, 0x3c83ef6119eb05ca) +1 GEN → ACCEPTED OK [11s] B: create tx=0x5c41e011016ff64bbe725c2c9226523de9f1fa133c93fc3f2795e558bd98dbbb
+[2026-09-28T17:47:19.026Z]   opC      create_drop(Thin Reserve — pro, base, 0b15c4d2ddf2595370, 1790617866, 900, 600, 3000, 600000000000000000, 50000000000000000, DemoQuest, 0x3c83ef6119eb05ca) +1 GEN → ACCEPTED OK [12s] C: create tx=0x31bc8e695e2b6986eee0e3c54aa6596967c3f5ac82bd70f77b4f9ca2b60cc5b7
+[2026-09-28T17:47:32.071Z]   opD      create_drop(Borderline — split, base, c48c8edd6aeee9e32a, 1790617879, 900, 600, 3600, 500000000000000000, 50000000000000000, DemoQuest, 0x3c83ef6119eb05ca) +1 GEN → ACCEPTED OK [13s] D: create tx=0x2d82bb6f497c38bd056575e030d4b3b3c70a6888ac62e0349817324b78cf0a0b
+[2026-09-28T17:47:32.072Z] A: drop #1 snapshot 2026-09-28T17:50:41.000Z appeals until 2026-09-28T18:00:41.000Z reveal by 2026-09-28T18:50:41.000Z
+[2026-09-28T17:47:32.073Z] B: drop #2 snapshot 2026-09-28T17:50:55.000Z appeals until 2026-09-28T18:00:55.000Z reveal by 2026-09-28T18:15:55.000Z
+[2026-09-28T17:47:32.073Z] C: drop #3 snapshot 2026-09-28T17:51:06.000Z appeals until 2026-09-28T18:01:06.000Z reveal by 2026-09-28T18:51:06.000Z
+[2026-09-28T17:47:32.073Z] D: drop #4 snapshot 2026-09-28T17:51:19.000Z appeals until 2026-09-28T18:01:19.000Z reveal by 2026-09-28T19:01:19.000Z
+[2026-09-28T17:47:44.059Z]   deployer set_paused(true) → ACCEPTED OK [11s] owner PAUSES the contract for the rest of the run tx=0x5d58b7cc835eb6a4b077a76d2a492ef8877f43fe3e945b7c30efdd3087e14d13
+[2026-09-28T17:47:57.279Z]   prober   create_drop(Paused?, base, 000000000000000000, 1790618264, 10, 3600, 3600, 100000000000000000, 100000000000000000, , ) +1 GEN → ACCEPTED REJECTED new drops are paused [13s] create_drop while paused (must be refused) tx=0x9f8a4879d7ade16f1879e60b535c9fe153016e0d0a21acac6cbe79019a8c2118
+[2026-09-28T17:47:58.282Z]   … waiting until 2026-09-28T17:50:46.000Z (168s) A: for the snapshot

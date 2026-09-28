@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Menu, Radio, Wallet, X } from "lucide-react";
 import { Logo } from "./Logo";
+import { ClaimBar } from "./ClaimBar";
 import { useWallet } from "./WalletProvider";
 import { NETWORK_LABEL } from "@/lib/genlayer";
 import { short } from "@/lib/fairdrop";
@@ -108,6 +109,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
         {error && <div className="bg-sybil/10 px-4 py-1.5 text-center text-xs text-sybil">{error}</div>}
       </header>
+      <ClaimBar />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
       <footer className="border-t border-[var(--line)] px-4 py-6 text-center text-xs text-muted">
         FairDrop · GenLayer Studio Dev · <Link href="/docs" className="underline">how it works</Link> · <a className="underline" href="https://github.com/kenil1710/fairdrop" target="_blank" rel="noreferrer">source</a>

@@ -26,7 +26,7 @@ And if the operator never reveals? Every pending appeal wins. Operator failure c
 
 ## The blind read
 
-A flagged wallet appeals *from itself* — the transaction sender is the wallet, so nobody can appeal for a wallet they don't control and there's no identity to bind. It posts a small bond and a merkle proof that it's on the flagged list.
+A flagged wallet appeals *from itself* — the transaction sender is the wallet, so nobody can appeal for a wallet they don't control and there's no identity to bind. It posts a small bond. The flagged list itself is published on chain and the contract computed its root, so the wallet builds its own merkle proof from that list (the app does it), asks the contract for one, or sends none and lets the contract check the published list. No appeal waits on the operator.
 
 Once the rules are revealed, anyone can trigger the read. This is the part only GenLayer can do. Every validator fetches the wallet's outbound history from Blockscout on its own. The history inside the drop's window becomes one fixed-shape line per transaction: date, target, whether the target is a contract, its public label, method and value. That text is hashed, and validators must produce the **same hash**. Code computes the four deterministic findings from the text, and validators must agree on them exactly. Then a model reads the text and answers the four model questions with one word each, where validators may differ by one bucket. Last, each validator applies the revealed rules **in code to its own findings**. The outcome it gets must be identical to the leader's, or the round doesn't settle. ("What went wrong" explains why that last check exists.)
 
@@ -46,28 +46,67 @@ The first real read settled on the first attempt, in 61 seconds. The wallet had 
 
 Version four separates the evidence from the decision. Findings may still differ by one bucket, because model readings of a borderline wallet genuinely wobble. But once the rules are revealed, every validator applies them in code to its **own** findings, and the outcome must be identical. A shade that changes nothing is accepted. A shade that crosses a threshold stops the round. So reads now happen after the reveal. The model is exactly as blind as before: the rules go to `_evaluate`, never to the prompt.
 
-That raised a new problem. On GenLayer, an UNDETERMINED transaction commits *nothing*, so a round can't count its own failure. Each read attempt is therefore two writes. The first opens a ticket, and that write always commits. The second runs the round. A ticket that expires without a landed round counts as unsettled, and three unsettled rounds make the appeal **UNRESOLVED**: the bond comes back, the wallet may refile, nothing is paid and nobody is condemned.
+That raised a new problem. On GenLayer, an UNDETERMINED transaction commits *nothing*, so a round can't count its own failure. My first answer was tickets: a committed write before each round, counted when it expired unrun. A binding review killed it in one line: anyone could open a ticket and never run it, so the count proved nothing, and an operator could push an honest appeal to UNRESOLVED by neglect.
+
+The fix records a failure only when the failure itself reaches consensus. `settle_stalled` is a second consensus round, and a validator accepts it only if it read the wallet, agreed with the leader on the evidence, and computed a **different** outcome. On a wallet the validators agree on, that round can't settle, however many times anyone calls it. Three genuine splits make the appeal **UNRESOLVED**: the bond comes back, the wallet may refile until the drop's read deadline, nothing is paid and nobody is condemned.
 
 **The word "flagged" reached the model.** I wrote a checker that reads back every live prompt through the contract's `get_prompt` and looks for anything that should never be there. It found one: an operator's contest text said the wallet "shares a funding source with several flagged wallets." No rule had leaked — but the promise is that the model never sees the flag either. The contest-text screen now also refuses framing words (flag, sybil, airdrop, appeal, allocation, verdict), the contract was redeployed, and the checker runs as part of the audit.
 
-**The brief's two commitments can't happen at the same moment.** The rules must be sealed before the snapshot. The flagged list is the *output* of those rules applied to the snapshot — it cannot exist before it. So the seal is committed at creation and the flagged root after the snapshot.
+**The brief's two commitments can't happen at the same moment.** The rules must be sealed before the snapshot. The flagged list is the *output* of those rules applied to the snapshot — it cannot exist before it. So the seal is committed at creation, and the flagged list is published on chain after the snapshot, with the contract computing its root.
 
 **None of my keys have a history.** The canonical instance requires the flagged wallet to send its own appeal. I checked all 199 keys I control across five Blockscout chains: zero transactions. So there are two instances of the same source. The canonical one runs on my own keys and honestly reads empty histories. The DEMO one lets a drop's operator file on behalf of a named public wallet — real Base histories, labelled DEMO everywhere.
 
-## What v4 did on chain
+**A binding review found six more gaps.** The question it asked: is every stored result tied to the drop, the snapshot, the wallet and the committed rules?
+- *The first funding could come from after the snapshot, or be a guess.* It now must be at or before the snapshot. It must also be provably the first: on the first page of the wallet's history, with no second sender in the same second. Otherwise code sets the funder finding to UNCLEAR, and a drop whose rules use it reads INSUFFICIENT_HISTORY.
+- *Appeals depended on the operator handing out proofs.* The operator only committed a root. Now the operator publishes the whole list and the contract computes the root.
+- *Merkle leaves and nodes shared a hash domain.* They now carry `0x00` and `0x01` prefixes.
+- *A per-drop cap of 100 appeals* could be filled by whoever controls many flagged wallets. The cap is now 3 filings per wallet.
+- *An UNRESOLVED appeal's refile window could close before it was UNRESOLVED.* Refiles now run to one contest window after the reveal deadline, and each refile gets its own full read window.
+- *A mined transaction with an unreadable timestamp was silently dropped.* Now it makes the read INSUFFICIENT.
 
-The v4 demo instance ran four drops, all while the owner had the contract paused (pause stops new drops and nothing else). Thirteen appeals were filed. They produced 14 read rounds that landed, and every landed read settled with the validators agreeing on the outcome. The final count was seven HUMAN_PATTERN, three SYBIL_PATTERN, two INSUFFICIENT_HISTORY and one UNRESOLVED.
+## What the final version did on chain
 
-- The wobble is real, and now it's harmless. One wallet, the same history, read `SCRIPTED_REPETITION=SOME` on one drop and `NONE` on another. Both rounds settled on HUMAN_PATTERN, because on that drop's rules the difference changes nothing.
-- The borderline wallet from v1 went into a drop with one rule, `SCRIPTED_REPETITION ≥ SOME`, exactly the threshold v3 let a leader cross. This time every validator read SOME, so the round settled on SYBIL_PATTERN. The genuine split didn't recur, so the UNRESOLVED on chain comes from a different path. Three read tickets were opened and never run, `settle_stalled` counted each one while the contract was paused, and the third made the appeal UNRESOLVED: bond returned, nothing paid. The wallet refiled before the deadline. Blockscout answered HTTP 500 on its earliest-activity page four times; the contract returned UNAVAILABLE and decided nothing. The fifth attempt read it.
-- The operator tried two reveals that didn't match the seal (a more lenient `min_hits`, then the right rules with a new salt). Both were refused and counted on the drop. A read attempted before the reveal was refused too.
-- A contest text containing the word "flagged" was refused before it could reach a model. A contest that copied the appeal statement was refused by the novelty gate. The real contest re-read the stored snapshot and the HUMAN outcome held.
-- Three winners on a 1 GEN reserve with a 0.6 GEN allocation were each paid 0.333… GEN. The pool ended at zero.
-- After every drop closed and every account claimed, the books read 0 balance, 0 locked, 0 payable. Every live prompt was read back through `get_prompt`: none contained a rule, a threshold, the drop's name or the appellant's statement.
+The v6 demo ran eleven drops while the owner had the contract paused. Pause
+stops new drops and nothing else. Nineteen appeals were filed: nine won
+(HUMAN_PATTERN), one lost (SYBIL_PATTERN) and nine came back
+INSUFFICIENT_HISTORY. After every drop closed and every account claimed, the
+books read 0 balance, 0 locked, 0 payable.
+
+- **The rules held both ways.** A 920-day-old wallet, funded from an exchange,
+  won by the rules. A 15-day-old, single-contract minter lost. Two reveals that
+  didn't match the seal were refused and counted on the drop.
+- **Griefing did nothing.** A stranger and the operator each called
+  `settle_stalled` on an appeal the validators agreed on. Both rounds were
+  UNDETERMINED, and zero splits were recorded.
+- **No reveal meant everyone won.** On two drops the operator never revealed,
+  and every pending appeal won by default. On one of them, two winners were
+  owed 0.6 GEN each from a 1 GEN reserve, and each was paid exactly 0.5 GEN.
+- **Contests held.** A contest text that framed the case was refused before
+  it could reach a model. Real contests re-read the stored snapshot, and the
+  outcome held.
+- **A truncated history was never condemned.** It came back
+  INSUFFICIENT_HISTORY, was refiled after the reveal deadline inside the
+  extended window, and came back INSUFFICIENT_HISTORY again.
+- **The whole lifecycle ran through the live app.** A headless browser used
+  real contract calls for every step: create, publish the list, build a proof
+  from that list, file, a refused duplicate, a refused bad reveal, the real
+  reveal, read, verdict, contest, close and both claims.
+
+The walk found a real bug. The app waited for a transaction to be exactly
+ACCEPTED, and Studio sometimes finalises between two polls, so a successful
+write could spin for ten minutes. Now any decided state counts.
+
+Two things did not happen. First, the borderline wallet's three split rounds
+all ended UNDETERMINED because the validators agreed, so there is no
+UNRESOLVED on chain; that path is proven offline. Second, Blockscout's Base
+API answered HTTP 500 to most requests for about three hours. Six appeals
+could not be read in time and expired as INSUFFICIENT_HISTORY. The bond came
+back and nobody was condemned. An infrastructure failure costs a verdict, not
+a user.
 
 ## The coverage gate
 
-The mistake I've made before, and designed against here: proving a negative from evidence that couldn't have contained the counterexample. Blockscout returns 50 transactions a page. If a wallet sent 80 transactions since the lookback start, the page doesn't reach back far enough, and "no sign of organic behaviour on this page" says nothing about the wallet.
+The mistake I've made before, and designed against here: proving a negative from evidence that couldn't have contained the counterexample. Blockscout returns 50 transactions a page. If a wallet sent 80 transactions between the lookback start and now (activity after the snapshot fills the page too), the page doesn't reach back far enough, and "no sign of organic behaviour on this page" says nothing about the wallet.
 
 So a read counts only if the outbound page is complete (fewer than 50 items *and* no next page) or its oldest item reaches back to the lookback start, and the earliest-activity page is complete or verifiably ascending. Otherwise the outcome is `INSUFFICIENT_HISTORY`: bond returned, refile allowed. It never condemns. In the seed, a wallet with 50 outbound transactions in 24 days hit exactly that — read, refused to judge, refiled, refused again. Honest both times.
 
@@ -86,7 +125,8 @@ The operator escrows an appeal reserve at creation. Nothing is paid until every 
 - Reading behaviour is a judgement. Four one-word answers, validator agreement on each, rules applied by code, a contest — all of that bounds the judgement. None of it makes a model infallible.
 - Blockscout is the only source. Labels can be missing; replicas lag by minutes; 50-item pages mean very active wallets read as INSUFFICIENT.
 - Studio Dev queues value transfers and may not deliver them. The contract reports the gap as `undelivered_wei`; the books still close at zero.
-- Anyone may open a read ticket, and one nobody runs expires as unsettled. Someone who wants an appeal UNRESOLVED could open tickets and wait. Anyone defeats that by running the round in time, and UNRESOLVED neither pays nor condemns.
+- A split needs the validators' own outcomes to differ from the leader's, which only happens one bucket from a threshold. There a dishonest leader can help record splits; the worst it buys is UNRESOLVED, which neither pays nor condemns.
+- Explorer labels are today's, not the snapshot's. Transactions, first activity and first funding are bound to the snapshot; the labels aren't, and they reach the model only as descriptive text.
 - The canonical instance's 48-hour contest window is still open, so its drop can't close yet. That's the design, not a gap.
 
 ## The point
