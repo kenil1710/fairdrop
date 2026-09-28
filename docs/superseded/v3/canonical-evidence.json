@@ -1,6 +1,5 @@
 {
-  "contract": "0xe206255a3639aFC60c77F0D8dCA42C2dac80f889",
-  "at": "2026-09-28T17:02:39.826Z",
+  "contract": "0xeADc6ccb80761E9b98d9947A3Bb31dd125C09095",
   "drop": {
     "drop_id": 1,
     "operator": "0x0d0A43EFFF182E05a3A1713676C82202525Cb5Da",
@@ -8,48 +7,29 @@
     "chain": "base",
     "protocol": "CanonProto",
     "protocol_contracts": [],
-    "phase": "SETTLING",
-    "created_at": 1790608884,
-    "snapshot_ts": 1790609118,
-    "committed_before_snapshot_s": 234,
+    "phase": "APPEALS_OPEN",
+    "created_at": 1790599888,
+    "snapshot_ts": 1790600121,
+    "committed_before_snapshot_s": 233,
     "lookback_days": 365,
-    "lookback_start": 1759073118,
-    "appeal_end_ts": 1790612718,
-    "reveal_end_ts": 1790616318,
+    "lookback_start": 1759064121,
+    "appeal_end_ts": 1790603721,
+    "reveal_end_ts": 1790607321,
     "allocation_wei": "500000000000000000",
     "bond_wei": "50000000000000000",
     "contest_bond_wei": "25000000000000000",
     "reserve_initial_wei": "1000000000000000000",
     "reserve_wei": "1000000000000000000",
     "held_bonds_wei": "50000000000000000",
-    "rules_hash": "6422dfe386c6e66cb135bde92f7fa2825f19b6c1a6ed0f97e7fa2effd2498b75",
+    "rules_hash": "4b1e1ffb73c4e087edd4157b40e511ccbafd4b1063376ca84874c9da509c95a0",
     "flagged_root": "38f74eccf9e14b6ae6ffe1dd2c6d2befa0055b322b35dabf5e9cb9a8f16af8de",
     "flagged_count": 2,
-    "flagged_at": 1790609129,
-    "revealed": true,
-    "rules_json": "{\"min_hits\":2,\"rules\":[{\"condition\":\"LT\",\"finding\":\"WALLET_AGE_DAYS\",\"threshold\":30},{\"condition\":\"LT\",\"finding\":\"OUTBOUND_TX_COUNT\",\"threshold\":3},{\"condition\":\"EQ\",\"finding\":\"ORGANIC_DIVERSITY\",\"threshold\":\"LOW\"}]}",
-    "salt": "8f5fad814bbc0241194cf9bff9e97505b5695745dba90bb1874994e06d4f6890",
-    "rules": {
-      "min_hits": 2,
-      "rules": [
-        {
-          "finding": "WALLET_AGE_DAYS",
-          "condition": "LT",
-          "threshold": 30
-        },
-        {
-          "finding": "OUTBOUND_TX_COUNT",
-          "condition": "LT",
-          "threshold": 3
-        },
-        {
-          "finding": "ORGANIC_DIVERSITY",
-          "condition": "EQ",
-          "threshold": "LOW"
-        }
-      ]
-    },
-    "revealed_at": 1790612730,
+    "flagged_at": 1790600132,
+    "revealed": false,
+    "rules_json": "",
+    "salt": "",
+    "rules": null,
+    "revealed_at": 0,
     "bad_reveals": 0,
     "appeals": 1,
     "open_appeals": 1,
@@ -69,20 +49,17 @@
       "filer": "0x8CD1770dF3EB9A7b7C7bF102A00074AA8dd85629",
       "on_behalf": false,
       "statement": "This is my own wallet and I appeal from it.",
-      "filed_at": 1790609161,
+      "filed_at": 1790600210,
       "bond_wei": "50000000000000000",
-      "status": "PROVISIONAL",
-      "outcome": "SYBIL_PATTERN",
-      "decided_by": "RULES",
+      "status": "READ",
+      "outcome": "",
+      "decided_by": "",
       "refile_of": 0,
       "read_attempts": 1,
-      "read_at": 1790612764,
-      "rounds_opened": 1,
-      "unsettled_rounds": 0,
-      "round_open_at": 0,
+      "read_at": 1790600265,
       "last_read_status": "READ",
       "snapshot": "",
-      "snapshot_hash": "63f68ac556a1f662961fc8df273c7d52806de2161b9d1eb7f06e6ffee9c24b2b",
+      "snapshot_hash": "0369cf9b9425ceaeeb013a493688ab64f917903f481e096fe1bf92e4b2dd0247",
       "features": {
         "WALLET_AGE_DAYS": "0",
         "OUTBOUND_TX_COUNT": "0",
@@ -95,9 +72,9 @@
         "SINGLE_PURPOSE_FARMING": "UNCLEAR",
         "ORGANIC_DIVERSITY": "UNCLEAR"
       },
-      "decided_at": 1790612825,
-      "provisional_outcome": "SYBIL_PATTERN",
-      "contest_until": 1790785625,
+      "decided_at": 0,
+      "provisional_outcome": "",
+      "contest_until": 0,
       "contested": false,
       "contester": "0x0000000000000000000000000000000000000000",
       "contest_bond_wei": "0",
@@ -107,36 +84,7 @@
       "final_at": 0,
       "payout_wei": "0",
       "in_flight": false,
-      "trace": {
-        "hits": 2,
-        "min_hits": 2,
-        "rules": [
-          {
-            "finding": "WALLET_AGE_DAYS",
-            "condition": "LT",
-            "threshold": 30,
-            "value": "0",
-            "fired": true,
-            "note": ""
-          },
-          {
-            "finding": "OUTBOUND_TX_COUNT",
-            "condition": "LT",
-            "threshold": 3,
-            "value": "0",
-            "fired": true,
-            "note": ""
-          },
-          {
-            "finding": "ORGANIC_DIVERSITY",
-            "condition": "EQ",
-            "threshold": "LOW",
-            "value": "UNCLEAR",
-            "fired": false,
-            "note": "UNCLEAR never fires"
-          }
-        ]
-      },
+      "trace": null,
       "contest_trace": null
     }
   ],
@@ -150,7 +98,7 @@
       "create_drop"
     ],
     "contest_window_s": 172800,
-    "stall_ttl_s": 3600,
+    "stall_ttl_s": 172800,
     "min_phase_s": 3600,
     "contest_bond_bps": 500,
     "min_reserve_wei": "1000000000000000000",
@@ -247,39 +195,13 @@
     "merkle": "leaf = sha256(20 address bytes); node = sha256(min(a,b) || max(a,b))",
     "coverage": "outbound page complete (fewer than 50 items, no next page) or reaching back to the lookback start; earliest-activity page complete or verifiably ascending; otherwise INSUFFICIENT_HISTORY",
     "max_fetches_per_read": 2,
-    "findings_tolerance": "each model finding may differ by one bucket; UNCLEAR only matches UNCLEAR; the rule outcome each validator computes from its own findings must be identical, or the round does not settle",
-    "outcome_compared": "exact",
-    "max_unsettled_rounds": 3,
-    "round_ttl_s": 3600,
+    "findings_tolerance": "model findings agree if equal, or if the leader's bucket is exactly one step toward the human end; never toward condemnation; UNCLEAR only matches UNCLEAR",
+    "human_end": {
+      "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE": "YES",
+      "SCRIPTED_REPETITION": "NONE",
+      "SINGLE_PURPOSE_FARMING": "NONE",
+      "ORGANIC_DIVERSITY": "HIGH"
+    },
     "model_sees": "the stored history snapshot only (plus contest context on a contest); never the rules, flag or thresholds"
-  },
-  "stats": {
-    "drops": 1,
-    "appeals": 1,
-    "outcomes": {
-      "HUMAN_PATTERN": 0,
-      "SYBIL_PATTERN": 0,
-      "INSUFFICIENT_HISTORY": 0,
-      "UNRESOLVED": 0
-    },
-    "reads": 1,
-    "contests": 0,
-    "rejected_calls": 6,
-    "ledger": {
-      "balance_wei": "1050000000000000000",
-      "locked_wei": "1050000000000000000",
-      "payable_wei": "0",
-      "identity_holds": true,
-      "identity": "balance_wei == locked_wei + payable_wei"
-    },
-    "on_chain_balance_wei": "1250000000000000000",
-    "undelivered_wei": "200000000000000000",
-    "totals": {
-      "deposited_wei": "1000000000000000000",
-      "allocations_paid_wei": "0",
-      "leftover_returned_wei": "0",
-      "bonds_forfeited_wei": "0",
-      "claimed_wei": "200000000000000000"
-    }
   }
 }

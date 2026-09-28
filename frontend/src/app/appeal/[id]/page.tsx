@@ -71,7 +71,7 @@ export default function AppealDetail() {
             </div>
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-right">
               <div className="display text-2xl font-bold sm:text-3xl" style={{ color: OUTCOME_COLOR[a.outcome] ?? "var(--pending)" }}>
-                {a.outcome || (a.status === "FILED" ? "AWAITING READ" : "READ · RULES SEALED")}
+                {a.outcome || (a.status === "FILED" ? (d && !d.revealed ? "AWAITING REVEAL" : "AWAITING READ") : "READ · OUTCOME AGREED")}
               </div>
               <div className="mt-1 flex justify-end gap-2"><OutcomeBadge outcome={a.outcome} status={a.status} /><span className="chip" style={{ color: "var(--sand-dim)" }}>{a.decided_by || a.status}</span></div>
             </motion.div>
@@ -90,10 +90,17 @@ export default function AppealDetail() {
                 </>
               ) : a.outcome === "INSUFFICIENT_HISTORY" ? (
                 <p className="text-sm text-muted">The history could not be proven complete back to the lookback start, so nothing was read and nothing was decided against this wallet. The bond was returned; the wallet may refile until the reveal deadline.</p>
+              ) : a.outcome === "UNRESOLVED" ? (
+                <p className="text-sm text-muted">{a.unsettled_rounds} read rounds never settled: the validators could not agree on the outcome. UNRESOLVED never pays and never condemns. The bond was returned; the wallet may refile until the reveal deadline.</p>
+              ) : a.status !== "FILED" ? (
+                <p className="text-sm text-muted">Never read. {a.decided_by === "NO_REVEAL" ? "The operator never revealed, so no read was needed." : ""}</p>
+              ) : d && !d.revealed ? (
+                <p className="text-sm text-muted">Reads start once the rules are revealed: every validator applies them in code to its own findings and must reach the same outcome. The model never sees them.</p>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-sm text-muted">Not read yet{a.last_read_status ? ` (last attempt: ${a.last_read_status})` : ""}. Anyone may trigger the read: every validator fetches the wallet&apos;s outbound history itself and they must agree on all of it.</p>
-                  <TxButton label="Run the blind read" icon={<FileSearch size={16} />} send={(acct) => write(acct, "read_wallet", [a.appeal_id])} onDone={reload} />
+                  <p className="text-sm text-muted">Not read yet{a.last_read_status ? ` (last landed round: ${a.last_read_status})` : ""}. Anyone may trigger the read: every validator fetches the wallet&apos;s outbound history itself and they must agree on all of it, and on the outcome.</p>
+                  <p className="text-xs text-muted">A read attempt is two transactions. The first opens a round ticket, which commits even if the round later fails to settle; the second runs the round. Tickets {a.rounds_opened} · unsettled {a.unsettled_rounds} of 3.</p>
+                  <TxButton label={a.in_flight ? "Run the blind read" : "Open a read round"} icon={<FileSearch size={16} />} send={(acct) => write(acct, "read_wallet", [a.appeal_id])} onDone={reload} />
                 </div>
               )}
               {a.snapshot_hash && (
@@ -114,7 +121,7 @@ export default function AppealDetail() {
                 ) : a.decided_by === "NO_REVEAL" ? (
                   <p className="text-sm text-human">The operator never revealed its rules before the deadline, so this appeal was won by default. Operator failure cannot hurt a user.</p>
                 ) : (
-                  <p className="text-sm text-muted">Waiting for the reveal. The findings are already fixed on chain; the rules will be applied to them exactly as committed.</p>
+                  <p className="text-sm text-muted">{d && !d.revealed ? "Waiting for the reveal. The rules will be applied exactly as committed, or every pending appeal wins." : "Waiting for the read."}</p>
                 )}
                 {a.contest_trace && <div className="mt-5"><TraceTable trace={a.contest_trace} title="After the contest re-read (same stored snapshot)" /></div>}
               </div>
@@ -162,8 +169,8 @@ export default function AppealDetail() {
             {a.status === "FINAL" && a.outcome === "HUMAN_PATTERN" && (
               <p className="mt-3 text-sm text-human">Cleared. {a.payout_wei !== "0" ? `Paid ${gen(a.payout_wei, 4)} GEN at close.` : "The allocation is paid when the drop closes."} Distributors can check <span className="mono">is_cleared(wallet, {a.drop_id})</span>.</p>
             )}
-            {a.in_flight && (
-              <div className="mt-3"><TxButton label="Settle a stalled round" className="btn btn-ghost" send={(acct) => write(acct, "settle_stalled", [a.appeal_id])} onDone={reload} /></div>
+            {a.status === "FILED" && a.round_open_at > 0 && !a.in_flight && (
+              <div className="mt-3"><TxButton label="Count the expired round (settle_stalled)" className="btn btn-ghost" send={(acct) => write(acct, "settle_stalled", [a.appeal_id])} onDone={reload} /></div>
             )}
           </Section>
           {a.statement && <p className="text-xs text-muted">Appellant&apos;s statement (the model never reads it): “{a.statement}”</p>}

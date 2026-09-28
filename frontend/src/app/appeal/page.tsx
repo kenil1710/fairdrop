@@ -100,7 +100,7 @@ export default function AppealPage() {
               <div><div className="label">Lookback</div><span className="text-sand">{d.lookback_days} days</span></div>
             </div>
           )}
-          <p className="mt-3 text-xs text-muted">HUMAN_PATTERN returns the bond and pays the allocation. SYBIL_PATTERN sends the bond to the reserve. INSUFFICIENT_HISTORY returns it and you may refile.</p>
+          <p className="mt-3 text-xs text-muted">HUMAN_PATTERN returns the bond and pays the allocation. SYBIL_PATTERN sends the bond to the reserve. INSUFFICIENT_HISTORY and UNRESOLVED return it and you may refile.</p>
           <div className="mt-4">
             <TxButton
               label="File appeal and post bond"

@@ -182,12 +182,14 @@ export type Appeal = {
   provisional_outcome: string; contest_until: number; contested: boolean; contester: string;
   contest_bond_wei: string; contest_evidence: string; contest_findings: Record<string, string>;
   contest_at: number; final_at: number; payout_wei: string; in_flight: boolean;
+  rounds_opened: number; unsettled_rounds: number; round_open_at: number;
   trace: Trace | null; contest_trace: Trace | null;
 };
 
 export type Config = {
   rubric_version: string; mode: "DEMO" | "CANONICAL"; mode_note: string; owner: string;
   paused: boolean; contest_window_s: number; stall_ttl_s: number; min_phase_s: number;
+  round_ttl_s: number; max_unsettled_rounds: number;
   chains: string[]; max_appeals_per_drop: number;
 };
 
@@ -205,6 +207,7 @@ export const OUTCOME_COLOR: Record<string, string> = {
   HUMAN_PATTERN: "var(--human)",
   SYBIL_PATTERN: "var(--sybil)",
   INSUFFICIENT_HISTORY: "var(--insufficient)",
+  UNRESOLVED: "var(--pending)",
   "": "var(--pending)",
 };
 

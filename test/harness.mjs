@@ -240,6 +240,7 @@ export async function fundOnStudio(chain, address, wei, { attempts = 3 } = {}) {
  */
 export async function retry(fn, { attempts = 6, baseMs = 4000, label = "rpc" } = {}) {
   let last;
+  let hourly = 0;
   for (let i = 1; i <= attempts; i++) {
     try {
       return await fn();
@@ -258,6 +259,18 @@ export async function retry(fn, { attempts = 6, baseMs = 4000, label = "rpc" } =
         // congestion. Backing off and resubmitting is the correct response;
         // treating it as a contract fault is not.
         /to consensus contract .* was reverted/i.test(message);
+      // The hourly bucket (500/h) empties in minutes, not seconds. Waiting it
+      // out is the only correct answer, and it must not use up the ordinary
+      // retry budget: a seed that dies here leaves the chain half-driven.
+      if (/per hour/i.test(message) && hourly < 40) {
+        hourly++;
+        i--;
+        const after = Number(message.match(/retry_after_seconds["\s:]*(\d+)/)?.[1] ?? 90);
+        const wait = Math.min(Math.max(after, 30), 900) * 1000;
+        console.log(`  … ${label} hit the HOURLY RPC limit (${hourly}), waiting ${wait / 1000}s`);
+        await sleep(wait);
+        continue;
+      }
       if (!transient || i === attempts) throw e;
       const rateLimited = /rate limit exceeded|-32029/i.test(message);
       // A per-minute bucket needs the minute to roll over; ordinary noise does
@@ -381,7 +394,9 @@ export function connect({ networkName = argOf("network", "studiodev"), address, 
    * the chain — which is the one failure mode a seed script must not have.
    */
   const deadline = chain.isStudio ? 900_000 : 900_000;
-  const pollMs = chain.isStudio ? 1_500 : 5_000;
+  // Studio meters 30 requests/min AND 500/hour per IP (measured: a seed that
+  // polled every 1.5 s across five concurrent actors was cut off mid-run).
+  const pollMs = chain.isStudio ? 6_000 : 5_000;
 
   /**
    * Submit a write and wait for it to reach a terminal state.

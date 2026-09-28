@@ -9,8 +9,10 @@ Faithful where the runner has bitten before:
     type's zero for scalar maps and None for struct maps.
   * DynArray.append_new_get() returns a REFERENCE to the stored element.
   * Proxy.emit() posts nothing; only emit_transfer moves value.
-  * A consensus round runs the leader, then a validator on gl.vm.Return, and
-    a disagreement applies no state.
+  * A consensus round runs the leader, then a validator on gl.vm.Return. A
+    round that does not settle raises _Rolled and World.call restores the
+    contract as it was before the call: on chain an UNDETERMINED transaction
+    commits NOTHING, not even a refusal counter.
 """
 import ast
 import builtins
@@ -420,13 +422,13 @@ def _run_nondet(leader_fn, validator_fn):
     LAST_CONSENSUS.clear()
     if FORGE["leader_dies"]:
         LAST_CONSENSUS["agreed"] = False
-        return None
+        raise _Rolled("the round never settled")
     try:
         result = leader_fn()
     except Exception as e:
         LAST_CONSENSUS["agreed"] = False
         LAST_CONSENSUS["leader_error"] = repr(e)
-        return None
+        raise _Rolled("the leader crashed")
     LAST_CONSENSUS["leader"] = result
     if FORGE["payload"] is not None:
         result = FORGE["payload"]
@@ -435,7 +437,7 @@ def _run_nondet(leader_fn, validator_fn):
     agreed = validator_fn(_Return(result))
     LAST_CONSENSUS["agreed"] = bool(agreed)
     if not agreed:
-        return None
+        raise _Rolled("validators disagreed")
     return result
 
 

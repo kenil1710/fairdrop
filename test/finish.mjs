@@ -26,15 +26,19 @@ for (let pass = 0; pass < 3; pass++) {
   }
   await sleep(5000);
 }
-if ((await view(FD, "get_config")).paused) await tx("deployer", FD, "set_paused", [false], 0n, "owner unpauses");
+// Claims run WHILE PAUSED (pause stops create_drop only); unpause once every
+// drop is closed and every balance is pulled.
 const acc = accounts();
+const paused = (await view(FD, "get_config")).paused;
 for (const role of Object.keys(acc)) {
   const owed = await view(FD, "payout_of", [acc[role].address]);
-  if (owed?.owed_wei && owed.owed_wei !== "0") await tx(role, FD, "claim_payout", [], 0n, `${role} claims ${owed.owed_gen} GEN`);
+  if (owed?.owed_wei && owed.owed_wei !== "0") await tx(role, FD, "claim_payout", [], 0n, `${role} claims ${owed.owed_gen} GEN${paused ? " (contract paused)" : ""}`);
 }
+const allClosed = (await view(FD, "get_drops", [0, 50])).drops.every((d) => d.closed);
+if (allClosed && (await view(FD, "get_config")).paused) await tx("deployer", FD, "set_paused", [false], 0n, "owner unpauses (every drop closed, every balance claimed)");
 const stats = await view(FD, "get_stats");
 log("STATS", JSON.stringify(stats));
-const evidence = { contract: FD, at: new Date().toISOString(), stats, drops: {} };
+const evidence = { contract: FD, at: new Date().toISOString(), config: await view(FD, "get_config"), stats, drops: {} };
 const st = existsSync(new URL("./.seed-state.json", import.meta.url)) ? JSON.parse(readFileSync(new URL("./.seed-state.json", import.meta.url), "utf8")) : {};
 const letter = Object.fromEntries(Object.entries(st).filter(([, v]) => v?.id).map(([k, v]) => [v.id, k]));
 for (const d of (await view(FD, "get_drops", [0, 50])).drops) {

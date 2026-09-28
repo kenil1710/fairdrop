@@ -1,0 +1,99 @@
+{
+ "contracts": [
+  "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+  "0xe206255a3639aFC60c77F0D8dCA42C2dac80f889"
+ ],
+ "checked": [
+  {
+   "contract": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+   "drop": 1,
+   "appeal": 1,
+   "outcome": "HUMAN_PATTERN",
+   "prompt_chars": 2816,
+   "has_contest_prompt": false,
+   "revealed": true,
+   "leaked": []
+  },
+  {
+   "contract": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+   "drop": 1,
+   "appeal": 5,
+   "outcome": "SYBIL_PATTERN",
+   "prompt_chars": 2640,
+   "has_contest_prompt": false,
+   "revealed": true,
+   "leaked": []
+  },
+  {
+   "contract": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+   "drop": 1,
+   "appeal": 11,
+   "outcome": "HUMAN_PATTERN",
+   "prompt_chars": 8011,
+   "has_contest_prompt": true,
+   "revealed": true,
+   "leaked": []
+  },
+  {
+   "contract": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+   "drop": 3,
+   "appeal": 2,
+   "outcome": "HUMAN_PATTERN",
+   "prompt_chars": 2773,
+   "has_contest_prompt": false,
+   "revealed": true,
+   "leaked": []
+  },
+  {
+   "contract": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+   "drop": 3,
+   "appeal": 6,
+   "outcome": "HUMAN_PATTERN",
+   "prompt_chars": 3823,
+   "has_contest_prompt": false,
+   "revealed": true,
+   "leaked": []
+  },
+  {
+   "contract": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+   "drop": 3,
+   "appeal": 8,
+   "outcome": "HUMAN_PATTERN",
+   "prompt_chars": 3665,
+   "has_contest_prompt": false,
+   "revealed": true,
+   "leaked": []
+  },
+  {
+   "contract": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+   "drop": 4,
+   "appeal": 4,
+   "outcome": "SYBIL_PATTERN",
+   "prompt_chars": 3823,
+   "has_contest_prompt": false,
+   "revealed": true,
+   "leaked": []
+  },
+  {
+   "contract": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+   "drop": 4,
+   "appeal": 13,
+   "outcome": "SYBIL_PATTERN",
+   "prompt_chars": 4605,
+   "has_contest_prompt": false,
+   "revealed": true,
+   "leaked": []
+  },
+  {
+   "contract": "0xe206255a3639aFC60c77F0D8dCA42C2dac80f889",
+   "drop": 1,
+   "appeal": 1,
+   "outcome": "SYBIL_PATTERN",
+   "prompt_chars": 1798,
+   "has_contest_prompt": false,
+   "revealed": true,
+   "leaked": []
+  }
+ ],
+ "ok": true
+}

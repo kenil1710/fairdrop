@@ -59,10 +59,8 @@ def decide_many(w, d, wallets, outs=None, findings=None):
         MODEL.reset()
         if findings:
             MODEL.say(**findings)
-        assert w.call(STRANGER, "read_wallet", aid)["read"] == "READ"
+        assert w.read(aid)["read"] == "READ"
     MODEL.reset()
-    w.at(max(w.now, d["appeal_end"] + 1))
-    assert ok(w.reveal(d))
     for aid in ids:
         assert ok(w.call(STRANGER, "decide", aid))
     return ids
@@ -76,12 +74,9 @@ def to_decided(w, d, wallet, outs=None, findings=None):
     serve_history(wallet, outs if outs is not None else human_outs(d["snap"]))
     if findings:
         MODEL.say(**findings)
-    rr = w.call(STRANGER, "read_wallet", aid)
+    rr = w.read(aid)
     assert ok(rr) and rr["read"] == "READ", rr
     MODEL.reset()
-    if not w.view("get_drop", d["id"])["drop"]["revealed"]:
-        w.at(max(w.now, d["appeal_end"] + 1))
-        assert ok(w.reveal(d))
     dd = w.call(STRANGER, "decide", aid)
     assert ok(dd), dd
     return aid
@@ -607,8 +602,10 @@ for i, (fld, val) in enumerate(FORGERIES):
 
 
 class TestTolerance(unittest.TestCase):
-    """`_findings_agree`: equal, or ONE step toward the human end. Every pair of
-    buckets for every model finding is enumerated."""
+    """`_findings_agree`: equal, or ONE bucket apart in either direction; never
+    two; UNCLEAR only matches UNCLEAR. Every pair of buckets for every model
+    finding is enumerated. (The outcome is compared exactly on top of this:
+    TestOutcomeIdentity.)"""
 
 
 def _tol_case(self, case):
@@ -623,7 +620,7 @@ def _tol_case(self, case):
         expect = False
     else:
         step = scale.index(lead) - scale.index(mine)
-        expect = step == (1 if C.HUMAN_END_HIGH[f] else -1)
+        expect = abs(step) == 1
     self.assertEqual(C._findings_agree(t, m), expect, case)
 
 
@@ -632,21 +629,20 @@ gen_tests(TestTolerance, "pair", [(f, x, y) for f in C.MODEL_FINDINGS
                                   for y in C.SCALES[f] + ("UNCLEAR",)], _tol_case)
 
 
-def _no_condemning_shade(self, f):
-    """A leader can never move ANY finding toward the sybil end."""
+def _never_two_buckets(self, f):
+    """Two buckets apart never agree, in either direction."""
     scale = list(C.SCALES[f])
-    order = scale if C.HUMAN_END_HIGH[f] else scale[::-1]   # sybil end first
     base = {g: C.SCALES[g][0] for g in C.MODEL_FINDINGS}
-    for i in range(len(order)):
-        for j in range(i):
-            lead = order[j]   # more sybil-like than the validator's
-            mine = order[i]
-            t = ",".join(g + "=" + (lead if g == f else base[g]) for g in C.MODEL_FINDINGS)
-            m = ",".join(g + "=" + (mine if g == f else base[g]) for g in C.MODEL_FINDINGS)
-            self.assertFalse(C._findings_agree(t, m), (f, lead, mine))
+    for i in range(len(scale)):
+        for j in range(len(scale)):
+            if abs(i - j) < 2:
+                continue
+            t = ",".join(g + "=" + (scale[i] if g == f else base[g]) for g in C.MODEL_FINDINGS)
+            m = ",".join(g + "=" + (scale[j] if g == f else base[g]) for g in C.MODEL_FINDINGS)
+            self.assertFalse(C._findings_agree(t, m), (f, scale[i], scale[j]))
 
 
-gen_tests(TestTolerance, "never_toward_sybil", list(C.MODEL_FINDINGS), _no_condemning_shade)
+gen_tests(TestTolerance, "never_two_buckets", list(C.MODEL_FINDINGS), _never_two_buckets)
 
 
 class TestConsensusMore(unittest.TestCase):
@@ -667,14 +663,15 @@ class TestConsensusMore(unittest.TestCase):
         b = C._blind_read(facts())
         self.assertFalse(C._agree_read(a, b))
 
-    def test_leader_one_step_toward_sybil_is_refused(self):
+    def test_evidence_tolerates_one_bucket_toward_sybil(self):
         serve_history(ALICE, farm_outs(T0))
         mine = C._blind_read(facts())          # validator: SCRIPTED NONE
         MODEL.say(SCRIPTED_REPETITION="SOME")
-        theirs = C._blind_read(facts())        # leader: SOME, a step toward sybil
-        self.assertFalse(C._agree_read(theirs, mine))
+        theirs = C._blind_read(facts())        # leader: SOME
+        # the evidence layer tolerates it; the OUTCOME layer decides
+        self.assertTrue(C._agree_read(theirs, mine))
 
-    def test_leader_one_step_toward_human_is_accepted(self):
+    def test_evidence_tolerates_one_bucket_toward_human(self):
         serve_history(ALICE, farm_outs(T0))
         theirs = C._blind_read(facts())        # leader: NONE
         MODEL.say(SCRIPTED_REPETITION="SOME")
@@ -717,6 +714,245 @@ class TestConsensusMore(unittest.TestCase):
 # ============================================================================
 # the contract: lifecycle
 # ============================================================================
+
+
+THRESHOLD_RULES = {"min_hits": 1, "rules": [
+    {"finding": "SCRIPTED_REPETITION", "condition": "GTE", "threshold": "SOME"},
+]}
+
+
+def _vec(findings):
+    return ",".join(f + "=" + findings.get(f, C.SCALES[f][0]) for f in C.MODEL_FINDINGS)
+
+
+class TestOutcomeIdentity(unittest.TestCase):
+    """v3 let the leader shade a finding one step toward HUMAN with no outcome
+    check, so a borderline sybil could be moved across a threshold and paid
+    from the operator's reserve. v4: findings may differ by one bucket, but
+    the rule outcome every validator computes from its OWN findings must be
+    identical, or the round does not settle."""
+
+    def setUp(self):
+        self.w = World()
+
+    def judged(self, rules, **model):
+        serve_history(ALICE, farm_outs(T0))
+        MODEL.reset()
+        MODEL.say(**model)
+        return C._judged_read(facts(), rules)
+
+    def test_shading_across_threshold_refused_unit(self):
+        mine = self.judged(THRESHOLD_RULES, SCRIPTED_REPETITION="SOME")
+        theirs = self.judged(THRESHOLD_RULES, SCRIPTED_REPETITION="NONE")
+        self.assertEqual(mine["outcome"], "SYBIL_PATTERN")
+        self.assertEqual(theirs["outcome"], "HUMAN_PATTERN")
+        self.assertTrue(C._agree_read(theirs, mine), "one bucket is tolerated as evidence")
+        self.assertFalse(C._agree_judged(theirs, mine), "but the outcome differs")
+
+    def test_shading_toward_sybil_across_threshold_refused_unit(self):
+        mine = self.judged(THRESHOLD_RULES, SCRIPTED_REPETITION="NONE")
+        theirs = self.judged(THRESHOLD_RULES, SCRIPTED_REPETITION="SOME")
+        self.assertFalse(C._agree_judged(theirs, mine))
+
+    def test_one_bucket_that_changes_nothing_is_accepted(self):
+        mine = self.judged(THRESHOLD_RULES, SCRIPTED_REPETITION="SOME", ORGANIC_DIVERSITY="HIGH")
+        theirs = self.judged(THRESHOLD_RULES, SCRIPTED_REPETITION="STRONG", ORGANIC_DIVERSITY="MEDIUM")
+        self.assertEqual(theirs["outcome"], mine["outcome"])
+        self.assertTrue(C._agree_judged(theirs, mine))
+
+    def test_claimed_outcome_must_match_own_findings(self):
+        theirs = self.judged(THRESHOLD_RULES, SCRIPTED_REPETITION="SOME")
+        lie = dict(theirs, outcome="HUMAN_PATTERN")
+        self.assertFalse(C._coherent_judged(lie, T0, THRESHOLD_RULES))
+        self.assertTrue(C._coherent_judged(theirs, T0, THRESHOLD_RULES))
+
+    def test_exhaustive_one_bucket_never_flips_an_agreed_outcome(self):
+        """Every model finding, every threshold, every condition, every pair of
+        buckets one apart: whenever the round would settle, the leader's
+        outcome IS the validator's outcome."""
+        feats = "WALLET_AGE_DAYS=900,OUTBOUND_TX_COUNT=6,DISTINCT_CONTRACTS_TOUCHED=1,ACTIVE_DAYS=6"
+        checked = 0
+        for f in C.MODEL_FINDINGS:
+            scale = C.SCALES[f]
+            for thr in scale:
+                for cond in C.CONDITIONS:
+                    rules = {"min_hits": 1, "rules": [
+                        {"finding": f, "condition": cond, "threshold": thr}]}
+                    for i in range(len(scale)):
+                        for j in range(len(scale)):
+                            if abs(i - j) > 1:
+                                continue
+                            mine = C._read_vector(C.R_READ, "", "snap", 0, _vec({f: scale[i]}))
+                            theirs = C._read_vector(C.R_READ, "", "snap", 0, _vec({f: scale[j]}))
+                            mine["features"] = theirs["features"] = feats
+                            mine["outcome"] = C._outcome_of(rules, mine)
+                            theirs["outcome"] = C._outcome_of(rules, theirs)
+                            agreed = C._agree_judged(theirs, mine)
+                            self.assertEqual(agreed, mine["outcome"] == theirs["outcome"],
+                                             (f, cond, thr, scale[i], scale[j]))
+                            checked += 1
+        self.assertGreater(checked, 100)
+
+    def test_leader_shading_across_threshold_is_refused_on_the_contract(self):
+        w = self.w
+        d = w.drop(rules=THRESHOLD_RULES)
+        w.file(d, ALICE)
+        serve_history(ALICE, farm_outs(d["snap"]))
+        MODEL.say(SCRIPTED_REPETITION="SOME")          # the honest reading: SYBIL
+
+        def shade(p):
+            kv = C._kv(p["findings"])
+            kv["SCRIPTED_REPETITION"] = "NONE"           # one step toward human
+            p["findings"] = _vec(kv)
+            p["outcome"] = "HUMAN_PATTERN"             # and coherent with it
+            return p
+        FORGE["mutate"] = shade
+        out = w.read(1)
+        FORGE["mutate"] = None
+        self.assertEqual(out["status"], "UNDETERMINED")
+        a = w.appeal(1)
+        self.assertEqual(a["status"], "FILED")
+        self.assertEqual(a["findings"], {})
+        self.assertEqual(a["outcome"], "")
+        # the honest round then settles on the honest outcome
+        w.later(int(w.c.stall_ttl_s))
+        out = w.read(1)
+        self.assertEqual(out["agreed_outcome"], "SYBIL_PATTERN", out)
+        self.assertEqual(w.call(STRANGER, "decide", 1)["outcome"], "SYBIL_PATTERN")
+
+    def test_leader_incoherent_outcome_is_refused_on_the_contract(self):
+        w = self.w
+        d = w.drop(rules=THRESHOLD_RULES)
+        w.file(d, ALICE)
+        serve_history(ALICE, farm_outs(d["snap"]))
+        MODEL.say(SCRIPTED_REPETITION="SOME")
+        FORGE["mutate"] = lambda p: dict(p, outcome="HUMAN_PATTERN")
+        out = w.read(1)
+        FORGE["mutate"] = None
+        self.assertEqual(out["status"], "UNDETERMINED")
+
+    def test_contest_shading_across_threshold_is_refused(self):
+        w = self.w
+        d = w.drop(rules=THRESHOLD_RULES)
+        w.file(d, ALICE)
+        serve_history(ALICE, farm_outs(d["snap"]))
+        MODEL.say(SCRIPTED_REPETITION="SOME")
+        self.assertEqual(w.read(1)["agreed_outcome"], "SYBIL_PATTERN")
+        self.assertEqual(w.call(STRANGER, "decide", 1)["outcome"], "SYBIL_PATTERN")
+        bond = max(1, d["alloc"] * 500 // 10000)
+        FORGE["mutate"] = lambda p: dict(p, findings=p["findings"].replace(
+            "SCRIPTED_REPETITION=SOME", "SCRIPTED_REPETITION=NONE"))
+        out = w.call(ALICE, "contest", 1, "Payroll wallet, the same transfer each Friday.",
+                     value=bond)
+        FORGE["mutate"] = None
+        self.assertEqual(out["status"], "UNDETERMINED")
+        a = w.appeal(1)
+        self.assertEqual(a["status"], "PROVISIONAL")
+        self.assertEqual(a["outcome"], "SYBIL_PATTERN")
+        self.assertFalse(a["contested"])
+
+
+class TestUnresolved(unittest.TestCase):
+    """Three read rounds that never settle make an appeal UNRESOLVED: bond
+    returned, refileable until the reveal deadline, no payout, never
+    SYBIL_PATTERN."""
+
+    def setUp(self):
+        self.w = World()
+        self.d = self.w.drop(rules=THRESHOLD_RULES, reserve=GEN, alloc=GEN // 2)
+        self.assertTrue(ok(self.w.file(self.d, ALICE)))
+        self.w.ensure_revealed(1)
+
+    def fail_round(self, aid=1):
+        FORGE["leader_dies"] = True
+        out = self.w.read(aid, reveal=False)
+        FORGE["leader_dies"] = False
+        self.w.later(int(self.w.c.stall_ttl_s))
+        return out
+
+    def unresolve(self, aid=1):
+        for _ in range(C.MAX_UNSETTLED_ROUNDS):
+            self.assertEqual(self.fail_round(aid)["status"], "UNDETERMINED")
+        return self.w.call(STRANGER, "settle_stalled", aid)
+
+    def test_three_undetermined_attempts_give_unresolved(self):
+        out = self.unresolve()
+        self.assertEqual(out["outcome"], "UNRESOLVED", out)
+        a = self.w.appeal(1)
+        self.assertEqual(a["status"], "FINAL")
+        self.assertEqual(a["outcome"], "UNRESOLVED")
+        self.assertEqual(a["decided_by"], "ROUNDS_NEVER_SETTLED")
+        self.assertEqual(a["unsettled_rounds"], 3)
+        self.assertEqual(a["rounds_opened"], 3)
+        self.assertEqual(a["read_attempts"], 0)
+        self.assertTrue(self.w.view("verify_appeal", 1)["verified"])
+
+    def test_expiry_through_read_wallet_counts_too(self):
+        for _ in range(C.MAX_UNSETTLED_ROUNDS):
+            self.fail_round()
+        out = self.w.call(STRANGER, "read_wallet", 1)
+        self.assertEqual(out["outcome"], "UNRESOLVED", out)
+
+    def test_two_failures_then_a_landed_round_decides_normally(self):
+        self.fail_round()
+        self.fail_round()
+        serve_history(ALICE, farm_outs(self.d["snap"]))
+        MODEL.say(SCRIPTED_REPETITION="SOME")
+        out = self.w.read(1, reveal=False)
+        self.assertEqual(out["read"], "READ", out)
+        self.assertEqual(self.w.appeal(1)["unsettled_rounds"], 2)
+        self.assertEqual(self.w.call(STRANGER, "decide", 1)["outcome"], "SYBIL_PATTERN")
+
+    def test_unresolved_returns_bond_and_never_pays_or_condemns(self):
+        self.unresolve()
+        self.assertEqual(int(self.w.c.payout_wei.get(ALICE)), self.d["bond"])
+        self.assertFalse(self.w.view("is_cleared", str(ALICE), 1))
+        self.assertEqual(self.w.drop_view(self.d)["winners"], 0)
+        self.assertEqual(self.w.view("get_stats")["outcomes"]["SYBIL_PATTERN"], 0)
+        self.assertEqual(self.w.view("get_stats")["outcomes"]["UNRESOLVED"], 1)
+        self.w.at(self.d["reveal_end"] + 1)
+        out = self.w.call(STRANGER, "close_drop", 1)
+        self.assertTrue(ok(out), out)
+        self.assertEqual(out["winners"], 0)
+        self.assertEqual(out["paid_winners_wei"], "0")
+        self.assertEqual(self.w.appeal(1)["payout_wei"], "0")
+        self.assertEqual(int(self.w.c.payout_wei.get(ALICE)), self.d["bond"])
+        self.assertEqual(int(self.w.c.payout_wei.get(OPERATOR)), GEN)
+        self.w.drain()
+
+    def test_unresolved_is_refileable_until_the_reveal_deadline(self):
+        self.unresolve()
+        out = self.w.file(self.d, ALICE)
+        self.assertTrue(ok(out), out)
+        self.assertTrue(out["refile"])
+        self.assertEqual(self.w.appeal(out["appeal_id"])["refile_of"], 1)
+
+    def test_unresolved_refile_refused_after_reveal_deadline(self):
+        self.unresolve()
+        self.w.at(self.d["reveal_end"])
+        self.assertTrue(rej(self.w.file(self.d, ALICE)))
+
+    def test_settle_stalled_works_paused_and_waits_for_ttl(self):
+        self.w.call(OWNER, "set_paused", True)
+        self.assertEqual(self.w.call(STRANGER, "read_wallet", 1)["round"], "OPENED")
+        self.assertTrue(rej(self.w.call(STRANGER, "settle_stalled", 1)))
+        self.w.later(int(self.w.c.stall_ttl_s))
+        out = self.w.call(NOBODY, "settle_stalled", 1)
+        self.assertTrue(ok(out), out)
+        self.assertEqual(out["unsettled_rounds"], 1)
+        self.assertFalse(self.w.appeal(1)["in_flight"])
+
+    def test_a_live_ticket_is_run_by_anyone(self):
+        self.assertEqual(self.w.call(NOBODY, "read_wallet", 1)["round"], "OPENED")
+        serve_history(ALICE, human_outs(self.d["snap"]))
+        out = self.w.call(STRANGER, "read_wallet", 1)
+        self.assertEqual(out["read"], "READ", out)
+        self.assertFalse(self.w.appeal(1)["in_flight"])
+
+    def test_a_live_ticket_blocks_nothing_it_should_not(self):
+        self.w.call(STRANGER, "read_wallet", 1)
+        self.assertTrue(rej(self.w.call(STRANGER, "settle_stalled", 1)))
+        self.assertEqual(self.w.appeal(1)["unsettled_rounds"], 0)
 
 
 class TestCreateDrop(unittest.TestCase):
@@ -862,7 +1098,7 @@ class TestRead(unittest.TestCase):
 
     def test_read_stores_vector(self):
         serve_history(ALICE, human_outs(self.d["snap"]))
-        out = self.w.call(STRANGER, "read_wallet", 1)
+        out = self.w.read(1)
         self.assertEqual(out["read"], "READ")
         a = self.w.appeal(1)
         self.assertEqual(a["status"], "READ")
@@ -871,43 +1107,68 @@ class TestRead(unittest.TestCase):
     def test_read_is_permissionless_and_works_paused(self):
         self.w.call(OWNER, "set_paused", True)
         serve_history(ALICE, human_outs(self.d["snap"]))
-        self.assertTrue(ok(self.w.call(NOBODY, "read_wallet", 1)))
+        self.assertTrue(ok(self.w.read(1, NOBODY)))
 
     def test_unavailable_changes_nothing(self):
         WEB.serve("out", 429, "")
-        out = self.w.call(STRANGER, "read_wallet", 1)
+        out = self.w.read(1)
         self.assertEqual(out["read"], "UNAVAILABLE")
         a = self.w.appeal(1)
         self.assertEqual(a["status"], "FILED")
         self.assertEqual(a["read_attempts"], 1)
         serve_history(ALICE, human_outs(self.d["snap"]))
-        self.assertEqual(self.w.call(STRANGER, "read_wallet", 1)["read"], "READ")
+        self.assertEqual(self.w.read(1)["read"], "READ")
 
     def test_read_twice_refused(self):
         serve_history(ALICE, human_outs(self.d["snap"]))
-        self.w.call(STRANGER, "read_wallet", 1)
-        self.assertTrue(rej(self.w.call(STRANGER, "read_wallet", 1)))
+        self.w.read(1)
+        self.assertTrue(rej(self.w.read(1)))
 
     def test_disagreement_applies_nothing(self):
         serve_history(ALICE, human_outs(self.d["snap"]))
         FORGE["mutate"] = lambda p: dict(p, findings=p["findings"].replace("HIGH", "LOW"))
-        out = self.w.call(STRANGER, "read_wallet", 1)
+        out = self.w.read(1)
         FORGE["mutate"] = None
-        self.assertTrue(rej(out))
+        self.assertEqual(out["status"], "UNDETERMINED")
         self.assertEqual(self.w.appeal(1)["status"], "FILED")
         self.assertEqual(self.w.appeal(1)["findings"], {})
 
     def test_round_that_never_settles_applies_nothing(self):
         FORGE["leader_dies"] = True
-        out = self.w.call(STRANGER, "read_wallet", 1)
+        rejected = int(self.w.c.total_rejected)
+        out = self.w.read(1)
         FORGE["leader_dies"] = False
+        self.assertEqual(out["status"], "UNDETERMINED")
+        a = self.w.appeal(1)
+        self.assertEqual(a["status"], "FILED")
+        self.assertEqual(a["read_attempts"], 0)
+        # the ticket opened by the committed first call is still live
+        self.assertTrue(a["in_flight"])
+        self.assertEqual(a["rounds_opened"], 1)
+        self.assertEqual(int(self.w.c.total_rejected), rejected)
+
+    def test_no_read_before_reveal(self):
+        self.w.at(self.d["appeal_end"] + 1)
+        out = self.w.read(1, reveal=False)
         self.assertTrue(rej(out))
-        self.assertEqual(self.w.appeal(1)["status"], "FILED")
-        self.assertFalse(self.w.appeal(1)["in_flight"])
+        self.assertIn("revealed", out["reason"])
 
     def test_no_read_after_missed_reveal(self):
         self.w.at(self.d["reveal_end"] + 1)
+        self.assertTrue(rej(self.w.read(1, reveal=False)))
+
+    def test_no_read_after_read_deadline(self):
+        self.w.ensure_revealed(1)
+        self.w.at(self.d["reveal_end"] + C.CONTEST_WINDOW_S)
         self.assertTrue(rej(self.w.call(STRANGER, "read_wallet", 1)))
+
+    def test_first_call_only_opens_a_ticket(self):
+        self.w.ensure_revealed(1)
+        out = self.w.call(STRANGER, "read_wallet", 1)
+        self.assertEqual(out["round"], "OPENED")
+        self.assertEqual(out["attempt"], 1)
+        self.assertEqual(self.w.appeal(1)["status"], "FILED")
+        self.assertEqual(MODEL.prompts, [])
 
 
 class TestDecide(unittest.TestCase):
@@ -928,8 +1189,7 @@ class TestDecide(unittest.TestCase):
 
     def test_not_before_reveal(self):
         self.w.file(self.d, ALICE)
-        serve_history(ALICE, human_outs(self.d["snap"]))
-        self.w.call(STRANGER, "read_wallet", 1)
+        self.w.at(self.d["appeal_end"] + 1)
         self.assertTrue(rej(self.w.call(STRANGER, "decide", 1)))
 
     def test_unread_after_reveal_needs_read(self):
@@ -1112,11 +1372,20 @@ class TestContest(unittest.TestCase):
 
     def test_model_unavailable_returns_bond_and_keeps_contest(self):
         aid = self.sybil()
-        MODEL.raise_next = 1
+        MODEL.raise_next = 2      # the leader AND the validator see no model
         out = self.w.call(ALICE, "contest", aid, "Fresh evidence the model never saw.",
                           value=self.bond)
         self.assertTrue(ok(out) and not out["contested"], out)
         self.assertEqual(int(self.w.c.payout_wei.get(ALICE)), self.bond)
+        self.assertFalse(self.w.appeal(aid)["contested"])
+
+    def test_model_unavailable_for_one_side_is_undetermined(self):
+        aid = self.sybil()
+        MODEL.raise_next = 1
+        out = self.w.call(ALICE, "contest", aid, "Fresh evidence the model never saw.",
+                          value=self.bond)
+        self.assertEqual(out["status"], "UNDETERMINED")
+        self.assertEqual(int(self.w.c.payout_wei.get(ALICE) or 0), 0)
         self.assertFalse(self.w.appeal(aid)["contested"])
 
     def test_disagreeing_contest_round_applies_nothing(self):
@@ -1126,8 +1395,9 @@ class TestContest(unittest.TestCase):
             "SINGLE_PURPOSE_FARMING=UNCLEAR,ORGANIC_DIVERSITY=UNCLEAR"))
         out = self.w.call(ALICE, "contest", aid, "Some brand new facts about me.", value=self.bond)
         FORGE["mutate"] = None
-        self.assertTrue(ok(out) and not out["contested"])
+        self.assertEqual(out["status"], "UNDETERMINED")
         self.assertEqual(self.w.appeal(aid)["status"], "PROVISIONAL")
+        self.assertFalse(self.w.appeal(aid)["contested"])
 
     def test_evidence_leaking_rules_refused(self):
         aid = self.sybil()
@@ -1226,7 +1496,7 @@ class TestInsufficient(unittest.TestCase):
         self.w.file(self.d, ALICE)
         outs = [(self.d["snap"] - i * 3600, PROTO, True, "X", "swap", 0) for i in range(60)]
         serve_history(ALICE, outs)
-        self.out = self.w.call(STRANGER, "read_wallet", 1)
+        self.out = self.w.read(1)
 
     def test_outcome_and_bond_returned(self):
         self.assertEqual(self.out["outcome"], "INSUFFICIENT_HISTORY")
@@ -1274,12 +1544,14 @@ class TestLoopholes(unittest.TestCase):
     def test_02_operator_never_reveals_pending_appeals_auto_won(self):
         w = World()
         d = w.drop(reserve=GEN, alloc=GEN // 2)
-        # one READ, one never read at all
+        # reads wait for the reveal, so an unrevealed drop cannot be read
         w.file(d, ALICE)
         serve_history(ALICE, farm_outs(d["snap"]))
         MODEL.say(**FARM_FINDINGS)
-        w.call(STRANGER, "read_wallet", 1)
+        self.assertTrue(rej(w.read(1, reveal=False)))
         w.file(d, BOB)
+        w.at(d["appeal_end"] + 1)
+        self.assertTrue(rej(w.read(1, reveal=False)))
         w.at(d["reveal_end"])
         for aid in (1, 2):
             out = w.call(STRANGER, "decide", aid)
@@ -1324,7 +1596,7 @@ class TestLoopholes(unittest.TestCase):
             outs = [(d["snap"] - i * 600, PROTO, True, "Farm", "mintNFTs", 0) for i in range(n)]
             serve_history(ALICE, outs)
             MODEL.say(**FARM_FINDINGS)
-            out = w.call(STRANGER, "read_wallet", 1)
+            out = w.read(1)
             self.assertEqual(out["outcome"], "INSUFFICIENT_HISTORY", n)
             self.assertNotEqual(w.appeal(1)["outcome"], "SYBIL_PATTERN")
             self.assertEqual(int(w.c.payout_wei.get(ALICE)), d["bond"])
@@ -1374,7 +1646,7 @@ class TestLoopholes(unittest.TestCase):
         self.assertIn("already appealed", out["reason"])
         aid = 1
         serve_history(ALICE, human_outs(d["snap"]))
-        w.call(STRANGER, "read_wallet", aid)
+        w.read(aid)
         self.assertTrue(rej(w.file(d, ALICE)), "READ still blocks")
 
     def test_09_contest_copying_original_text_refused(self):
@@ -1385,7 +1657,7 @@ class TestLoopholes(unittest.TestCase):
         w.file(d, ALICE, statement=statement)
         serve_history(ALICE, farm_outs(d["snap"]))
         MODEL.say(**FARM_FINDINGS)
-        w.call(STRANGER, "read_wallet", 1)
+        w.read(1)
         w.at(d["appeal_end"] + 1)
         w.reveal(d)
         w.call(STRANGER, "decide", 1)
@@ -1437,15 +1709,20 @@ class TestLoopholes(unittest.TestCase):
                                    w.now + 100, 10, DAY, DAY, GEN, GEN, "", "",
                                    value=GEN)))
         self.assertTrue(ok(w.file(d, ALICE)))
-        # a stuck in-flight marker, cleared while paused
-        w.c.in_flight["1"] = w.now
-        self.assertTrue(rej(w.call(STRANGER, "read_wallet", 1)))
+        w.ensure_revealed(1)
+        # a round ticket whose round never lands, settled while paused
+        opened = w.call(STRANGER, "read_wallet", 1)
+        self.assertEqual(opened["round"], "OPENED")
+        FORGE["leader_dies"] = True
+        self.assertEqual(w.call(STRANGER, "read_wallet", 1)["status"], "UNDETERMINED")
+        FORGE["leader_dies"] = False
+        self.assertTrue(rej(w.call(STRANGER, "settle_stalled", 1)))
         w.later(C.STALL_TTL_S)
-        self.assertTrue(ok(w.call(STRANGER, "settle_stalled", 1)))
+        out = w.call(STRANGER, "settle_stalled", 1)
+        self.assertTrue(ok(out), out)
+        self.assertEqual(out["unsettled_rounds"], 1)
         serve_history(ALICE, human_outs(d["snap"]))
-        self.assertTrue(ok(w.call(STRANGER, "read_wallet", 1)))
-        w.at(max(w.now, d["appeal_end"] + 1))
-        self.assertTrue(ok(w.reveal(d)))
+        self.assertEqual(w.read(1)["read"], "READ")
         self.assertTrue(ok(w.call(STRANGER, "decide", 1)))
         w.later(C.CONTEST_WINDOW_S + 1)
         self.assertTrue(ok(w.call(STRANGER, "finalize_appeal", 1)))
@@ -1485,7 +1762,7 @@ class TestDemo(unittest.TestCase):
         self.w.file(self.d, ALICE, sender=OPERATOR)
         serve_history(ALICE, farm_outs(self.d["snap"]))
         MODEL.say(**FARM_FINDINGS)
-        self.w.call(STRANGER, "read_wallet", 1)
+        self.w.read(1)
         self.w.at(self.d["appeal_end"] + 1)
         self.w.reveal(self.d)
         self.w.call(STRANGER, "decide", 1)
@@ -1507,7 +1784,7 @@ class TestDemo(unittest.TestCase):
         MESSAGE.sender_address = OWNER
         c = MOD.FairDrop(False, 60, 60, 30)
         self.assertEqual(int(c.contest_window_s), 48 * 3600)
-        self.assertEqual(int(c.stall_ttl_s), 48 * 3600)
+        self.assertEqual(int(c.stall_ttl_s), 3600)
 
 
 # ============================================================================
@@ -1627,7 +1904,7 @@ class TestViews(unittest.TestCase):
         self.w.file(self.d, ALICE)
         self.w.file(self.d, BOB)
         serve_history(BOB, human_outs(self.d["snap"], 5))
-        self.w.call(STRANGER, "read_wallet", 2)
+        self.w.read(2)
         p = self.w.view("get_prompt", 2)["read_prompt"]
         self.assertEqual(p, MODEL.prompts[-1])
 
@@ -1689,11 +1966,30 @@ def _lifecycle(self, seed):
         out = w.file(d, x, value=v)
         if ok(out):
             filed.append((out["appeal_id"], x))
+    w.at(d["appeal_end"] + 1)
+    revealed = reveal_mode in ("reveal", "bad_then_good")
+    if revealed:
+        if reveal_mode == "bad_then_good":
+            self.assertTrue(rej(w.reveal(d, salt=SALT2)))
+        self.assertTrue(ok(w.reveal(d)))
     kinds = {}
-    for aid, x in filed:
-        k = r.choice(["human", "farm", "trunc", "down", "unread"])
+    for aid, x in list(filed):
+        k = r.choice(["human", "farm", "trunc", "down", "unread", "split"])
         kinds[aid] = k
         if k == "unread":
+            continue
+        if not revealed:
+            self.assertTrue(rej(w.read(aid, reveal=False)))
+            continue
+        if k == "split":
+            # every round on this appeal fails to settle
+            FORGE["leader_dies"] = True
+            for _ in range(C.MAX_UNSETTLED_ROUNDS):
+                w.read(aid, reveal=False)
+                w.later(int(w.c.stall_ttl_s))
+            FORGE["leader_dies"] = False
+            out = w.call(STRANGER, "settle_stalled", aid)
+            self.assertEqual(w.appeal(aid)["outcome"], "UNRESOLVED", (seed, out))
             continue
         if k == "human":
             serve_history(x, human_outs(d["snap"], r.randint(1, 12)))
@@ -1705,17 +2001,13 @@ def _lifecycle(self, seed):
             serve_history(x, [(d["snap"] - i * 900, PROTO, True, "F", "m", 0) for i in range(55)])
         else:
             WEB.serve("out", 503, "")
-        w.call(STRANGER, "read_wallet", aid)
+        w.read(aid, reveal=False)
+        MODEL.reset()
         if k == "trunc" and r.random() < 0.5:
             out = w.file(d, x)
             if ok(out):
                 kinds[out["appeal_id"]] = "unread"
                 filed.append((out["appeal_id"], x))
-    w.at(d["appeal_end"] + 1)
-    if reveal_mode in ("reveal", "bad_then_good"):
-        if reveal_mode == "bad_then_good":
-            self.assertTrue(rej(w.reveal(d, salt=SALT2)))
-        self.assertTrue(ok(w.reveal(d)))
     for aid, _ in filed:
         w.call(STRANGER, "decide", aid)
     if reveal_mode == "never":
@@ -1745,6 +2037,8 @@ def _lifecycle(self, seed):
             self.assertNotEqual(a["outcome"], "SYBIL_PATTERN")
         if a["outcome"] == "SYBIL_PATTERN":
             self.assertTrue(a["snapshot"], "SYBIL only from a covered read")
+        if kinds.get(aid) == "split" and revealed:
+            self.assertEqual(a["outcome"], "UNRESOLVED", (seed, a))
     out = w.call(STRANGER, "close_drop", 1)
     self.assertTrue(ok(out), (seed, out))
     winners = [a for a in (w.appeal(i) for i, _ in filed)
@@ -1754,6 +2048,10 @@ def _lifecycle(self, seed):
     self.assertLessEqual(per, alloc)
     for a in winners:
         self.assertEqual(int(a["payout_wei"]), per)
+    for i, _ in filed:
+        a = w.appeal(i)
+        if a["outcome"] == "UNRESOLVED":
+            self.assertEqual(int(a["payout_wei"]), 0)
     self.assertEqual(w.drop_view(d)["reserve_wei"], "0")
     self.assertEqual(w.drop_view(d)["held_bonds_wei"], "0")
     w.drain()

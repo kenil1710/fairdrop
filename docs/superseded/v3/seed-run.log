@@ -1,0 +1,68 @@
+[2026-09-28T12:51:34.708Z]   opC      create_drop(Thin Reserve — pro, base, b24e02c22e69f9fe38, 1790600122, 900, 1500, 2400, 600000000000000000, 50000000000000000, DemoQuest, 0x3c83ef6119eb05ca) +1 GEN → ACCEPTED OK [11s]  tx=0xee0d1433751880f2cdf1ef9ad39f6c25be87407f018523e349139265d536a357
+[2026-09-28T12:51:36.128Z]   … waiting 231s C: for the snapshot
+[2026-09-28T12:51:37.296Z]   opA      create_drop(Base Quest Season , base, 7af6cddfdcf1776332, 1790600121, 900, 1800, 2400, 100000000000000000, 100000000000000000, DemoQuest, 0x3c83ef6119eb05ca) +3 GEN → ACCEPTED OK [14s]  tx=0x64d74e9eb585cbf38a12dd1df089b1495912a6d42e3ccd58f96f402a2d8308bb
+[2026-09-28T12:51:38.292Z]   … waiting 228s A: for the snapshot
+[2026-09-28T12:51:41.803Z]   opB      create_drop(Silent Operator — , base, 3dd53ee6a40db76542, 1790600122, 900, 900, 1500, 400000000000000000, 50000000000000000, DemoQuest, 0x3c83ef6119eb05ca) +1 GEN → ACCEPTED OK [18s]  tx=0x8cd0dcd7a67c5f7ba1e9f0c7a23cb17783fbe809fa349239c619eeae0eb6b21f
+[2026-09-28T12:51:42.762Z]   … waiting 224s B: for the snapshot
+[2026-09-28T12:55:37.405Z]   opA      commit_flagged(2, f65bcccb019dddf377, 4) → ACCEPTED OK [11s]  tx=0x3edede4799a05722c857be87c907cc4848142e55679a659ea9fa303173dcc52a
+[2026-09-28T12:55:37.414Z] A: drop #2
+[2026-09-28T12:55:40.498Z]   opC      commit_flagged(1, 9d64a50d2fb9c5b08a, 3) → ACCEPTED OK [13s]  tx=0x9d5339bfdebd5eaafebb4a9ffdab2c227e8a86af6d1aa24873e1ce80e6eceac8
+[2026-09-28T12:55:40.499Z] C: drop #1
+[2026-09-28T12:55:42.760Z]   opB      commit_flagged(3, 9f9e3be82455d7ef27, 2) → ACCEPTED OK [16s]  tx=0xc2b1fc1ff8eb87859030a8e566f0668138de8f85baa49b2968680e88690161a6
+[2026-09-28T12:55:42.761Z] B: drop #3
+[2026-09-28T12:55:44.794Z]   opA      file_appeal(2, 0x0f2589542b6d5a50, aa6a2e7c09e96658b3, I have used this w) +0.1 GEN → ACCEPTED OK [6s] A/human tx=0xbb3c5fa35d86fb7092ba901aa80a3d0fdd3128c14126b0e320c8e1a09a21446b
+[2026-09-28T12:55:50.636Z]   deployer set_paused(true) → ACCEPTED OK [9s] owner PAUSES the contract tx=0xcf3361906227b21e5672f3461e257ea8a8039fc435a8d40f44f6975540820b03
+[2026-09-28T12:55:53.109Z]   opB      file_appeal(3, 0x8cd35fc08b003fcd, 7772654d1e8d0f64e9, Demo appeal on a d) +0.05 GEN → ACCEPTED OK [9s] B/minter tx=0x742c8e060f38507a837285f55ac854e311ca0c543a96642d6e57e89c811ba271
+[2026-09-28T12:55:55.365Z]   opA      file_appeal(2, 0x8410115b7ee1b359, bb84d0f9362b373263, Demo appeal filed ) +0.1 GEN → ACCEPTED OK [9s] A/farm tx=0x8f28e6fc1b6731415af110f759bbf54beaab8f282e012f85c365395dea5019e8
+[2026-09-28T12:56:01.769Z]   outsider create_drop(Paused?, base, 000000000000000000, 1790600750, 10, 3600, 3600, 100000000000000000, 100000000000000000, , ) +1 GEN → ACCEPTED REJECTED new drops are paused [11s] create_drop while paused (must be refused) tx=0xbf9aefb49a711bb9a36e7f845ae8dbae00116a7d8487fc9b885444b79e02d587
+[2026-09-28T12:56:39.339Z]   opC      file_appeal(1, 0x0f2589542b6d5a50, 29b7444c801a5c8a2e, Demo appeal on a t) +0.05 GEN → ACCEPTED OK [10s] C/long tx=0x1681131b5bce031629ce647583f103512cb73b4eaf49e8ac6239388557839893
+[2026-09-28T12:56:43.109Z]   opB      file_appeal(3, 0x35b4a50f63f4beee, 55dbb391bf5626237a, Demo appeal on a d) +0.05 GEN → ACCEPTED OK [49s] B/swapper tx=0xc29bf83a95fb197f822a39b9cf1d51bd0b2c64717e5ce7482edad897c39b002f
+[2026-09-28T12:56:45.181Z]   opA      file_appeal(2, 0xd5512d138ea203c5, 29b7444c801a5c8a2e, Demo appeal filed ) +0.1 GEN → ACCEPTED OK [10s] A/active tx=0xfd6891b3b3f193b78b88acbcebfcc56f7659ef1a67f9a5a5796cf758a010bcd8
+[2026-09-28T12:56:48.720Z]   opC      file_appeal(1, 0x1c1ff5a779249371, bb84d0f9362b373263, Demo appeal on a t) +0.05 GEN → ACCEPTED OK [8s] C/diverse tx=0xc8489d8ac6fb029340f5e8bce8c3664f2ce27ef77394e8857b289476ff29b477
+[2026-09-28T12:57:00.445Z]   trigger2 read_wallet(2) → ACCEPTED OK [17s] B/minter read attempt 1 tx=0xd97338c4d701de40d96f1c4bff433f719782b544ec5ce19f482955884165648f
+[2026-09-28T12:57:01.543Z]     B/minter: round ACCEPTED, still FILED (outbound history HTTP 500)
+[2026-09-28T12:57:05.398Z]   opA      file_appeal(2, 0x1c1ff5a779249371, 2b57a4a2a52846605c, Demo appeal: a lon) +0.1 GEN → ACCEPTED OK [19s] A/diverse tx=0xd60591b7a83b40dca41aeae577a787804472eee19dc6c4548d48746d21ab510f
+[2026-09-28T12:57:08.372Z]   opC      file_appeal(1, 0x35b4a50f63f4beee, 9555408c7e998ff4cf, Demo appeal on a t) +0.05 GEN → ACCEPTED OK [19s] C/swapper tx=0xfa740134c82806024c780cfad74c6e90cd37f6281ccecfbf19d53b9b0849c2ea
+[2026-09-28T12:57:49.058Z]   trigger3 settle_stalled(4) → ACCEPTED REJECTED nothing is in flight on appeal #4 [40s] settle_stalled while paused (reaches its own check, not a pause refusal) tx=0x00c0aefb4b5a9871231e0c6abc346cf5ae4a9e51dbca94c4a7bf2be36b250bb7
+[2026-09-28T12:59:01.769Z]   trigger2 read_wallet(2) → ACCEPTED OK [75s] B/minter read attempt 2 tx=0x91f956634f00aef7d82da44e4b71661b162d782aea89efa6feaab04c83652a49
+[2026-09-28T12:59:02.968Z]     B/minter: round ACCEPTED, still FILED (outbound history HTTP 500)
+[2026-09-28T13:00:04.703Z]   trigger2 read_wallet(2) → ACCEPTED OK [17s] B/minter read attempt 3 tx=0x7e7769dd1d8267299d570667fb3286ad9ba24cf65e202bd82772032da7c23eb5
+[2026-09-28T13:00:05.698Z]     B/minter: READ {"WALLET_AGE_DAYS":"11","OUTBOUND_TX_COUNT":"6","DISTINCT_CONTRACTS_TOUCHED":"1","ACTIVE_DAYS":"6"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"UNCLEAR","SCRIPTED_REPETITION":"STRONG","SINGLE_PURPOSE_FARMING":"STRONG","ORGANIC_DIVERSITY":"LOW"} (round ACCEPTED)
+[2026-09-28T13:00:35.730Z]   … waiting 2091s B: past the reveal deadline with no reveal
+[2026-09-28T13:00:53.820Z]   trigger  read_wallet(1) → ACCEPTED OK [18s] A/human read attempt 1 tx=0xb264c53089563c869d16e122250e253d1b007a09c1bee8e52a5bb00976c1dc74
+[2026-09-28T13:00:54.816Z]     A/human: READ {"WALLET_AGE_DAYS":"920","OUTBOUND_TX_COUNT":"6","DISTINCT_CONTRACTS_TOUCHED":"2","ACTIVE_DAYS":"5"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"YES","SCRIPTED_REPETITION":"SOME","SINGLE_PURPOSE_FARMING":"NONE","ORGANIC_DIVERSITY":"MEDIUM"} (round ACCEPTED)
+[2026-09-28T13:02:53.818Z]   trigger3 read_wallet(4) → UNDETERMINED OK [89s] C/4 read attempt 1 tx=0x35a455e4abde46820216bc58f9216bc5d939785ce0e75c0a0d9bad97c306184f
+[2026-09-28T13:02:55.045Z]     C/4: round UNDETERMINED, still FILED (round not applied)
+[2026-09-28T13:04:29.865Z]   trigger3 read_wallet(4) → ACCEPTED OK [50s] C/4 read attempt 2 tx=0x1cc8ec738a4dfe14131aab140b45062e8547a6780c5e787b727d149c5929ed2a
+[2026-09-28T13:04:30.804Z]     C/4: READ {"WALLET_AGE_DAYS":"920","OUTBOUND_TX_COUNT":"6","DISTINCT_CONTRACTS_TOUCHED":"2","ACTIVE_DAYS":"5"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"YES","SCRIPTED_REPETITION":"NONE","SINGLE_PURPOSE_FARMING":"NONE","ORGANIC_DIVERSITY":"MEDIUM"} (round ACCEPTED)
+[2026-09-28T13:05:23.923Z]   trigger  read_wallet(3) → ACCEPTED OK [23s] A/farm read attempt 1 tx=0x61b08dc872b7ccc8676c4a4ea94fdef8ebd0840b2caff6bcd7b68d54a4ffbcbe
+[2026-09-28T13:05:24.828Z]     A/farm: READ {"WALLET_AGE_DAYS":"15","OUTBOUND_TX_COUNT":"5","DISTINCT_CONTRACTS_TOUCHED":"1","ACTIVE_DAYS":"5"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"UNCLEAR","SCRIPTED_REPETITION":"STRONG","SINGLE_PURPOSE_FARMING":"STRONG","ORGANIC_DIVERSITY":"LOW"} (round ACCEPTED)
+[2026-09-28T13:06:50.502Z]   trigger3 read_wallet(7) → ACCEPTED OK [56s] C/7 read attempt 1 tx=0x8007e8e4baec398e914c782043da9f91322b1a3fe748c3cfc394341363d7ae3d
+[2026-09-28T13:06:51.515Z]     C/7: READ {"WALLET_AGE_DAYS":"920","OUTBOUND_TX_COUNT":"13","DISTINCT_CONTRACTS_TOUCHED":"5","ACTIVE_DAYS":"5"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"YES","SCRIPTED_REPETITION":"NONE","SINGLE_PURPOSE_FARMING":"NONE","ORGANIC_DIVERSITY":"MEDIUM"} (round ACCEPTED)
+[2026-09-28T13:07:31.360Z]   trigger  read_wallet(6) → ACCEPTED OK [10s] A/active read attempt 1 tx=0x38c8fee499a942ebcb9d8ff88df773edd8b7d6d0c2db51e6616a3aebcf20f627
+[2026-09-28T13:07:32.933Z]     A/active: INSUFFICIENT_HISTORY {} {} (round ACCEPTED)
+[2026-09-28T13:08:34.741Z]   trigger3 read_wallet(9) → ACCEPTED OK [32s] C/9 read attempt 1 tx=0xdd04e80b45543ca6000996b669bb554df3016ab1edb783edd8f545838a1fd126
+[2026-09-28T13:08:35.735Z]     C/9: READ {"WALLET_AGE_DAYS":"347","OUTBOUND_TX_COUNT":"13","DISTINCT_CONTRACTS_TOUCHED":"9","ACTIVE_DAYS":"5"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"YES","SCRIPTED_REPETITION":"STRONG","SINGLE_PURPOSE_FARMING":"NONE","ORGANIC_DIVERSITY":"LOW"} (round ACCEPTED)
+[2026-09-28T13:09:05.742Z]   … waiting 681s C: appeal window
+[2026-09-28T13:09:41.190Z]   trigger  read_wallet(8) → ACCEPTED OK [35s] A/diverse read attempt 1 tx=0x8660f94cd24134dda28c9c8f8483d8f040a01c171fecd91c176235106353bd1e
+[2026-09-28T13:09:42.110Z]     A/diverse: READ {"WALLET_AGE_DAYS":"920","OUTBOUND_TX_COUNT":"13","DISTINCT_CONTRACTS_TOUCHED":"5","ACTIVE_DAYS":"5"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"YES","SCRIPTED_REPETITION":"NONE","SINGLE_PURPOSE_FARMING":"NONE","ORGANIC_DIVERSITY":"MEDIUM"} (round ACCEPTED)
+[2026-09-28T13:10:23.552Z]   opA      file_appeal(2, 0xd5512d138ea203c5, 29b7444c801a5c8a2e, Refiled after an I) +0.1 GEN → ACCEPTED OK [9s] A/refile tx=0x49837584ba08cdcf7aadaad97918821d14303d362fcf3d073abc335a09bf9f23
+[2026-09-28T13:10:36.428Z]   trigger  read_wallet(10) → ACCEPTED OK [13s] A/refile read attempt 1 tx=0xd8a3bf6a42a7730000a1fe2aeed6ae527b67e46a83807e2fb841723d8fbf609a
+[2026-09-28T13:10:37.537Z]     A/refile: INSUFFICIENT_HISTORY {} {} (round ACCEPTED)
+[2026-09-28T13:11:07.542Z]   … waiting 858s A: for the appeal window to close
+[2026-09-28T13:21:03.365Z]   opC      reveal_rules(1, {"min_hits":2,"rul, 0a79922e9b5fa79e1d) → ACCEPTED (unreadable) [34s]  tx=0x9c277a9db113d008708847471894ad09283abf1f64b0212a3e47e36a148efb4e
+[2026-09-28T13:21:17.197Z]   trigger3 decide(4) → ACCEPTED (unreadable) [13s]  tx=0x8c575a21b3fc7b15f2c70f0b37f944b1bdabf2ffc2c001d76c273548803a8591
+[2026-09-28T13:21:30.654Z]   trigger3 decide(7) → ACCEPTED (unreadable) [12s]  tx=0xa646b8993c0026def68b774e88144877f8cc421123b4a3279c9487db41b5e292
+[2026-09-28T13:21:38.136Z]   trigger3 decide(9) → ACCEPTED (unreadable) [6s]  tx=0x30a17926a775a9541272abe3aa38ffe8d729c2c7a19686b8413db033375644c5
+[2026-09-28T13:25:40.268Z]   opA      reveal_rules(2, {"min_hits":4,"rul, 6a9dcbe53492a2dde9) → ACCEPTED REJECTED sha256(rules_json + salt) does not match the commitment; the reveal is refused [12s] A: DIFFERENT rules than committed (must be refused) tx=0x2ded83a790566dd525eca4e80159d6f9b5ca0fb93d0848237a992fe505c501ac
+[2026-09-28T13:25:48.397Z]   opA      reveal_rules(2, {"min_hits":2,"rul, 5aa3c929f48438fa1c) → ACCEPTED REJECTED sha256(rules_json + salt) does not match the commitment; the reveal is refused [8s] A: right rules, wrong salt (must be refused) tx=0xa94e6e322493e12b2c70b8364b5aabb44191c256d2224f4810024ef493cd3158
+[2026-09-28T13:25:55.009Z]   opA      reveal_rules(2, {"min_hits":2,"rul, 6a9dcbe53492a2dde9) → ACCEPTED (unreadable) [7s] A: the committed rules tx=0x9a9c68d57928a935c3b684cae9bace0e8ab1c086526e80cb08a1f45dc3e1bd80
+[2026-09-28T13:26:06.049Z]   trigger  decide(1) → ACCEPTED (unreadable) [10s] A/human tx=0x7e64ce45377c7067ee6116320ebae51bb267518b1465382c9c060c5f5ca2e2f8
+[2026-09-28T13:26:13.665Z]   trigger  decide(3) → ACCEPTED (unreadable) [7s] A/farm tx=0x296dcb716f311d7e9924d1a48b24b5b28677ec97baa785799619b01d3d6ba466
+[2026-09-28T13:26:22.616Z]   trigger  decide(8) → ACCEPTED (unreadable) [8s] A/diverse tx=0x6207e61d7b8dbd32584a136e28c1782aaeda225835a74bb20943a33bed09a6cb
+[2026-09-28T13:26:34.686Z]   opA      contest(8, Our cluster analys) +0.05 GEN → ACCEPTED REJECTED contest evidence may not reach the model because it frames the case (flagged); describe the wallet only [10s] A/diverse contest text that FRAMES the case (must be refused: the model may not learn the wallet was flagged) tx=0x69689d6a3eb348423aa3306584b1e9fd8177a847ddcd8f7c9777ad75b0a18719
+[2026-09-28T13:27:00.998Z]   opA      contest(8, Chain analysis lin) +0.05 GEN → ACCEPTED (unreadable) [26s] A/diverse contest tx=0xf6fb9f9f37a76094ac849a6213ab43686353d52165bd170958b3f98bf89b5795
+[2026-09-28T13:27:13.020Z]   opA      contest(3, Demo appeal filed ) +0.05 GEN → ACCEPTED REJECTED a contest must add NEW evidence; this text repeats the appeal [11s] A/farm contest that COPIES the statement (novelty gate must refuse) tx=0xbdfd48c2384736b5f72630859c5a0d097ef1d2c682a8b24fe950983768a457d3
+[2026-09-28T13:35:49.348Z]   trigger  decide(2) → ACCEPTED OK [22s] B: operator missed the reveal → default win tx=0xc9a0f885ea7d93a73c177b5681b11013b2253d3ddf8d10f60c582397fb5a29ab
+[2026-09-28T13:36:02.701Z]   trigger  decide(5) → ACCEPTED OK [13s] B: operator missed the reveal → default win tx=0x28f9c75ca058993192a9ae1f2b7745e15a9a4b47c3a26352f351c0a110965e63
+[2026-09-28T13:36:03.749Z]   … waiting 2382s every reveal deadline and contest window

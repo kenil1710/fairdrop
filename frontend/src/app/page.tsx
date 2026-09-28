@@ -22,8 +22,8 @@ const DEMO_RULES = {
 const STEPS = [
   { icon: Hash, title: "Seal the rules", body: "Before the snapshot, the operator commits sha256(rules + salt). The contract refuses a snapshot that is not in the future, so the seal is provably older than the list it produces." },
   { icon: Fingerprint, title: "Appeal from the wallet", body: "A flagged wallet appeals from itself with a merkle proof and a bond. No forms, no identity - the signature is the identity." },
-  { icon: Scale, title: "Read it blind", body: "Validators fetch the wallet's outbound history, code computes the hard numbers, and a model describes the behaviour in a fixed vocabulary. It never sees the rules." },
-  { icon: Unlock, title: "Reveal and apply", body: "The reveal must hash to the seal or it is refused. Contract code applies the rules line by line. Miss the reveal and every pending appeal wins." },
+  { icon: Unlock, title: "Reveal the rules", body: "The reveal must hash to the seal or it is refused. Miss the reveal and every pending appeal wins by default." },
+  { icon: Scale, title: "Read blind, rule in code", body: "Validators fetch the wallet's history, code computes the hard numbers, and a model describes the behaviour in a fixed vocabulary. It never sees the rules. Code applies them, and every validator must reach the same outcome." },
 ];
 
 export default function Home() {
@@ -91,11 +91,12 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="grid gap-4 pb-8 md:grid-cols-3">
+      <section className="grid gap-4 pb-8 md:grid-cols-2 xl:grid-cols-4">
         {[
           { c: "var(--human)", t: "HUMAN_PATTERN", b: "The appeal wins: the allocation is paid from the operator's escrowed reserve and the bond comes back." },
           { c: "var(--sybil)", t: "SYBIL_PATTERN", b: "The committed rules say so, given the findings. The bond goes to the reserve. Either side may contest once, with new evidence." },
           { c: "var(--insufficient)", t: "INSUFFICIENT_HISTORY", b: "The history could not be proven complete back to the lookback start. It never condemns: bond returned, refile allowed." },
+          { c: "var(--pending)", t: "UNRESOLVED", b: "Three read rounds never settled - the validators could not agree on the outcome. It never pays and never condemns: bond returned, refile allowed." },
         ].map((o) => (
           <div key={o.t} className="card p-5" style={{ borderColor: o.c }}>
             <div className="mono text-sm font-bold" style={{ color: o.c }}>{o.t}</div>

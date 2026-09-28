@@ -49,8 +49,10 @@ export default function DocsPage() {
             <li>Each validator fetches <span className="mono break-all">/api/v2/addresses/&#123;wallet&#125;/transactions?filter=from</span> (outbound only) and <span className="mono break-all">?sort=block_number&amp;order=asc</span> (earliest activity and first funding) from Blockscout. Two requests, no pagination.</li>
             <li>The outbound transactions inside [lookback start, snapshot] are reduced to one fixed-shape line each. That snapshot is hashed; validators must produce the identical hash.</li>
             <li>Code computes the four deterministic findings from the snapshot text; validators must agree exactly.</li>
-            <li>The model reads the snapshot and answers the four model findings with one word each. It never sees the rules, the flag or any threshold. Each validator must land on the same bucket as the leader, or exactly one step toward the human end — never a step toward condemnation.</li>
-            <li>After the reveal, <span className="mono">decide</span> applies the rules in code, line by line. The outcome is provisional for the contest window.</li>
+            <li>The model reads the snapshot and answers the four model findings with one word each. It never sees the rules, the flag or any threshold. Each finding may differ from the leader&apos;s by one bucket.</li>
+            <li>Reads run only after the reveal, because each validator applies the revealed rules in code to its <b>own</b> findings, and the outcome must be <b>identical</b> to the leader&apos;s. A one-bucket difference that would flip the outcome means the round does not settle.</li>
+            <li>A read attempt is a ticket then a round: the ticket commits even if the round never settles, so failures are counted. Three unsettled rounds make the appeal <b>UNRESOLVED</b>: bond returned, refile allowed, never paid, never condemned.</li>
+            <li><span className="mono">decide</span> then books the agreed outcome, line by line. It is provisional for the contest window.</li>
           </ol>
         </Section>
 
@@ -99,7 +101,7 @@ if IFairDropRegistry(REGISTRY).view().is_cleared(wallet, drop_id):
             <li>Reading behaviour is a judgement. The vocabulary bounds it to four one-word answers and validators must agree on each, but a model can still describe a real person as scripted.</li>
             <li>Blockscout is the only source. Its labels can be missing, its replicas lag by minutes, and internal transactions are not read (on Base the internal endpoint answers &quot;not yet processed&quot;). Wallet age is measured from the first visible normal transaction.</li>
             <li>Studio Dev queues value transfers and may not deliver them; the contract publishes the gap as <span className="mono">undelivered_wei</span>. Its books still drain to zero.</li>
-            <li>A consensus round that never settles rolls back entirely, so a genuinely stalled marker cannot be staged on demand; <span className="mono">settle_stalled</span> is proved offline.</li>
+            <li>Anyone may open a read ticket; one nobody runs expires and counts as unsettled. A party wanting an appeal UNRESOLVED could open tickets and wait; anyone can defeat that by running the round inside the ticket&apos;s life, and UNRESOLVED can neither pay nor condemn.</li>
           </ul>
         </Section>
       </div>

@@ -1,8 +1,13 @@
 /**
- * Loophole 10, on chain: read the EXACT prompts the model saw (get_prompt,
- * rebuilt by the contract from storage) for every read appeal on the demo, and
- * check none contains its drop's revealed rules JSON, salt, commitment, any
- * rule line, or the words the prompt must never use. Prints JSON.
+ * Loophole 10, on chain: read back the EXACT prompts the model saw (get_prompt,
+ * rebuilt by the contract from storage with the same function the validators
+ * ran) for every read appeal on BOTH instances, and check that none contains:
+ *   - the drop's revealed rules JSON, salt or commitment, or any rule line
+ *     (finding + condition, or the canonical "condition" key);
+ *   - a threshold word (threshold, min_hits, rule/rules);
+ *   - the flag or its reason: "flag", the appellant's statement, the drop's
+ *     name, or case framing (sybil, airdrop, appeal).
+ * Case-insensitive for words. Prints JSON.
  */
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
@@ -11,27 +16,34 @@ const { createClient } = require("genlayer-js");
 const { studioDevnet } = require("genlayer-js/chains");
 const dep = JSON.parse(readFileSync(new URL("../deployments.json", import.meta.url), "utf8")).deployments.studiodev;
 const client = createClient({ chain: studioDevnet });
-const FD = dep.FairDropDemo.address;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-async function v(fn, args) {
+async function v(address, fn, args) {
   for (let i = 0; i < 6; i++) {
-    try { return JSON.parse(await client.readContract({ address: FD, functionName: fn, args })); } catch { await sleep(12000); }
+    try { return JSON.parse(await client.readContract({ address, functionName: fn, args })); } catch { await sleep(12000); }
   }
   throw new Error(fn);
 }
-const out = { contract: FD, checked: [], ok: true };
-for (const d of (await v("get_drops", [0, 50])).drops) {
-  if (!d.revealed) continue;
-  const banned = [d.rules_json, d.salt, d.rules_hash, "min_hits", "threshold", "flagged", "sybil", "SYBIL", "airdrop", "appeal"];
-  for (const r of d.rules.rules) banned.push(`${r.finding} ${r.condition}`, `"condition":"${r.condition}"`);
-  for (const a of (await v("get_appeals", [d.drop_id])).appeals) {
-    const p = await v("get_prompt", [a.appeal_id]);
-    if (!p.found) continue;
-    const text = p.read_prompt + "\n" + p.contest_prompt;
-    const hits = banned.filter((b) => b && text.includes(b));
-    out.checked.push({ drop: d.drop_id, appeal: a.appeal_id, prompt_chars: text.length, leaked: hits });
-    if (hits.length) out.ok = false;
-    await sleep(2500);
+const WORDS = ["threshold", "min_hits", "rule", "flag", "sybil", "airdrop", "appeal"];
+const out = { contracts: [dep.FairDropDemo.address, dep.FairDrop.address], checked: [], ok: true };
+for (const FD of out.contracts) {
+  for (const d of (await v(FD, "get_drops", [0, 50])).drops) {
+    const exact = [d.rules_hash, d.name];
+    if (d.revealed) {
+      exact.push(d.rules_json, d.salt);
+      for (const r of d.rules.rules) exact.push(`${r.finding} ${r.condition}`, `"condition":"${r.condition}"`, `${r.finding}=${r.threshold}`);
+    }
+    for (const a of (await v(FD, "get_appeals", [d.drop_id])).appeals) {
+      const p = await v(FD, "get_prompt", [a.appeal_id]);
+      if (!p.found) continue;
+      const text = p.read_prompt + "\n" + p.contest_prompt;
+      const lower = text.toLowerCase();
+      const banned = [...exact, a.statement].filter(Boolean);
+      const leaked = [...banned.filter((b) => text.includes(b)), ...WORDS.filter((w) => lower.includes(w))];
+      out.checked.push({ contract: FD, drop: d.drop_id, appeal: a.appeal_id, outcome: a.outcome, prompt_chars: text.length,
+        has_contest_prompt: Boolean(p.contest_prompt), revealed: d.revealed, leaked });
+      if (leaked.length) out.ok = false;
+      await sleep(2500);
+    }
   }
 }
 console.log(JSON.stringify(out));

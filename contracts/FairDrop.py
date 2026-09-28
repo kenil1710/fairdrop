@@ -22,26 +22,31 @@ import typing
 #   2. After the snapshot, the operator commits the merkle root of the flagged
 #      list. A flagged wallet appeals FROM ITSELF (sender == wallet) with a
 #      merkle proof and a bond.
-#   3. Validators read the wallet BLIND: each fetches its outbound history from
+#   3. The operator reveals the rules. The reveal is accepted only if it hashes
+#      to the commitment exactly; if it never comes, every pending appeal wins.
+#   4. Validators read the wallet BLIND: each fetches its outbound history from
 #      Blockscout, the contract computes the deterministic findings, and a model
 #      describes the behaviour in a fixed vocabulary of bucketed findings. The
 #      model never sees the rules, the flag or any threshold: the prompt is
-#      built from the stored history snapshot and nothing else (`_prompt`).
-#   4. The operator reveals the rules. The reveal is accepted only if it hashes
-#      to the commitment exactly; if it never comes, every pending appeal wins.
-#   5. CODE, not the model, applies the revealed rules to the stored findings.
+#      built from the history snapshot and nothing else (`_prompt`).
+#   5. CODE, not the model, applies the revealed rules to each validator's own
+#      findings, and every validator must reach the SAME outcome.
 #
 # The model never sees the rules. It describes the wallet's behaviour; contract
 # code applies the rules that were committed before the snapshot.
 #
 # RULES CARRIED FROM EVERY PREVIOUS REJECTION (design notes: contracts/NOTES.md)
 #
-#   1. CONSENSUS BINDS EVERY STORED VALUE. The compared axis is the whole
-#      reading: status, coverage, snapshot hash, deterministic features (exact)
-#      and model findings (bucketed; equal, or one step toward the HUMAN end -
-#      never toward condemnation; see `_findings_agree`). Nothing uncompared
-#      is stored; the stored snapshot text is bound by its sha256, which every
-#      validator recomputes over its own fetch.
+#   1. CONSENSUS BINDS EVERY STORED VALUE, AND THE OUTCOME EXACTLY. The
+#      compared axis is the whole reading: status, coverage, snapshot hash and
+#      deterministic features (exact), model findings (bucketed; each may
+#      differ by ONE bucket), and the RULE OUTCOME each validator computes in
+#      code from its own findings (exact). A one-bucket difference can
+#      therefore never move money: if it would change the outcome, the round
+#      does not settle. Three rounds that never settle make the appeal
+#      UNRESOLVED (bond back, refileable, never SYBIL). Nothing uncompared is
+#      stored; the snapshot text is bound by its sha256, which every validator
+#      recomputes over its own fetch.
 #   2. NO PUBLIC WRITE EVER RAISES. There is not one `raise` in this file.
 #      Value is banked in ONE place (`_bank`, which makes it the sender's) and
 #      taken in ONE place (`_take`). A refusal credits nothing and takes
@@ -138,19 +143,26 @@ MIN_SALT_HEX = 32
 
 # --- appeal lifecycle
 S_FILED = "FILED"            # bond posted, waiting for the blind read
-S_READ = "READ"              # findings stored, waiting for the reveal
+S_READ = "READ"              # read and outcome agreed, waiting for decide
 S_PROVISIONAL = "PROVISIONAL"  # rules applied, contest window open
 S_FINAL = "FINAL"
 O_NONE = ""
 O_HUMAN = "HUMAN_PATTERN"
 O_SYBIL = "SYBIL_PATTERN"
 O_INSUFFICIENT = "INSUFFICIENT_HISTORY"
-OUTCOMES = (O_HUMAN, O_SYBIL, O_INSUFFICIENT)
+O_UNRESOLVED = "UNRESOLVED"
+OUTCOMES = (O_HUMAN, O_SYBIL, O_INSUFFICIENT, O_UNRESOLVED)
+# Outcomes that return the bond and let the wallet file again.
+REFILEABLE = (O_INSUFFICIENT, O_UNRESOLVED)
 BY_RULES = "RULES"
 BY_NO_REVEAL = "NO_REVEAL"
 BY_CONTEST = "CONTEST"
 BY_COVERAGE = "COVERAGE"
 BY_UNREAD = "UNREAD_AT_DEADLINE"
+BY_UNSETTLED = "ROUNDS_NEVER_SETTLED"
+# A read round that has not landed when its ticket expires counts as one
+# unsettled attempt; this many make the appeal UNRESOLVED.
+MAX_UNSETTLED_ROUNDS = 3
 
 # --- what a blind read can come back as
 R_READ = "READ"
@@ -168,7 +180,7 @@ MAX_VALUE_WEI = 10 ** 26
 
 # --- time (contract-level; per-drop windows are frozen at creation)
 CONTEST_WINDOW_S = 48 * 3600
-STALL_TTL_S = 48 * 3600
+STALL_TTL_S = 3600           # life of one read-round ticket
 MIN_PHASE_S = 3600
 MAX_PHASE_S = 365 * 86400
 MAX_LOOKBACK_DAYS = 3650
@@ -1016,30 +1028,21 @@ def _coherent_read(p: typing.Any, snap_ts: int) -> bool:
     return _findings_ok(p["findings"])
 
 
-# Which end of each model scale is the HUMAN end. Used for exactly one thing:
-# the one-step-toward-human tolerance in `_findings_agree`.
-HUMAN_END_HIGH = {F_FUNDER: True, F_SCRIPTED: False, F_FARMING: False,
-                  F_ORGANIC: True}
-
-
 def _findings_agree(theirs: typing.Any, mine: typing.Any) -> bool:
-    """Do the leader's model findings match this validator's?
+    """Do the leader's model findings match this validator's, bucket by bucket?
 
     MEASURED ON CHAIN, and the reason this is not plain equality: the same
     public wallet read `SCRIPTED_REPETITION=SOME` in two rounds and `NONE` in
     another, and with exact comparison its rounds went UNDETERMINED again and
-    again. A borderline wallet could then NEVER be read, and would expire as
-    INSUFFICIENT_HISTORY - safe, but a real person starved of a verdict.
+    again. So each finding may differ by ONE bucket, in either direction;
+    never two, and UNCLEAR only matches UNCLEAR.
 
-    So a validator accepts the leader's bucket if it is EQUAL to its own, or
-    exactly ONE STEP TOWARD THE HUMAN END of that scale. Never a step toward
-    condemnation, never two steps, and UNCLEAR only matches UNCLEAR. A leader
-    can therefore shade a borderline reading in the appellant's favour by one
-    bucket at most, and cannot shade any reading against them at all - the
-    asymmetry this whole contract is built on (a wrong clearance costs part of
-    a reserve; a wrong condemnation costs a real user their allocation). The
-    rules are still sealed when the read happens, so no leader knows which
-    finding would matter anyway."""
+    This tolerance is ONLY safe because it never decides anything on its own:
+    every round also compares the RULE OUTCOME exactly (`_agree_judged`). v3
+    let the leader shade one step toward human with no outcome check, and a
+    borderline wallet could be moved across a threshold and paid from the
+    operator's reserve on the leader's say-so. Now a one-bucket difference is
+    accepted only when it changes nothing that matters."""
     if not _findings_ok(theirs) or not _findings_ok(mine):
         return False
     a = _kv(theirs)
@@ -1051,16 +1054,16 @@ def _findings_agree(theirs: typing.Any, mine: typing.Any) -> bool:
             return False
         scale = SCALES[f]
         step = scale.index(a[f]) - scale.index(b[f])
-        if step != (1 if HUMAN_END_HIGH[f] else -1):
+        if step != 1 and step != -1:
             return False
     return True
 
 
 def _agree_read(theirs: typing.Any, mine: typing.Any) -> bool:
-    """THE FULL VECTOR: status, snapshot hash and deterministic features
-    compared EXACTLY; model findings compared bucket by bucket with the
-    one-step-toward-human tolerance of `_findings_agree`. Validators need not
-    agree on WHY a source was unavailable, only that it was."""
+    """THE EVIDENCE: status, snapshot hash and deterministic features compared
+    EXACTLY; model findings within one bucket (`_findings_agree`). Validators
+    need not agree on WHY a source was unavailable, only that it was. The
+    outcome is compared on top of this by `_agree_judged`."""
     if not isinstance(theirs, dict) or not isinstance(mine, dict):
         return False
     for k in ("status", "snapshot_hash", "features"):
@@ -1075,6 +1078,44 @@ def _agree_read(theirs: typing.Any, mine: typing.Any) -> bool:
             str(theirs.get("why")) != str(mine.get("why")):
         return False
     return True
+
+
+def _outcome_of(rules: dict, p: dict) -> str:
+    """The outcome code assigns to a reading: the rules applied to ITS
+    features and findings. Empty for anything but a READ."""
+    if p.get("status") != R_READ:
+        return ""
+    outcome, _ = _evaluate(rules, str(p.get("features")), str(p.get("findings")))
+    return outcome
+
+
+def _judged_read(facts: dict, rules: dict) -> dict:
+    """One validator's whole contribution: its own blind read, and the outcome
+    the revealed rules give on it. The rules go to `_evaluate` (code) and never
+    to `_prompt` (the model): `_blind_read` is called with the facts alone."""
+    p = _blind_read(facts)
+    p["outcome"] = _outcome_of(rules, p)
+    return p
+
+
+def _coherent_judged(p: typing.Any, snap_ts: int, rules: dict) -> bool:
+    """The leader's payload is internally honest: a coherent read, and the
+    outcome it claims is the one the rules give on ITS OWN findings."""
+    if not _coherent_read(p, snap_ts):
+        return False
+    return isinstance(p.get("outcome"), str) and \
+        p["outcome"] == _outcome_of(rules, p)
+
+
+def _agree_judged(theirs: typing.Any, mine: typing.Any) -> bool:
+    """THE FULL VECTOR. The evidence agrees (`_agree_read`) AND the rule
+    outcome this validator computed from its OWN findings is IDENTICAL to the
+    leader's. A leader that shades a borderline finding across a threshold
+    produces a different outcome from an honest validator, and the round does
+    not settle."""
+    if not _agree_read(theirs, mine):
+        return False
+    return str(theirs.get("outcome", "!")) == str(mine.get("outcome", "?"))
 
 
 # --- text gates for a contest --------------------------------------------------
@@ -1231,7 +1272,9 @@ class Appeal:
     decided_by: str
     refile_of: u32
     # --- the blind read (all consensus-bound)
-    read_attempts: u32
+    read_attempts: u32         # rounds that LANDED (any read status)
+    rounds_opened: u32         # read-round tickets opened
+    unsettled_rounds: u32      # tickets that expired without a landed round
     read_at: u64
     last_read_status: str
     snapshot: str
@@ -1418,6 +1461,7 @@ class FairDrop(gl.contract.Contract):
             self._release(ap.filer, bond)
         if outcome == O_HUMAN:
             drop.winners = u32(int(drop.winners) + 1)
+        self.in_flight[str(int(ap.appeal_id))] = u64(0)
         ap.status = S_FINAL
         ap.outcome = outcome
         ap.decided_by = by
@@ -1660,7 +1704,7 @@ class FairDrop(gl.contract.Contract):
         prev = self._appeal(prev_id) if prev_id > 0 else None
         refile = False
         if prev is not None:
-            if str(prev.outcome) != O_INSUFFICIENT:
+            if str(prev.outcome) not in REFILEABLE:
                 return self._refuse("this wallet has already appealed this drop",
                                     {"appeal_id": prev_id})
             refile = True
@@ -1700,6 +1744,8 @@ class FairDrop(gl.contract.Contract):
         a.decided_by = ""
         a.refile_of = u32(prev_id if refile else 0)
         a.read_attempts = u32(0)
+        a.rounds_opened = u32(0)
+        a.unsettled_rounds = u32(0)
         a.read_at = u64(0)
         a.last_read_status = ""
         a.snapshot = ""
@@ -1731,11 +1777,17 @@ class FairDrop(gl.contract.Contract):
 
     @gl.public.write
     def read_wallet(self, appeal_id: typing.Any) -> typing.Any:
-        """Run the blind read. PERMISSIONLESS and ungated on pause.
+        """Run the blind read. PERMISSIONLESS and ungated on pause. Only after
+        the rules are revealed, because every validator must compute the
+        OUTCOME from its own findings and agree on it exactly.
 
-        Every validator fetches the wallet's outbound history itself, the
-        contract derives the deterministic findings, the model describes the
-        snapshot, and the validators compare the WHOLE vector exactly."""
+        TICKETS. A round that never settles (UNDETERMINED) commits nothing, so
+        it cannot count itself. The first call therefore only OPENS a ticket
+        (a committed, deterministic write); calls while the ticket is live run
+        the consensus round, and a landed round closes it. A ticket that
+        expires without a landed round counts as one unsettled attempt - here,
+        or through `settle_stalled` - and the third makes the appeal
+        UNRESOLVED."""
         self._bank()
         now = self._now()
         a = self._appeal(appeal_id)
@@ -1747,16 +1799,34 @@ class FairDrop(gl.contract.Contract):
         d = self._drop(int(a.drop_id))
         if now <= 0:
             return self._refuse("the block time was unreadable; retry")
-        if now < int(d.snapshot_ts):
-            return self._refuse("the snapshot has not happened yet")
-        if not bool(d.revealed) and now >= int(d.reveal_end_ts):
-            return self._refuse("the operator missed the reveal deadline; call "
-                                "decide(" + str(int(a.appeal_id)) + "): this "
-                                "appeal is won by default")
+        if not bool(d.revealed):
+            if now >= int(d.reveal_end_ts):
+                return self._refuse("the operator missed the reveal deadline; "
+                                    "call decide(" + str(int(a.appeal_id))
+                                    + "): this appeal is won by default")
+            return self._refuse("reads start once the rules are revealed: "
+                                "each validator must compute the outcome from "
+                                "its own findings",
+                                {"reveal_opens_at": int(d.appeal_end_ts)})
+        if now >= int(d.reveal_end_ts) + int(self.contest_window_s):
+            return self._refuse("the read deadline has passed; call "
+                                "finalize_appeal(" + str(int(a.appeal_id)) + ")")
         aid = int(a.appeal_id)
-        if self._flight(aid, now) > 0:
-            return self._refuse("a consensus round on this appeal is in flight")
+        opened = int(self.in_flight.get(str(aid)) or 0)
+        if opened > 0 and now - opened >= int(self.stall_ttl_s):
+            return self._expire_round(d, a, now)
+        if opened <= 0:
+            self.in_flight[str(aid)] = u64(now)
+            a.rounds_opened = u32(int(a.rounds_opened) + 1)
+            return {"status": "OK", "appeal_id": aid, "round": "OPENED",
+                    "attempt": int(a.rounds_opened),
+                    "unsettled_rounds": int(a.unsettled_rounds),
+                    "run_until": now + int(self.stall_ttl_s),
+                    "next": "read_wallet(" + str(aid) + ") runs the round"}
 
+        rules, err = _parse_rules(str(d.rules_json))
+        if rules is None:
+            return self._refuse("stored rules unreadable: " + err)
         facts = {
             "chain": str(d.chain), "wallet": a.wallet.as_hex,
             "lookback_start": self._lookback_start(d),
@@ -1764,25 +1834,24 @@ class FairDrop(gl.contract.Contract):
             "contracts": str(d.protocol_contracts),
         }
         snap_ts = int(d.snapshot_ts)
-        self.in_flight[str(aid)] = u64(now)
 
         def leader_fn() -> dict:
-            return _blind_read(facts)
+            return _judged_read(facts, rules)
 
         def validator_fn(leader_result: gl.vm.Result) -> bool:
             if not isinstance(leader_result, gl.vm.Return):
                 return False
             theirs = leader_result.calldata
-            if not _coherent_read(theirs, snap_ts):
+            if not _coherent_judged(theirs, snap_ts, rules):
                 return False
-            return _agree_read(theirs, _blind_read(facts))
+            return _agree_judged(theirs, _judged_read(facts, rules))
 
         out = gl.vm.run_nondet(leader_fn, validator_fn)
-        self.in_flight[str(aid)] = u64(0)
-        if not _coherent_read(out, snap_ts):
+        if not _coherent_judged(out, snap_ts, rules):
             return self._refuse("the validators did not return a usable "
                                 "reading; nothing changed, read again")
 
+        self.in_flight[str(aid)] = u64(0)
         self.total_reads = u256(int(self.total_reads) + 1)
         a.read_attempts = u32(int(a.read_attempts) + 1)
         a.last_read_status = str(out["status"])
@@ -1806,8 +1875,31 @@ class FairDrop(gl.contract.Contract):
         a.status = S_READ
         return {"status": "OK", "appeal_id": aid, "read": R_READ,
                 "snapshot_hash": a.snapshot_hash, "features": a.features,
-                "findings": a.findings,
-                "next": "decide(" + str(aid) + ") once the rules are revealed"}
+                "findings": a.findings, "agreed_outcome": str(out["outcome"]),
+                "next": "decide(" + str(aid) + ")"}
+
+    def _expire_round(self, d: Drop, a: Appeal, now: int) -> dict:
+        """A read-round ticket outlived its TTL without a landed round: count
+        it. The third makes the appeal UNRESOLVED - bond returned, no payout,
+        refileable until the reveal deadline, and never SYBIL_PATTERN."""
+        aid = int(a.appeal_id)
+        started = int(self.in_flight.get(str(aid)) or 0)
+        self.in_flight[str(aid)] = u64(0)
+        a.unsettled_rounds = u32(int(a.unsettled_rounds) + 1)
+        n = int(a.unsettled_rounds)
+        if n >= MAX_UNSETTLED_ROUNDS:
+            self._finish(d, a, O_UNRESOLVED, BY_UNSETTLED, now)
+            return {"status": "OK", "appeal_id": aid, "round": "EXPIRED",
+                    "stalled_for_s": now - started, "unsettled_rounds": n,
+                    "outcome": O_UNRESOLVED, "final": True,
+                    "note": str(n) + " read rounds never settled; UNRESOLVED "
+                            "returns the bond, pays nothing, condemns nobody, "
+                            "and the wallet may refile until the reveal "
+                            "deadline", "claim_with": "claim_payout()"}
+        return {"status": "OK", "appeal_id": aid, "round": "EXPIRED",
+                "stalled_for_s": now - started, "unsettled_rounds": n,
+                "left": MAX_UNSETTLED_ROUNDS - n,
+                "next": "read_wallet(" + str(aid) + ") opens a new round"}
 
     # --- writes: decision -----------------------------------------------------
 
@@ -1905,7 +1997,7 @@ class FairDrop(gl.contract.Contract):
             return self._refuse("the contest bond could not be locked")
 
         snapshot = str(a.snapshot)
-        self.in_flight[str(aid)] = u64(now)
+        features = str(a.features)
 
         def leader_fn() -> dict:
             ok, f = _ask_model(snapshot, added)
@@ -1922,10 +2014,16 @@ class FairDrop(gl.contract.Contract):
             ok, f = _ask_model(snapshot, added)
             if ok != theirs["ok"]:
                 return False
-            return (not ok) or _findings_agree(theirs.get("findings"), f)
+            if not ok:
+                return True
+            if not _findings_agree(theirs.get("findings"), f):
+                return False
+            # The outcome, exactly: a one-bucket shade may not flip a contest.
+            lead, _ = _evaluate(doc, features, str(theirs.get("findings")))
+            mine, _ = _evaluate(doc, features, f)
+            return lead == mine
 
         out = gl.vm.run_nondet(leader_fn, validator_fn)
-        self.in_flight[str(aid)] = u64(0)
         if not isinstance(out, dict) or out.get("ok") is not True or \
                 not _findings_ok(out.get("findings")):
             # The re-read could not be made. The contest is not consumed and
@@ -2091,8 +2189,10 @@ class FairDrop(gl.contract.Contract):
 
     @gl.public.write
     def settle_stalled(self, appeal_id: typing.Any) -> typing.Any:
-        """Clear an in-flight marker that outlived its round. PERMISSIONLESS
-        and works while paused. No money moves: none moved when it was set."""
+        """Close a read-round ticket that outlived its TTL without a landed
+        round, and count it as unsettled (the third makes the appeal
+        UNRESOLVED). PERMISSIONLESS and works while paused. No money moves
+        unless that third count finalizes the appeal, which returns the bond."""
         self._bank()
         now = self._now()
         a = self._appeal(appeal_id)
@@ -2106,9 +2206,12 @@ class FairDrop(gl.contract.Contract):
         if age < int(self.stall_ttl_s):
             return self._refuse("in flight for " + str(age) + "s; clearable "
                                 "after " + str(int(self.stall_ttl_s)) + "s")
-        self.in_flight[str(aid)] = u64(0)
-        return {"status": "OK", "appeal_id": aid, "stalled_for_s": age,
-                "appeal_status": str(a.status)}
+        if str(a.status) != S_FILED:
+            self.in_flight[str(aid)] = u64(0)
+            return {"status": "OK", "appeal_id": aid, "stalled_for_s": age,
+                    "appeal_status": str(a.status)}
+        d = self._drop(int(a.drop_id))
+        return self._expire_round(d, a, now)
 
     @gl.public.write
     def set_paused(self, paused: typing.Any) -> typing.Any:
@@ -2210,6 +2313,9 @@ class FairDrop(gl.contract.Contract):
             "status": str(a.status), "outcome": str(a.outcome),
             "decided_by": str(a.decided_by), "refile_of": int(a.refile_of),
             "read_attempts": int(a.read_attempts), "read_at": int(a.read_at),
+            "rounds_opened": int(a.rounds_opened),
+            "unsettled_rounds": int(a.unsettled_rounds),
+            "round_open_at": int(self.in_flight.get(str(int(a.appeal_id))) or 0),
             "last_read_status": str(a.last_read_status),
             "snapshot": str(a.snapshot), "snapshot_hash": str(a.snapshot_hash),
             "features": _kv(str(a.features)), "findings": _kv(str(a.findings)),
@@ -2362,6 +2468,12 @@ class FairDrop(gl.contract.Contract):
         if str(a.outcome) == O_SYBIL:
             checks.append({"check": "a SYBIL outcome was read from covered "
                                     "history", "ok": bool(str(a.snapshot))})
+        if str(a.outcome) == O_UNRESOLVED:
+            checks.append({"check": "UNRESOLVED only after "
+                                    + str(MAX_UNSETTLED_ROUNDS) + " unsettled "
+                                    "rounds, paying nothing",
+                           "ok": int(a.unsettled_rounds) >= MAX_UNSETTLED_ROUNDS
+                           and int(a.payout_wei) == 0})
         checks.append({"check": "the drop committed its rules before the "
                                 "snapshot",
                        "ok": int(d.created_at) < int(d.snapshot_ts)})
@@ -2451,12 +2563,14 @@ class FairDrop(gl.contract.Contract):
                          "earliest-activity page complete or verifiably "
                          "ascending; otherwise INSUFFICIENT_HISTORY"),
             "max_fetches_per_read": MAX_FETCHES,
-            "findings_tolerance": ("model findings agree if equal, or if the "
-                                   "leader's bucket is exactly one step toward "
-                                   "the human end; never toward condemnation; "
-                                   "UNCLEAR only matches UNCLEAR"),
-            "human_end": {f: (SCALES[f][-1] if HUMAN_END_HIGH[f] else SCALES[f][0])
-                          for f in MODEL_FINDINGS},
+            "findings_tolerance": ("each model finding may differ by one "
+                                   "bucket; UNCLEAR only matches UNCLEAR; the "
+                                   "rule outcome each validator computes from "
+                                   "its own findings must be identical, or the "
+                                   "round does not settle"),
+            "outcome_compared": "exact",
+            "max_unsettled_rounds": MAX_UNSETTLED_ROUNDS,
+            "round_ttl_s": int(self.stall_ttl_s),
             "model_sees": "the stored history snapshot only (plus contest "
                           "context on a contest); never the rules, flag or "
                           "thresholds",

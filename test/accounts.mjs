@@ -14,6 +14,9 @@
  *   trigger     calls the permissionless methods (read, decide, finalize,
  *               close) and earns nothing for it
  *   outsider    only ever probes access control
+ *   trigger2    runs every demo read (one serialized queue)
+ *   trigger3/4/5  drive drops C, B and D; canonTrigger the canonical drop;
+ *               prober the pause probe - one key per concurrent actor
  *
  * Usage: node accounts.mjs [--force]
  */
@@ -24,7 +27,8 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 const target = new URL("./.accounts.json", import.meta.url);
 const force = process.argv.includes("--force");
 const ROLES = ["deployer", "opA", "opB", "opC", "opD", "canonOp", "flagged1",
-  "flagged2", "trigger", "trigger2", "trigger3", "outsider"];
+  "flagged2", "trigger", "trigger2", "trigger3", "outsider", "trigger4",
+  "trigger5", "canonTrigger", "prober"];
 const existing = existsSync(target) && !force ? JSON.parse(readFileSync(target, "utf8")) : {};
 const out = {};
 for (const role of ROLES) {

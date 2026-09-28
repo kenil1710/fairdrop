@@ -2,6 +2,7 @@
 contract through the stub, a flagged-list merkle tree built independently of
 the contract, rules documents, and Blockscout-shaped history fixtures whose
 field names are copied from live responses (docs/probe/)."""
+import copy
 import hashlib
 import json
 import random
@@ -226,6 +227,8 @@ class World:
         self.now = T0
         self.deposited = 0
         self.ops = 0
+        self.infos = {}
+        self.undetermined = 0
 
     # --- driving ------------------------------------------------------------
 
@@ -238,10 +241,20 @@ class World:
         return self.at(self.now + int(secs))
 
     def call(self, who, name, *args, value=0):
+        """One transaction. A consensus round that does not settle rolls the
+        WHOLE transaction back (UNDETERMINED on chain): nothing is written and
+        the value never arrives."""
         MESSAGE.sender_address = who
         MESSAGE.value = int(value)
+        before = copy.deepcopy(self.c)
         try:
             out = getattr(self.c, name)(*args)
+        except stub._Rolled as e:
+            self.c = before
+            self.ops += 1
+            self.undetermined += 1
+            self.check_ledger()
+            return {"status": "UNDETERMINED", "reason": e.args[0] if e.args else ""}
         finally:
             MESSAGE.value = 0
         self.deposited += int(value)
@@ -299,6 +312,7 @@ class World:
         root, paths = build_tree(list(flagged))
         info["root"] = root
         info["proofs"] = paths
+        self.infos[info["id"]] = info
         if commit_now:
             self.at(snap + 1)
             r = self.call(operator, "commit_flagged", info["id"], root,
@@ -317,6 +331,34 @@ class World:
     def reveal(self, info, rules=None, salt=None):
         return self.call(info["operator"], "reveal_rules", info["id"],
                          canon(rules or info["rules"]), salt or info["salt"])
+
+    def ensure_revealed(self, drop_id):
+        """Reads run after the reveal: jump past the appeal window and reveal
+        the committed rules if that has not happened yet."""
+        info = self.infos[drop_id]
+        if not self.drop_view(info)["revealed"]:
+            self.at(max(self.now, info["appeal_end"] + 1))
+            r = self.reveal(info)
+            assert r["status"] == "OK", r
+        return info
+
+    def read(self, aid, who=None, reveal=True):
+        """One read ATTEMPT as a client makes it: open a round ticket if none
+        is live, then run the round. Returns the round's result."""
+        who = who or STRANGER
+        a = self.view("get_appeal", aid)
+        if a.get("found") and reveal:
+            self.ensure_revealed(a["appeal"]["drop_id"])
+        out = self.call(who, "read_wallet", aid)
+        if isinstance(out, dict) and out.get("round") in ("OPENED", "EXPIRED"):
+            if out.get("final"):
+                return out
+            if out.get("round") == "EXPIRED":
+                out = self.call(who, "read_wallet", aid)
+                if out.get("round") != "OPENED":
+                    return out
+            out = self.call(who, "read_wallet", aid)
+        return out
 
     def appeal(self, aid):
         return self.view("get_appeal", aid)["appeal"]

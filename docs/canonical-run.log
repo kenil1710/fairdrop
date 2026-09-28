@@ -1,13 +1,32 @@
-[2026-09-28T12:51:37.300Z]   canonOp  create_drop(Canonical — keys w, base, 4b1e1ffb73c4e087ed, 1790600121, 365, 3600, 3600, 500000000000000000, 50000000000000000, CanonProto, ) +1 GEN → ACCEPTED OK [14s]  tx=0xe616f3ec65bec2758c9d177cc0abdcca63a51c8bef03f5bb10030c61e926e3b2
-[2026-09-28T12:51:37.301Z] canonical drop #1 on 0xeADc6ccb80761E9b98d9947A3Bb31dd125C09095
-[2026-09-28T12:51:38.576Z]   … waiting 227s for the snapshot
-[2026-09-28T12:55:38.085Z]   canonOp  commit_flagged(1, 38f74eccf9e14b6ae6, 2) → ACCEPTED OK [12s]  tx=0xa2497bef73203e1c4c4537ceb74e1d67a8766661c6d6330a88f805451f87e042
-[2026-09-28T12:55:47.286Z]   outsider file_appeal(1, 0xb5b5cee6b8b53ff5, 785292ebdb29758fe1, Filing for a walle) +0.05 GEN → ACCEPTED REJECTED an appeal must be sent by the flagged wallet itself [9s] LOOPHOLE 4: a stranger files for flagged2 (must be refused) tx=0xfa296b2dae4b53a601a23b02fbcf4182912e8b434f5c621f8a48377e175c827d
-[2026-09-28T12:55:56.089Z]   canonOp  file_appeal(1, 0xb5b5cee6b8b53ff5, 785292ebdb29758fe1, Operator on behalf) +0.05 GEN → ACCEPTED REJECTED an appeal must be sent by the flagged wallet itself [9s] canonical: the operator files for flagged2 (must be refused) tx=0xa1affa97735cff455b614bd18478f71b6816d4903a50ac72d296e63bf26b2cae
-[2026-09-28T12:56:45.971Z]   outsider file_appeal(1, 0x17b2342321c2e411, ebf2e16f95e39bd526, Not flagged) +0.05 GEN → ACCEPTED REJECTED this wallet is not in the flagged list (the merkle proof does not verify) [50s] LOOPHOLE 3: a non-flagged wallet appeals (must be refused) tx=0x58f8a7e7bbaff4146fa644179d90888f578c6fd15b25b6071bfb3aefb18c4c47
-[2026-09-28T12:56:55.541Z]   flagged1 file_appeal(1, 0x8cd1770df3eb9a7b, ebf2e16f95e39bd526, This is my own wal) +0.05 GEN → ACCEPTED OK [9s] flagged1 appeals FROM ITSELF tx=0x71d693f9824f1a46aa9604298f37b9820a5203a0d91dbf8d1b22b3a04956fdad
-[2026-09-28T12:57:02.987Z]   flagged1 file_appeal(1, 0x8cd1770df3eb9a7b, ebf2e16f95e39bd526, Again) +0.05 GEN → ACCEPTED REJECTED this wallet has already appealed this drop [7s] LOOPHOLE 8: same wallet twice (must be refused) tx=0x05ab828764967ada644962f52b57288e94b801ee9fdc2d7ede4498e14237b1d0
-[2026-09-28T12:57:13.054Z]   canonOp  close_drop(1) → ACCEPTED REJECTED the reserve is locked until the reveal deadline and every contest window close [10s] LOOPHOLE 6: operator closes during appeals (must be refused) tx=0x8c55f461e48c354a775d3c7220e83e34cd08ae478367951be9c403c2fa485ccd
-[2026-09-28T12:58:08.057Z]   trigger  read_wallet(1) → ACCEPTED OK [55s] blind read on the canonical instance tx=0x86ce720ad260ba22d2c46b7191b5ffdc174d441ccd987983fbd5671e4450603c
-[2026-09-28T12:58:08.089Z] {"appeal_id":1,"features":"WALLET_AGE_DAYS=0,OUTBOUND_TX_COUNT=0,DISTINCT_CONTRACTS_TOUCHED=0,ACTIVE_DAYS=0","findings":"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE=UNCLEAR,SCRIPTED_REPETITION=UNCLEAR,SINGLE_PURPOSE_FARMING=UNCLEAR,ORGANIC_DIVERSITY=UNCLEAR","next":"decide(1) once the rules are revealed","read":"READ","snapshot_hash":"0369cf9b9425ceaeeb013a493688ab64f917903f481e096fe1bf92e4b2dd0247","status":"OK"}
-[2026-09-28T12:58:11.540Z] wrote docs/canonical-evidence.json
+[2026-09-28T15:21:29.424Z]   canonOp  create_drop(Canonical — keys w, base, 6422dfe386c6e66cb1, 1790609118, 365, 3600, 3600, 500000000000000000, 50000000000000000, CanonProto, ) +1 GEN → ACCEPTED OK [9s]  tx=0x14dbc86a96b9283d0032f52dc6a932c2e7d7245f88f6e10ecba074f5df762c3e
+[2026-09-28T15:21:29.428Z] canonical drop #1 on 0xe206255a3639aFC60c77F0D8dCA42C2dac80f889
+[2026-09-28T15:21:30.880Z]   … waiting until 2026-09-28T15:25:23.000Z (233s) for the snapshot
+[2026-09-28T15:25:32.568Z]   canonOp  commit_flagged(1, 38f74eccf9e14b6ae6, 2) → ACCEPTED OK [9s]  tx=0x2c8f467ae970b158b7b62ecf975b4107193be5f061dbd6b92d63c5d311aa63aa
+[2026-09-28T15:25:39.818Z]   outsider file_appeal(1, 0xb5b5cee6b8b53ff5, 785292ebdb29758fe1, Filing for a walle) +0.05 GEN → ACCEPTED REJECTED an appeal must be sent by the flagged wallet itself [7s] LOOPHOLE 4: a stranger files for flagged2 (must be refused) tx=0x78c03e751dea68ec1e9269e17e016477d006a851381dff2ede81baeffa0446dc
+[2026-09-28T15:25:46.731Z]   canonOp  file_appeal(1, 0xb5b5cee6b8b53ff5, 785292ebdb29758fe1, Operator on behalf) +0.05 GEN → ACCEPTED REJECTED an appeal must be sent by the flagged wallet itself [7s] canonical: the operator files for flagged2 (must be refused) tx=0xfb0fa38d55a7d9216b8ed8f9053831df8f06cf4e565b61247ecc9fe6fcfb053c
+[2026-09-28T15:25:57.737Z]   outsider file_appeal(1, 0x17b2342321c2e411, ebf2e16f95e39bd526, Not flagged) +0.05 GEN → ACCEPTED REJECTED this wallet is not in the flagged list (the merkle proof does not verify) [11s] LOOPHOLE 3: a non-flagged wallet appeals (must be refused) tx=0x4696d7f39d90ec4f23e807d4a95d468a18bcfd708e02cda88d1b8823d4a93713
+[2026-09-28T15:26:07.172Z]   flagged1 file_appeal(1, 0x8cd1770df3eb9a7b, ebf2e16f95e39bd526, This is my own wal) +0.05 GEN → ACCEPTED OK [9s] flagged1 appeals FROM ITSELF tx=0xe09ede558059d7d59875d6a2d5e327ff256f4c5bfcd37e023809773be7b572a0
+[2026-09-28T15:26:17.784Z]   flagged1 file_appeal(1, 0x8cd1770df3eb9a7b, ebf2e16f95e39bd526, Again) +0.05 GEN → ACCEPTED REJECTED this wallet has already appealed this drop [11s] LOOPHOLE 8: same wallet twice (must be refused) tx=0x63c39962e2dc4988cf3f8a8f928189b462f9e94f9dfd100d3b55a288a0243d84
+[2026-09-28T15:26:26.571Z]   canonOp  close_drop(1) → ACCEPTED REJECTED the reserve is locked until the reveal deadline and every contest window close [9s] LOOPHOLE 6: operator closes during appeals (must be refused) tx=0xd288fda868263b201e67d90fac4f79a26db15a371c90a2bc9d91590da5827348
+[2026-09-28T15:26:35.908Z]   canonTrigger read_wallet(1) → ACCEPTED REJECTED reads start once the rules are revealed: each validator must compute the outcome from its own findings [9s] v4: a read before the reveal (must be refused: the outcome needs the rules) tx=0x967e7158dccacc198b512507e8e51b858d994418a94e0081978c9fbd4cefd844
+[2026-09-28T15:26:35.910Z]   … waiting until 2026-09-28T16:25:23.000Z (3528s) the 1-hour appeal window
+[2026-09-28T15:31:50.539Z]   … still waiting 3213s the 1-hour appeal window
+[2026-09-28T15:36:51.298Z]   … still waiting 2912s the 1-hour appeal window
+[2026-09-28T15:41:53.677Z]   … still waiting 2610s the 1-hour appeal window
+[2026-09-28T15:47:02.929Z]   … still waiting 2301s the 1-hour appeal window
+[2026-09-28T15:52:13.253Z]   … still waiting 1990s the 1-hour appeal window
+[2026-09-28T16:20:32.300Z] canonical drop #1 on 0xe206255a3639aFC60c77F0D8dCA42C2dac80f889
+[2026-09-28T16:23:39.503Z]   … waiting until 2026-09-28T16:25:23.000Z (104s) the 1-hour appeal window
+[2026-09-28T16:25:39.287Z]   canonOp  reveal_rules(1, {"min_hits":2,"rul, 8f5fad814bbc024119) → ACCEPTED (unreadable) [13s] canonical reveal tx=0x0687a8edd58e9e23637b43f1129956b2d511cc061d8a569ce4f07fa14574791a
+[2026-09-28T16:25:54.438Z]   canonTrigger read_wallet(1) → ACCEPTED OK [13s] canonical #1 attempt 1: open a round ticket tx=0xd681182e71a08c1d47f49f93cec83031968b3b9916a670b7f9ac9a5acb1817f5
+[2026-09-28T16:26:59.550Z]   canonTrigger read_wallet(1) → ACCEPTED OK [64s] canonical #1 attempt 1: run the round tx=0x34d005ae378ea2c7fef67daf024cd11ed244f05da4afd6d9dec01c8b8438d39e
+[2026-09-28T16:27:00.492Z]     canonical #1 attempt 1: round ACCEPTED → READ {"WALLET_AGE_DAYS":"0","OUTBOUND_TX_COUNT":"0","DISTINCT_CONTRACTS_TOUCHED":"0","ACTIVE_DAYS":"0"} {"FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE":"UNCLEAR","SCRIPTED_REPETITION":"UNCLEAR","SINGLE_PURPOSE_FARMING":"UNCLEAR","ORGANIC_DIVERSITY":"UNCLEAR"} agreed_outcome=SYBIL_PATTERN (tickets 1, unsettled 0, landed 1, last READ)
+[2026-09-28T16:27:14.310Z]   canonTrigger decide(1) → ACCEPTED (unreadable) [13s] canonical decide (the 48-hour contest window opens) tx=0x708583163c449414ccf81061167d7878e5be3094dec4dd105b447de16835dcdc
+[2026-09-28T16:27:17.933Z] wrote docs/canonical-evidence.json
+[2026-09-28T17:01:14.389Z] canonical drop #1 on 0xe206255a3639aFC60c77F0D8dCA42C2dac80f889
+[2026-09-28T17:01:24.336Z] wrote docs/canonical-evidence.json
+[2026-09-28T17:01:56.838Z]   canonOp  claim_payout() → ACCEPTED OK [15s] canonOp claims 0.05 GEN on the canonical instance tx=0xf6a1cf1ea4c6721d29cfd5bc54af6ceb616e7b86e0009aca90aa4be593eebb7d
+[2026-09-28T17:02:11.580Z]   flagged1 claim_payout() → ACCEPTED OK [13s] flagged1 claims 0.05 GEN on the canonical instance tx=0x13eae579946987f65c3c248fbba54f0e9d5808a783e781da0bcba1c35b9d2e3f
+[2026-09-28T17:02:29.368Z]   outsider claim_payout() → ACCEPTED OK [13s] outsider claims 0.10 GEN on the canonical instance tx=0xdd04079c5f782e2be6debb291cc9497589ea0fe8566ff63b053610d8d11b524e
+[2026-09-28T17:02:35.234Z] canonical drop #1 on 0xe206255a3639aFC60c77F0D8dCA42C2dac80f889
+[2026-09-28T17:02:43.571Z] wrote docs/canonical-evidence.json

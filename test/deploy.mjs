@@ -5,7 +5,7 @@
  *   node deploy.mjs --canonical  | --demo | --registry
  *
  * CANONICAL: FairDrop(False) - the brief exactly: sender must be the wallet,
- * 48-hour contest window, 48-hour stall TTL, windows of at least an hour.
+ * 48-hour contest window, 1-hour read-round ticket, windows of at least an hour.
  * DEMO: FairDrop(True, 600, 600, 30) - same source; the operator may file on
  * behalf of a named public wallet, windows are minutes. get_config says DEMO.
  * The registry reads the DEMO instance, the one with settled outcomes.
@@ -16,7 +16,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { createClient, createAccount } from "genlayer-js";
-import { CHAINS, accounts, fundOnStudio, deploy, gen } from "./harness.mjs";
+import { CHAINS, accounts, fundOnStudio, deploy, gen, argOf } from "./harness.mjs";
 
 const chain = CHAINS.studiodev;
 const all = process.argv.includes("--all");
@@ -48,16 +48,23 @@ async function one(name, source, args, extra) {
     process.exit(1);
   }
   console.log(`  address ${res.address}`);
+  const prev = rec[name];
+  if (prev?.address && prev.address !== res.address) {
+    rec.superseded ??= [];
+    rec.superseded.push({ ...prev, name, superseded_by: res.address,
+      superseded_because: argOf("reason", "replaced by a redeploy") });
+  }
   rec[name] = { address: res.address, deploy_tx: res.hash, source_bytes: source.length,
     source_sha256: sha256(source), owner: account.address, constructor_args: args,
     deployed_at: new Date().toISOString(), ...extra };
   persist();
 }
 
-if (want("--canonical")) await one("FairDrop", code, [false], { mode: "CANONICAL", rubric_version: version, contest_window_s: 172800, stall_ttl_s: 172800 });
+if (want("--canonical")) await one("FairDrop", code, [false], { mode: "CANONICAL", rubric_version: version, contest_window_s: 172800, stall_ttl_s: 3600 });
 if (want("--demo")) await one("FairDropDemo", code, [true, 600, 600, 30], { mode: "DEMO", rubric_version: version, contest_window_s: 600, stall_ttl_s: 600 });
 if (want("--registry")) {
   const target = rec.FairDropDemo?.address;
+  if (rec.FairDropRegistry?.reads === target) { console.log("registry already reads the current demo"); process.exit(0); }
   if (!target) throw new Error("deploy the demo first");
   await one("FairDropRegistry", regCode, [target], { reads: target, custody: false, payable_methods: 0 });
 }

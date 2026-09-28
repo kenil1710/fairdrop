@@ -5,7 +5,7 @@ import { DEP, W, tx, view, log, logTo } from "./common.mjs";
 logTo("../docs/registry-run.log");
 const R = DEP.FairDropRegistry.address;
 const out = { registry: R, reads: DEP.FairDropRegistry.reads, checks: [] };
-for (const [label, wallet, drop] of [["A/human (won)", W.human_long_tail, st.A.id], ["A/farm (lost)", W.farm_minter_a, st.A.id], ["A/too_active (insufficient)", W.too_active, st.A.id], ["B/minter (default win)", W.farm_minter_b, st.B.id]]) {
+for (const [label, wallet, drop] of [["A/human (won)", W.human_long_tail, st.A.id], ["A/farm (lost)", W.farm_minter_a, st.A.id], ["A/too_active (insufficient)", W.too_active, st.A.id], ["B/minter (default win)", W.farm_minter_b, st.B.id], ["C/swapper (won, pro-rata)", W.human_swapper, st.C.id], ["D/farm_quester (UNRESOLVED, refiled, lost)", W.farm_quester, st.D.id]]) {
   const cleared = await view(R, "is_cleared", [wallet, drop]);
   log(`  is_cleared(${label}) = ${cleared}`);
   const r = await tx("outsider", R, "attest", [wallet, drop], 0n, `attest ${label}`);

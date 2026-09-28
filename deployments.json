@@ -129,28 +129,84 @@
           "payable_methods": 0,
           "name": "FairDropRegistry",
           "superseded_because": "an operator contest text carried the word \"flagged\" into an on-chain prompt (docs/superseded/v2/prompt-check.json); the contest-text screen now refuses case-framing words"
+        },
+        {
+          "address": "0xeADc6ccb80761E9b98d9947A3Bb31dd125C09095",
+          "deploy_tx": "0xbe3e98e6e6de88d56bf1bfbba7ebb6f2c1d9602d468493de662402792b32e4c5",
+          "source_bytes": 105225,
+          "source_sha256": "745808713e58fe2833362ad398e29aa5a5a41826627baa4232e5c118b0caa929",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            false
+          ],
+          "deployed_at": "2026-09-28T12:51:01.342Z",
+          "mode": "CANONICAL",
+          "rubric_version": "1.0.0",
+          "contest_window_s": 172800,
+          "stall_ttl_s": 172800,
+          "name": "FairDrop",
+          "superseded_by": "0xe206255a3639aFC60c77F0D8dCA42C2dac80f889",
+          "superseded_because": "v3 let the leader shade a model finding one step toward HUMAN with no outcome check, so a borderline sybil could be moved across a rule threshold and paid from the reserve; v4 compares the rule outcome exactly and makes 3 unsettled rounds UNRESOLVED"
+        },
+        {
+          "address": "0x2b1e1D88000c4b409866B2fAB2D4339404B2CCe3",
+          "deploy_tx": "0xcc7b6767ef6fbd64f07dc01a406a07b39449571bf349553c9b4dcd684a27c372",
+          "source_bytes": 105225,
+          "source_sha256": "745808713e58fe2833362ad398e29aa5a5a41826627baa4232e5c118b0caa929",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            true,
+            600,
+            600,
+            30
+          ],
+          "deployed_at": "2026-09-28T12:51:07.212Z",
+          "mode": "DEMO",
+          "rubric_version": "1.0.0",
+          "contest_window_s": 600,
+          "stall_ttl_s": 600,
+          "name": "FairDropDemo",
+          "superseded_by": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+          "superseded_because": "v3 let the leader shade a model finding one step toward HUMAN with no outcome check, so a borderline sybil could be moved across a rule threshold and paid from the reserve; v4 compares the rule outcome exactly and makes 3 unsettled rounds UNRESOLVED"
+        },
+        {
+          "address": "0xC55C7be2732f503516348e8De15011033fFad36b",
+          "deploy_tx": "0x7f0d3fba38f5e9cba664e3f70f0bfacf6dedba26620ae5fd8f58930e17136ac2",
+          "source_bytes": 7044,
+          "source_sha256": "78d8c603b79bf93ec93fa8bee37f0d189941ffb82d8cee7531b7b232472f88ea",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            "0x2b1e1D88000c4b409866B2fAB2D4339404B2CCe3"
+          ],
+          "deployed_at": "2026-09-28T12:51:11.773Z",
+          "reads": "0x2b1e1D88000c4b409866B2fAB2D4339404B2CCe3",
+          "custody": false,
+          "payable_methods": 0,
+          "name": "FairDropRegistry",
+          "superseded_by": "0x8E3E1c02C67FE445345D7A0Eee27019cb2D6405c",
+          "superseded_because": "v3 let the leader shade a model finding one step toward HUMAN with no outcome check, so a borderline sybil could be moved across a rule threshold and paid from the reserve; v4 compares the rule outcome exactly and makes 3 unsettled rounds UNRESOLVED"
         }
       ],
       "FairDrop": {
-        "address": "0xeADc6ccb80761E9b98d9947A3Bb31dd125C09095",
-        "deploy_tx": "0xbe3e98e6e6de88d56bf1bfbba7ebb6f2c1d9602d468493de662402792b32e4c5",
-        "source_bytes": 105225,
-        "source_sha256": "745808713e58fe2833362ad398e29aa5a5a41826627baa4232e5c118b0caa929",
+        "address": "0xe206255a3639aFC60c77F0D8dCA42C2dac80f889",
+        "deploy_tx": "0xe143293adb5eefe166e21611cea19bec501aa11fcda8bf359552ec2689f21021",
+        "source_bytes": 111467,
+        "source_sha256": "1994adaad38669cd51d71d43a7e79f6123c6f1e3c744f47e3bbed0874d433bc5",
         "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
         "constructor_args": [
           false
         ],
-        "deployed_at": "2026-09-28T12:51:01.342Z",
+        "deployed_at": "2026-09-28T15:20:10.196Z",
         "mode": "CANONICAL",
         "rubric_version": "1.0.0",
         "contest_window_s": 172800,
-        "stall_ttl_s": 172800
+        "stall_ttl_s": 3600
       },
       "FairDropDemo": {
-        "address": "0x2b1e1D88000c4b409866B2fAB2D4339404B2CCe3",
-        "deploy_tx": "0xcc7b6767ef6fbd64f07dc01a406a07b39449571bf349553c9b4dcd684a27c372",
-        "source_bytes": 105225,
-        "source_sha256": "745808713e58fe2833362ad398e29aa5a5a41826627baa4232e5c118b0caa929",
+        "address": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
+        "deploy_tx": "0x757f2ecb0d8ee1858480af0a9597d384b4c5cde0eec15213790ea48886e11f7b",
+        "source_bytes": 111467,
+        "source_sha256": "1994adaad38669cd51d71d43a7e79f6123c6f1e3c744f47e3bbed0874d433bc5",
         "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
         "constructor_args": [
           true,
@@ -158,23 +214,23 @@
           600,
           30
         ],
-        "deployed_at": "2026-09-28T12:51:07.212Z",
+        "deployed_at": "2026-09-28T15:20:22.485Z",
         "mode": "DEMO",
         "rubric_version": "1.0.0",
         "contest_window_s": 600,
         "stall_ttl_s": 600
       },
       "FairDropRegistry": {
-        "address": "0xC55C7be2732f503516348e8De15011033fFad36b",
-        "deploy_tx": "0x7f0d3fba38f5e9cba664e3f70f0bfacf6dedba26620ae5fd8f58930e17136ac2",
+        "address": "0x8E3E1c02C67FE445345D7A0Eee27019cb2D6405c",
+        "deploy_tx": "0x0c245adfd4c389079b7c3aa5f640176dff3f5d7a7d07e057daf7031f1f4ad43d",
         "source_bytes": 7044,
         "source_sha256": "78d8c603b79bf93ec93fa8bee37f0d189941ffb82d8cee7531b7b232472f88ea",
         "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
         "constructor_args": [
-          "0x2b1e1D88000c4b409866B2fAB2D4339404B2CCe3"
+          "0x9779afa39051286B9a1280f78d4d8EB32e491849"
         ],
-        "deployed_at": "2026-09-28T12:51:11.773Z",
-        "reads": "0x2b1e1D88000c4b409866B2fAB2D4339404B2CCe3",
+        "deployed_at": "2026-09-28T15:20:27.864Z",
+        "reads": "0x9779afa39051286B9a1280f78d4d8EB32e491849",
         "custody": false,
         "payable_methods": 0
       }

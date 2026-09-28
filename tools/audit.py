@@ -78,9 +78,18 @@ item("Safety", "Consensus binds every stored value (full vector compared)",
      ["TestConsensus", "TestConsensusMore", "TestRead.test_disagreement_applies_nothing"],
      [lambda: chain(lambda: all(a["snapshot_hash"] == hashlib.sha256(a.get("snapshot", "").encode()).hexdigest()
                                 for a in appeals() if a.get("snapshot")), "stored snapshots hash to stored hashes (full appeals)")])
-item("Safety", "Leader cannot forge: findings bucketed and compared (never shaded toward sybil), deterministic features compared exactly",
-     ["TestConsensus", "TestTolerance", "TestConsensusMore.test_leader_one_step_toward_sybil_is_refused",
-      "TestConsensusMore.test_validators_disagree_on_different_pages"])
+item("Safety", "Leader cannot forge: deterministic features, snapshot hash and the RULE OUTCOME compared exactly; model findings within one bucket",
+     ["TestConsensus", "TestTolerance", "TestOutcomeIdentity",
+      "TestConsensusMore.test_validators_disagree_on_different_pages"],
+     [lambda: chain(lambda: seed["config"]["outcome_compared"] == "exact", "live get_config: outcome_compared = exact"),
+      lambda: chain(lambda: all(a["outcome"] in ("HUMAN_PATTERN", "SYBIL_PATTERN") for a in appeals() if a.get("snapshot")),
+                    "every stored reading on chain ended in a rule outcome")])
+item("Safety", "Three rounds that never settle → UNRESOLVED: bond back, refileable, never paid, never SYBIL",
+     ["TestUnresolved", "TestRandomLifecycles"],
+     [lambda: chain(lambda: any(a["outcome"] == "UNRESOLVED" and a["unsettled_rounds"] >= 3 and a["payout_wei"] == "0"
+                                for a in appeals()), "drop D: an appeal UNRESOLVED on chain after 3 unsettled rounds, paid 0"),
+      lambda: chain(lambda: any(a.get("refile_of") and any(b["appeal_id"] == a["refile_of"] and b["outcome"] == "UNRESOLVED" for b in appeals())
+                                for a in appeals()), "the UNRESOLVED wallet refiled on chain")])
 item("Safety", "Zero raise statements (both contracts)", ["TestAST.test_zero_raise_statements", "TestAST.test_no_assert_statements"])
 item("Safety", "Refund-on-reject on every payable path (value of a refused call stays claimable)",
      ["TestAccess", "TestCreateDrop.test_refused_value_stays_claimable",
@@ -90,7 +99,7 @@ item("Safety", "No counter moves before a refusal", ["TestAccess"])
 item("Safety", "Content hash of the exact fetched history", ["TestRead.test_read_stores_vector", "TestFetch.test_snapshot_is_deterministic", "TestDecide.test_verify_appeal_rederives"])
 item("Safety", "settle_stalled permissionless and working while paused",
      ["TestLoopholes.test_11_owner_pause_leaves_appeals_payouts_and_settle_stalled", "TestAccess.test_settle_stalled_refusals"],
-     [lambda: chain(lambda: log_has("settle_stalled while paused") and "settle_stalled(" in LOG, "called on chain while paused; reached its own check, not a pause refusal")])
+     [lambda: chain(lambda: any("settle_stalled while paused" in l and "OK" in l for l in LOG.split("\n")), "settle_stalled counted expired tickets on chain while the contract was paused")])
 item("Safety", "Owner cannot freeze funds (pause gates only create_drop; no owner withdraw)",
      ["TestAST.test_pause_gates_only_create_drop", "TestLoopholes.test_11_owner_pause_leaves_appeals_payouts_and_settle_stalled"])
 item("Safety", "No str.replace()", ["TestAST.test_no_str_replace"])
@@ -160,11 +169,35 @@ item("Loophole", "10. Model sees rules → impossible by design; prompt never co
      [prompt_check])
 item("Loophole", "11. Owner pause → appeals, payouts, settle_stalled still work",
      ["TestLoopholes.test_11_owner_pause_leaves_appeals_payouts_and_settle_stalled"],
-     [lambda: chain(lambda: log_has("owner PAUSES the contract") and log_has("create_drop while paused (must be refused)"), "drop C filed/read while paused; create_drop refused")])
+     [lambda: chain(lambda: log_has("owner PAUSES the contract") and [l for l in LOG.split("\n") if "create_drop while paused" in l][0].count("REJECTED") == 1
+                    and any("claims" in l and "(contract paused)" in l and " OK " in l for l in LOG.split("\n")),
+                    "every demo drop ran paused: appeals, reads, settle_stalled and claims OK; create_drop refused")])
+
+
+def readme_rows():
+    """README must agree with deployments.json: the generated blocks re-render
+    identically, every current address appears, and no superseded address
+    appears outside the superseded table."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("readme_fill", ROOT / "tools" / "readme_fill.py")
+    rf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rf)
+    text = (ROOT / "README.md").read_text()
+    rows = []
+    try:
+        same = rf.filled(text) == text
+    except SystemExit as e:
+        same = False
+    rows.append(("README generated blocks == deployments.json + seed evidence", same, "README.md"))
+    for name in ("FairDrop", "FairDropDemo", "FairDropRegistry"):
+        rows.append((f"README names current {name}", DEP[name]["address"] in text, DEP[name]["address"]))
+    stale = [s["address"] for s in DEP.get("superseded", []) if text.count(s["address"]) > 1]
+    rows.append(("no superseded address in README outside the superseded table", not stale, ", ".join(stale) or "-"))
+    return rows
 
 
 def deployment_rows(with_chain):
-    rows = []
+    rows = readme_rows()
     for name, src in (("FairDrop", "contracts/FairDrop.py"), ("FairDropDemo", "contracts/FairDrop.py"),
                       ("FairDropRegistry", "contracts/FairDropRegistry.py")):
         if name not in DEP:

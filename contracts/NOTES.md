@@ -77,34 +77,74 @@ itself go into it, so equal histories give byte-equal snapshots.
 The window ends at the snapshot, in the past, so later activity by a live wallet
 does not change the snapshot and cannot split validators.
 
-## 4. Consensus: the full vector
+## 4. Consensus: the full vector, and the outcome exactly
 
-The compared axis is `status`, `snapshot_hash`, `features` and `findings`.
-Status, snapshot hash and features are compared **exactly**. Model findings are
-compared bucket by bucket with one asymmetric tolerance (`_findings_agree`): a
-validator accepts the leader's bucket if it equals its own, or is **exactly one
-step toward the human end** of that scale. Never a step toward condemnation,
-never two steps; UNCLEAR only matches UNCLEAR.
+The compared axis is `status`, `snapshot_hash`, `features`, `findings` **and
+`outcome`**.
 
-This was exact at first, and the chain showed why that was wrong. The same
-public wallet read `SCRIPTED_REPETITION=SOME` in two rounds and `NONE` in
-another; with exact comparison its rounds went UNDETERMINED on every attempt
-(`docs/superseded/seed-run-v1-exact-buckets.log`). A borderline wallet could
-never be read and would expire as INSUFFICIENT_HISTORY — safe, but a real
-person starved of a verdict. The tolerance lets that round settle on the
-reading more favourable to the appellant, and gives a malicious leader no way
-to move any finding against them. The rules are still sealed at read time, so
-no leader even knows which finding would matter.
+- Status, snapshot hash and deterministic features: compared **exactly**.
+- Model findings: each may differ by **one bucket**, in either direction;
+  never two, and UNCLEAR only matches UNCLEAR (`_findings_agree`).
+- The rule outcome: every validator applies the revealed rules **in code** to
+  its **own** findings, and the leader's outcome must be **identical**
+  (`_agree_judged`). The leader's claimed outcome must also be the one the
+  rules give on the leader's own findings (`_coherent_judged`).
 
-`_coherent_read` runs on the leader's payload before a validator spends a fetch:
-the snapshot must hash to its hash, the features must re-derive from the
-snapshot, the findings must be exactly the four keys in order, and a
-non-READ status must carry nothing. It runs again on the agreed payload before
-anything is stored.
+So a one-bucket difference is tolerated only when it changes nothing that
+matters. If it would change the outcome, the round does not settle.
 
-Validators do not need to agree on *why* a source was unavailable (one saw a
-429, another a 503), only that it was; they must agree on why history was
-INSUFFICIENT, because that outcome is stored.
+**Why it changed (v3 → v4).** Exact bucket comparison starved a real person:
+the same public wallet read `SCRIPTED_REPETITION=SOME` in two rounds and
+`NONE` in another, and every round went UNDETERMINED
+(`docs/superseded/seed-run-v1-exact-buckets.log`). v2/v3 fixed that by letting
+a validator accept the leader's bucket if it was one step toward the human end
+— with no outcome check. That let a leader shade a borderline sybil across a
+rule threshold to HUMAN and have it paid from the operator's reserve: a single
+leader moving money across a threshold. v4 keeps the tolerance for the
+*evidence* and removes its power over the *decision*.
+
+**Reads therefore run after the reveal.** An outcome needs the rules, so
+`read_wallet` refuses until the drop is revealed. The model is exactly as
+blind as before: `_judged_read(facts, rules)` calls `_blind_read(facts)` —
+which builds the prompt from the snapshot alone — and hands the rules only to
+`_evaluate`. The offline suite checks the prompt text; the audit reads every
+live prompt back from chain.
+
+`_coherent_read` still runs on the leader's payload before a validator spends
+a fetch: the snapshot must hash to its hash, the features must re-derive from
+the snapshot, the findings must be exactly the four keys in order, and a
+non-READ status must carry nothing. Validators do not need to agree on *why* a
+source was unavailable (one saw a 429, another a 503), only that it was; they
+must agree on why history was INSUFFICIENT, because that outcome is stored.
+
+A contest round is compared the same way: findings within one bucket, and the
+outcome from each validator's own contest findings identical. A contest round
+that does not settle consumes nothing; the provisional outcome stands.
+
+## 4a. Rounds that never settle: tickets and UNRESOLVED
+
+An UNDETERMINED round commits **nothing** — not a counter, not a refusal
+(measured: `docs/superseded/seed-run-v1-exact-buckets.log`, "round
+UNDETERMINED → FILED (not applied)"). So a round cannot count its own failure.
+
+`read_wallet` is therefore two committed steps. The first call on an appeal
+with no live ticket only **opens a ticket** (deterministic, always commits).
+Calls while the ticket is live run the consensus round; a landed round (READ,
+INSUFFICIENT or UNAVAILABLE) closes it. A ticket that outlives its TTL
+(`round_ttl_s`: 1 hour canonical, 10 minutes on the demo) without a landed
+round is counted as one **unsettled** attempt — by the next `read_wallet`, or
+by `settle_stalled` (permissionless, works while paused).
+
+The third unsettled attempt makes the appeal **UNRESOLVED**: final, bond back
+to the filer, no allocation, never SYBIL_PATTERN, and the wallet may refile
+until the reveal deadline. `verify_appeal` checks that an UNRESOLVED appeal
+had three unsettled rounds and paid nothing.
+
+Honest limit: a ticket anyone may open, and a ticket nobody runs expires. A
+party that wants an appeal UNRESOLVED can open tickets and wait; the other
+party defeats that by running the round inside the ticket's TTL (anyone may),
+and UNRESOLVED can neither pay nor condemn, so the worst it does is send the
+wallet back to refile.
 
 ## 5. The coverage gate (the WillExecutor lesson)
 
@@ -123,7 +163,8 @@ are not counted as the wallet's activity, but they still count toward how far
 back the page reaches. So the gate holds whether or not the filter was honoured.
 
 Anything else is INSUFFICIENT_HISTORY: bond returned, and the wallet may refile
-until the reveal deadline ("refileable after the window"). An appeal nobody
+until the reveal deadline ("refileable after the window": after the appeal
+window has closed, since reads only start once the rules are revealed). An appeal nobody
 managed to read by the reveal deadline plus a contest window also resolves as
 INSUFFICIENT_HISTORY — infrastructure failure never condemns.
 
