@@ -12,7 +12,7 @@ Status: `[ ]` open · `[~]` in progress · `[x]` done and verified (evidence not
 
 ## 2. Redeploy v4
 - [x] Deploy FairDrop 0xe206…f889, FairDropDemo 0x9779…1849, FairDropRegistry 0x8E3E…405c
-- [~] Source byte-for-byte vs repo (verify_onchain: identical ×3); GitHub after push
+- [x] Source byte-for-byte vs repo (verify_onchain: identical ×3) and GitHub main (identical)
 - [x] deployments.json: v4 current, v3 marked superseded (with superseded_by + reason)
 
 ## 3. Reseed v4
@@ -40,14 +40,14 @@ Status: `[ ]` open · `[~]` in progress · `[x]` done and verified (evidence not
 - [x] README addresses + seed outcome table generated (tools/readme_fill.py); audit fails on mismatch
 - [x] README leads with trust problem + mechanism; required sentence; honest limits
 - [x] docs/ARTICLE.md and docs/X_POST.md final numbers
-- [ ] Vercel on v4; live bundle has v4 addresses and no old ones
-- [ ] Pushed to GitHub, no co-author trailers
+- [x] Vercel env → v4, prod redeployed; live bundle (18 chunks) has all 3 v4 addresses, 0 superseded
+- [x] Pushed to GitHub, no co-author trailers
 
 ## 7. Final 7-point check
-- [ ] 1 outcome/deterministic exact; one-bucket difference can't flip outcome
-- [ ] 2 truncated history never SYBIL (test + on-chain)
-- [ ] 3 prompt never contains rules/thresholds/flag reason
-- [ ] 4 mismatched reveal refused; no reveal → auto-win (on chain)
-- [ ] 5 books drain to 0 (canonical excluded: window open)
-- [ ] 6 source byte-identical; README == deployments.json
-- [ ] 7 no assistant name or co-author trailer in history, blobs, messages (tools/final_check.py)
+- [x] 1 PASS — outcome/deterministic exact; one-bucket difference can't flip outcome
+- [x] 2 PASS — truncated history never SYBIL (test + on-chain)
+- [x] 3 PASS — prompt never contains rules/thresholds/flag reason
+- [x] 4 PASS — mismatched reveal refused; no reveal → auto-win (on chain)
+- [x] 5 PASS — books drain to 0 (canonical excluded: window open)
+- [x] 6 PASS — source byte-identical; README == deployments.json
+- [x] 7 PASS — no assistant name or co-author trailer in history, blobs, messages (tools/final_check.py)

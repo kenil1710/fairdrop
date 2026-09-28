@@ -77,7 +77,8 @@ try:
     pc = json.loads(out)
 except Exception:  # noqa: BLE001
     pc = {"ok": False, "checked": []}
-(ROOT / "docs" / "prompt-check.json").write_text(json.dumps(pc, indent=1) + "\n")
+if pc.get("checked"):
+    (ROOT / "docs" / "prompt-check.json").write_text(json.dumps(pc, indent=1) + "\n")
 ok3, ev3 = tests(["TestLoopholes.test_10_model_never_sees_rules", "TestAST.test_prompt_builders_are_pure_of_storage"])
 point(3, "Model prompt never contains rules, thresholds or the flag reason", [
     (pc["ok"] and len(pc["checked"]) > 0, f"on chain: {len(pc['checked'])} prompts read back via get_prompt on both instances "

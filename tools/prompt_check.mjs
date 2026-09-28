@@ -17,9 +17,12 @@ const { studioDevnet } = require("genlayer-js/chains");
 const dep = JSON.parse(readFileSync(new URL("../deployments.json", import.meta.url), "utf8")).deployments.studiodev;
 const client = createClient({ chain: studioDevnet });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Studio meters views at 30/min and 500/hour per IP: wait a rate limit out
+// (up to ~30 min) rather than report "0 prompts checked".
 async function v(address, fn, args) {
-  for (let i = 0; i < 6; i++) {
-    try { return JSON.parse(await client.readContract({ address, functionName: fn, args })); } catch { await sleep(12000); }
+  for (let i = 0; i < 40; i++) {
+    try { return JSON.parse(await client.readContract({ address, functionName: fn, args })); }
+    catch (e) { await sleep(/per hour/i.test(String(e?.message)) ? 60000 : 12000); }
   }
   throw new Error(fn);
 }
