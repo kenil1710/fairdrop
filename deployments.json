@@ -1,0 +1,183 @@
+{
+  "deployments": {
+    "studiodev": {
+      "network": "studiodev",
+      "chain_id": 61997,
+      "explorer": "https://explorer-studio-dev.genlayer.com/",
+      "superseded": [
+        {
+          "address": "0xb9589f3e0a10dD62D0034932D81216dA659765ea",
+          "deploy_tx": "0x2c368f63141256dde5f2669f397198a54df069d3084ca5b07dc06c2c9b7219fc",
+          "source_bytes": 102650,
+          "source_sha256": "e4f17c49aef19440da37ab46ccd91661911a04ee28d7b5fa6aa0b126b4913f0e",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            true,
+            600,
+            600,
+            30
+          ],
+          "deployed_at": "2026-09-28T10:46:56.775Z",
+          "mode": "DEMO",
+          "rubric_version": "1.0.0",
+          "contest_window_s": 600,
+          "stall_ttl_s": 600,
+          "superseded_because": "read used the legacy /api (10 req / 6 min per IP); the first on-chain read was HTTP 429 on every attempt"
+        },
+        {
+          "address": "0xa152a563017803F64259A71007E1f257966DE422",
+          "deploy_tx": "0x79120cdf8e12218c30324fa8b180756877c61989ca43374fd9e0a168d1aa60a5",
+          "source_bytes": 101832,
+          "source_sha256": "6f6720ffa6ce5086214acc5d4e6cb02d7ca0e7241b7dc48aa63c85ccdfec6223",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            false
+          ],
+          "deployed_at": "2026-09-28T11:03:00.621Z",
+          "mode": "CANONICAL",
+          "rubric_version": "1.0.0",
+          "contest_window_s": 172800,
+          "stall_ttl_s": 172800,
+          "name": "FairDrop",
+          "superseded_because": "exact model-bucket comparison left a borderline wallet UNDETERMINED on every round (docs/superseded/seed-run-v1-exact-buckets.log); replaced by one-step-toward-human tolerance"
+        },
+        {
+          "address": "0x7faea99DeC1974411BF615b7d360D5476270d9f5",
+          "deploy_tx": "0xa125decca5447ab34eb8fe8c4970d4f765d5ae57776cfa0edb7a48e9b7a4403e",
+          "source_bytes": 101832,
+          "source_sha256": "6f6720ffa6ce5086214acc5d4e6cb02d7ca0e7241b7dc48aa63c85ccdfec6223",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            true,
+            600,
+            600,
+            30
+          ],
+          "deployed_at": "2026-09-28T10:56:02.302Z",
+          "mode": "DEMO",
+          "rubric_version": "1.0.0",
+          "contest_window_s": 600,
+          "stall_ttl_s": 600,
+          "name": "FairDropDemo",
+          "superseded_because": "exact model-bucket comparison left a borderline wallet UNDETERMINED on every round (docs/superseded/seed-run-v1-exact-buckets.log); replaced by one-step-toward-human tolerance"
+        },
+        {
+          "address": "0x10A3c9Da0BB8e7616a039f93c91A8E111588455B",
+          "deploy_tx": "0x4cbdf4ed871b1aa9328f5286ef2d67eb3e976e5207782555e672a91f9bd2dd0b",
+          "source_bytes": 7044,
+          "source_sha256": "78d8c603b79bf93ec93fa8bee37f0d189941ffb82d8cee7531b7b232472f88ea",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            "0x7faea99DeC1974411BF615b7d360D5476270d9f5"
+          ],
+          "deployed_at": "2026-09-28T11:03:05.864Z",
+          "reads": "0x7faea99DeC1974411BF615b7d360D5476270d9f5",
+          "custody": false,
+          "payable_methods": 0,
+          "name": "FairDropRegistry",
+          "superseded_because": "exact model-bucket comparison left a borderline wallet UNDETERMINED on every round (docs/superseded/seed-run-v1-exact-buckets.log); replaced by one-step-toward-human tolerance"
+        },
+        {
+          "address": "0xBa426A78B0F953E5c13931553dCA95E90Bd302AE",
+          "deploy_tx": "0x9d7da5e6ae0e5345ff542378a6fcf7ff4e96465a95c1e060e4a1a79631779c52",
+          "source_bytes": 104530,
+          "source_sha256": "3878e14eeea3d8f5a2595a39a9618dc191276fb5337d1020aed59493d438bba5",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            false
+          ],
+          "deployed_at": "2026-09-28T11:27:16.463Z",
+          "mode": "CANONICAL",
+          "rubric_version": "1.0.0",
+          "contest_window_s": 172800,
+          "stall_ttl_s": 172800,
+          "name": "FairDrop",
+          "superseded_because": "an operator contest text carried the word \"flagged\" into an on-chain prompt (docs/superseded/v2/prompt-check.json); the contest-text screen now refuses case-framing words"
+        },
+        {
+          "address": "0x532D02383eb1Ac2Fa10F00288F75D14F7d39641a",
+          "deploy_tx": "0xd102e0ee67dc6e29db9a4cc7a2eda23d471d0a5207e64584dbd6fbe1864617fa",
+          "source_bytes": 104530,
+          "source_sha256": "3878e14eeea3d8f5a2595a39a9618dc191276fb5337d1020aed59493d438bba5",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            true,
+            600,
+            600,
+            30
+          ],
+          "deployed_at": "2026-09-28T11:27:21.786Z",
+          "mode": "DEMO",
+          "rubric_version": "1.0.0",
+          "contest_window_s": 600,
+          "stall_ttl_s": 600,
+          "name": "FairDropDemo",
+          "superseded_because": "an operator contest text carried the word \"flagged\" into an on-chain prompt (docs/superseded/v2/prompt-check.json); the contest-text screen now refuses case-framing words"
+        },
+        {
+          "address": "0x0CF59Bf0460A0eB6e5D0e12cf5e17D70e02eA0F9",
+          "deploy_tx": "0xfe246f9c76d3b86e52619fcc4f61695386893ead8f1b33e0d813765ea5ebd0fb",
+          "source_bytes": 7044,
+          "source_sha256": "78d8c603b79bf93ec93fa8bee37f0d189941ffb82d8cee7531b7b232472f88ea",
+          "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+          "constructor_args": [
+            "0x532D02383eb1Ac2Fa10F00288F75D14F7d39641a"
+          ],
+          "deployed_at": "2026-09-28T11:27:29.479Z",
+          "reads": "0x532D02383eb1Ac2Fa10F00288F75D14F7d39641a",
+          "custody": false,
+          "payable_methods": 0,
+          "name": "FairDropRegistry",
+          "superseded_because": "an operator contest text carried the word \"flagged\" into an on-chain prompt (docs/superseded/v2/prompt-check.json); the contest-text screen now refuses case-framing words"
+        }
+      ],
+      "FairDrop": {
+        "address": "0xeADc6ccb80761E9b98d9947A3Bb31dd125C09095",
+        "deploy_tx": "0xbe3e98e6e6de88d56bf1bfbba7ebb6f2c1d9602d468493de662402792b32e4c5",
+        "source_bytes": 105225,
+        "source_sha256": "745808713e58fe2833362ad398e29aa5a5a41826627baa4232e5c118b0caa929",
+        "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+        "constructor_args": [
+          false
+        ],
+        "deployed_at": "2026-09-28T12:51:01.342Z",
+        "mode": "CANONICAL",
+        "rubric_version": "1.0.0",
+        "contest_window_s": 172800,
+        "stall_ttl_s": 172800
+      },
+      "FairDropDemo": {
+        "address": "0x2b1e1D88000c4b409866B2fAB2D4339404B2CCe3",
+        "deploy_tx": "0xcc7b6767ef6fbd64f07dc01a406a07b39449571bf349553c9b4dcd684a27c372",
+        "source_bytes": 105225,
+        "source_sha256": "745808713e58fe2833362ad398e29aa5a5a41826627baa4232e5c118b0caa929",
+        "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+        "constructor_args": [
+          true,
+          600,
+          600,
+          30
+        ],
+        "deployed_at": "2026-09-28T12:51:07.212Z",
+        "mode": "DEMO",
+        "rubric_version": "1.0.0",
+        "contest_window_s": 600,
+        "stall_ttl_s": 600
+      },
+      "FairDropRegistry": {
+        "address": "0xC55C7be2732f503516348e8De15011033fFad36b",
+        "deploy_tx": "0x7f0d3fba38f5e9cba664e3f70f0bfacf6dedba26620ae5fd8f58930e17136ac2",
+        "source_bytes": 7044,
+        "source_sha256": "78d8c603b79bf93ec93fa8bee37f0d189941ffb82d8cee7531b7b232472f88ea",
+        "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+        "constructor_args": [
+          "0x2b1e1D88000c4b409866B2fAB2D4339404B2CCe3"
+        ],
+        "deployed_at": "2026-09-28T12:51:11.773Z",
+        "reads": "0x2b1e1D88000c4b409866B2fAB2D4339404B2CCe3",
+        "custody": false,
+        "payable_methods": 0
+      }
+    }
+  }
+}

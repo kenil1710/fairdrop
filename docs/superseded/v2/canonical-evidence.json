@@ -1,0 +1,255 @@
+{
+  "contract": "0xBa426A78B0F953E5c13931553dCA95E90Bd302AE",
+  "drop": {
+    "drop_id": 1,
+    "operator": "0x0d0A43EFFF182E05a3A1713676C82202525Cb5Da",
+    "name": "Canonical — keys we control",
+    "chain": "base",
+    "protocol": "CanonProto",
+    "protocol_contracts": [],
+    "phase": "SETTLING",
+    "created_at": 1790594877,
+    "snapshot_ts": 1790595111,
+    "committed_before_snapshot_s": 234,
+    "lookback_days": 365,
+    "lookback_start": 1759059111,
+    "appeal_end_ts": 1790598711,
+    "reveal_end_ts": 1790602311,
+    "allocation_wei": "500000000000000000",
+    "bond_wei": "50000000000000000",
+    "contest_bond_wei": "25000000000000000",
+    "reserve_initial_wei": "1000000000000000000",
+    "reserve_wei": "1000000000000000000",
+    "held_bonds_wei": "50000000000000000",
+    "rules_hash": "05891a2027fbc5622f3624757453bab4ffed672b2e5a83bbfd6e88c40b9e570b",
+    "flagged_root": "38f74eccf9e14b6ae6ffe1dd2c6d2befa0055b322b35dabf5e9cb9a8f16af8de",
+    "flagged_count": 2,
+    "flagged_at": 1790595121,
+    "revealed": true,
+    "rules_json": "{\"min_hits\":2,\"rules\":[{\"condition\":\"LT\",\"finding\":\"WALLET_AGE_DAYS\",\"threshold\":30},{\"condition\":\"LT\",\"finding\":\"OUTBOUND_TX_COUNT\",\"threshold\":3},{\"condition\":\"EQ\",\"finding\":\"ORGANIC_DIVERSITY\",\"threshold\":\"LOW\"}]}",
+    "salt": "1b4e3df28cb375ddfb2c63d25d91b41f78a1cb498c4ef1819a1d3098146bdece",
+    "rules": {
+      "min_hits": 2,
+      "rules": [
+        {
+          "finding": "WALLET_AGE_DAYS",
+          "condition": "LT",
+          "threshold": 30
+        },
+        {
+          "finding": "OUTBOUND_TX_COUNT",
+          "condition": "LT",
+          "threshold": 3
+        },
+        {
+          "finding": "ORGANIC_DIVERSITY",
+          "condition": "EQ",
+          "threshold": "LOW"
+        }
+      ]
+    },
+    "revealed_at": 1790598812,
+    "bad_reveals": 0,
+    "appeals": 1,
+    "open_appeals": 1,
+    "winners": 0,
+    "closed": false,
+    "closed_at": 0,
+    "per_winner_wei": "0",
+    "paid_winners_wei": "0",
+    "leftover_wei": "0",
+    "pro_rata": false
+  },
+  "appeals": [
+    {
+      "appeal_id": 1,
+      "drop_id": 1,
+      "wallet": "0x8CD1770dF3EB9A7b7C7bF102A00074AA8dd85629",
+      "filer": "0x8CD1770dF3EB9A7b7C7bF102A00074AA8dd85629",
+      "on_behalf": false,
+      "statement": "This is my own wallet and I appeal from it.",
+      "filed_at": 1790595202,
+      "bond_wei": "50000000000000000",
+      "status": "PROVISIONAL",
+      "outcome": "SYBIL_PATTERN",
+      "decided_by": "RULES",
+      "refile_of": 0,
+      "read_attempts": 1,
+      "read_at": 1790595249,
+      "last_read_status": "READ",
+      "snapshot": "",
+      "snapshot_hash": "6599f5bb3be53d86c462e25b7483cd7ba6f125bf928946f3b463fa77c700034f",
+      "features": {
+        "WALLET_AGE_DAYS": "0",
+        "OUTBOUND_TX_COUNT": "0",
+        "DISTINCT_CONTRACTS_TOUCHED": "0",
+        "ACTIVE_DAYS": "0"
+      },
+      "findings": {
+        "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE": "UNCLEAR",
+        "SCRIPTED_REPETITION": "UNCLEAR",
+        "SINGLE_PURPOSE_FARMING": "UNCLEAR",
+        "ORGANIC_DIVERSITY": "UNCLEAR"
+      },
+      "decided_at": 1790598823,
+      "provisional_outcome": "SYBIL_PATTERN",
+      "contest_until": 1790771623,
+      "contested": false,
+      "contester": "0x0000000000000000000000000000000000000000",
+      "contest_bond_wei": "0",
+      "contest_evidence": "",
+      "contest_findings": {},
+      "contest_at": 0,
+      "final_at": 0,
+      "payout_wei": "0",
+      "in_flight": false,
+      "trace": {
+        "hits": 2,
+        "min_hits": 2,
+        "rules": [
+          {
+            "finding": "WALLET_AGE_DAYS",
+            "condition": "LT",
+            "threshold": 30,
+            "value": "0",
+            "fired": true,
+            "note": ""
+          },
+          {
+            "finding": "OUTBOUND_TX_COUNT",
+            "condition": "LT",
+            "threshold": 3,
+            "value": "0",
+            "fired": true,
+            "note": ""
+          },
+          {
+            "finding": "ORGANIC_DIVERSITY",
+            "condition": "EQ",
+            "threshold": "LOW",
+            "value": "UNCLEAR",
+            "fired": false,
+            "note": "UNCLEAR never fires"
+          }
+        ]
+      },
+      "contest_trace": null
+    }
+  ],
+  "config": {
+    "rubric_version": "1.0.0",
+    "mode": "CANONICAL",
+    "mode_note": "CANONICAL: an appeal must be sent by the flagged wallet itself; the contest window is 48 hours.",
+    "owner": "0xbcb1B18A4BB84603B16019aa647607D1251Bd739",
+    "paused": false,
+    "paused_affects": [
+      "create_drop"
+    ],
+    "contest_window_s": 172800,
+    "stall_ttl_s": 172800,
+    "min_phase_s": 3600,
+    "contest_bond_bps": 500,
+    "min_reserve_wei": "1000000000000000000",
+    "max_appeals_per_drop": 100,
+    "chains": [
+      "ethereum",
+      "base",
+      "arbitrum",
+      "polygon",
+      "sepolia",
+      "base-sepolia"
+    ],
+    "explorer_hosts": {
+      "ethereum": "eth.blockscout.com",
+      "base": "base.blockscout.com",
+      "arbitrum": "arbitrum.blockscout.com",
+      "polygon": "polygon.blockscout.com",
+      "sepolia": "eth-sepolia.blockscout.com",
+      "base-sepolia": "base-sepolia.blockscout.com"
+    },
+    "vocabulary": [
+      {
+        "finding": "WALLET_AGE_DAYS",
+        "kind": "deterministic",
+        "threshold": "integer 0..100000"
+      },
+      {
+        "finding": "OUTBOUND_TX_COUNT",
+        "kind": "deterministic",
+        "threshold": "integer 0..100000"
+      },
+      {
+        "finding": "DISTINCT_CONTRACTS_TOUCHED",
+        "kind": "deterministic",
+        "threshold": "integer 0..100000"
+      },
+      {
+        "finding": "ACTIVE_DAYS",
+        "kind": "deterministic",
+        "threshold": "integer 0..100000"
+      },
+      {
+        "finding": "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE",
+        "kind": "model",
+        "scale": [
+          "NO",
+          "YES"
+        ],
+        "question": "Was the wallet's first funding transaction sent by a centralised exchange or a bridge? YES only if the funding line's label or pattern clearly shows one, NO if it clearly came from an ordinary wallet or another kind of contract, UNCLEAR if there is no funding line or the label says nothing."
+      },
+      {
+        "finding": "SCRIPTED_REPETITION",
+        "kind": "model",
+        "scale": [
+          "NONE",
+          "SOME",
+          "STRONG"
+        ],
+        "question": "Are the transactions near-identical sequences (same target, same method, same or round values) repeated at regular intervals? NONE, SOME or STRONG."
+      },
+      {
+        "finding": "SINGLE_PURPOSE_FARMING",
+        "kind": "model",
+        "scale": [
+          "NONE",
+          "SOME",
+          "STRONG"
+        ],
+        "question": "Does the activity ONLY touch the listed protocol's contracts, concentrated shortly before the snapshot time? NONE, SOME or STRONG."
+      },
+      {
+        "finding": "ORGANIC_DIVERSITY",
+        "kind": "model",
+        "scale": [
+          "LOW",
+          "MEDIUM",
+          "HIGH"
+        ],
+        "question": "Does the wallet look like a normal user: varied protocols, varied amounts, irregular timing spread over time? LOW, MEDIUM or HIGH."
+      }
+    ],
+    "conditions": [
+      "LT",
+      "LTE",
+      "GT",
+      "GTE",
+      "EQ",
+      "NEQ"
+    ],
+    "unclear": "UNCLEAR",
+    "unclear_note": "a rule on an UNCLEAR model finding never fires",
+    "max_rules": 12,
+    "commitment": "sha256(canonical_rules_json + salt), salt >= 32 hex",
+    "merkle": "leaf = sha256(20 address bytes); node = sha256(min(a,b) || max(a,b))",
+    "coverage": "outbound page complete (fewer than 50 items, no next page) or reaching back to the lookback start; earliest-activity page complete or verifiably ascending; otherwise INSUFFICIENT_HISTORY",
+    "max_fetches_per_read": 2,
+    "findings_tolerance": "model findings agree if equal, or if the leader's bucket is exactly one step toward the human end; never toward condemnation; UNCLEAR only matches UNCLEAR",
+    "human_end": {
+      "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE": "YES",
+      "SCRIPTED_REPETITION": "NONE",
+      "SINGLE_PURPOSE_FARMING": "NONE",
+      "ORGANIC_DIVERSITY": "HIGH"
+    },
+    "model_sees": "the stored history snapshot only (plus contest context on a contest); never the rules, flag or thresholds"
+  }
+}

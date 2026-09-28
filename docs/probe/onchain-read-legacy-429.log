@@ -1,0 +1,13 @@
+[2026-09-28T10:47:43.469Z] probe drop on 0xb9589f3e0a10dD62D0034932D81216dA659765ea snapshot=1790592763
+[2026-09-28T10:47:52.966Z]   opD      create_drop(Probe: one blind r, base, 4898b22a77db762b54, 1790592763, 900, 2400, 1200, 500000000000000000, 50000000000000000, ProbeProto, ) +1 GEN → ACCEPTED OK [7s]  tx=0xd8dfaec9b36cb1bf00fb9f73f9f5c95cbefc7686149afffc98afd9682ab89214
+[2026-09-28T10:47:52.969Z]   … waiting 295s for the snapshot
+[2026-09-28T10:52:57.958Z]   opD      commit_flagged(1, 83f5de651e69d6ded0, 2) → ACCEPTED OK [10s]  tx=0x06f13e7d25baa60453f84df4b4492f642cfa9c931f714984ae3d686a8b483bdc
+[2026-09-28T10:53:05.394Z]   opD      file_appeal(1, 0x0f2589542b6d5a50, aa6a2e7c09e96658b3, Probe appeal) +0.05 GEN → ACCEPTED OK [7s]  tx=0x527f74001a6b352d4218dffa7dabde20489dcfb55cdc2feafb9d087b187d5a70
+[2026-09-28T10:53:44.757Z]   trigger  read_wallet(1) → ACCEPTED OK [39s]  tx=0x56e5c5b66fbba4ccf7d5d7b1dbc66392a687ea4b952da4791b4b996edd2a455f
+[2026-09-28T10:53:44.758Z] {"appeal_id":1,"note":"the source or the model did not answer; nothing was decided and anyone may read again","read":"UNAVAILABLE","status":"OK","why":"earliest activity HTTP 429"}
+[2026-09-28T10:53:55.629Z]   trigger  read_wallet(1) → ACCEPTED OK [11s]  tx=0xcb94f6f78ed9583a85743f9e0d857a1c71e3e2cc5f0ea5965ebeb1f743b5946f
+[2026-09-28T10:53:55.630Z] {"appeal_id":1,"note":"the source or the model did not answer; nothing was decided and anyone may read again","read":"UNAVAILABLE","status":"OK","why":"earliest activity HTTP 429"}
+[2026-09-28T10:54:05.616Z]   trigger  read_wallet(1) → ACCEPTED OK [10s]  tx=0x8d79a5d57994ebff2efee3cdf7fb04a9f8ed0e3839b6f5c438cda136cdc1c59e
+[2026-09-28T10:54:05.616Z] {"appeal_id":1,"note":"the source or the model did not answer; nothing was decided and anyone may read again","read":"UNAVAILABLE","status":"OK","why":"earliest activity HTTP 429"}
+[2026-09-28T10:54:06.474Z] {} {}
+[2026-09-28T10:54:06.475Z] 

@@ -1,0 +1,10 @@
+{
+  "name": "fairdrop-tests",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Deployment, seed and on-chain verification scripts for FairDrop on GenLayer Studio Dev",
+  "dependencies": {
+    "genlayer-js": "2.0.0-rc.1"
+  }
+}

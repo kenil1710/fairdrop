@@ -1,0 +1,16 @@
+node_modules/
+.next/
+.env
+.env.local
+.vercel/
+.DS_Store
+__pycache__/
+*.pyc
+*.tsbuildinfo
+.accounts.json
+test/.accounts.json
+frontend/.env.local
+.probe-secret.json
+test/.seed-secrets.json
+.seed-state.json
+.canonical-state.json

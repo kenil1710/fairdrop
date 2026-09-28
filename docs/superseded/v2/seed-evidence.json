@@ -1,0 +1,850 @@
+{
+  "contract": "0x532D02383eb1Ac2Fa10F00288F75D14F7d39641a",
+  "at": "2026-09-28T12:47:23.416Z",
+  "stats": {
+    "drops": 3,
+    "appeals": 10,
+    "outcomes": {
+      "HUMAN_PATTERN": 7,
+      "SYBIL_PATTERN": 1,
+      "INSUFFICIENT_HISTORY": 2
+    },
+    "reads": 35,
+    "contests": 1,
+    "rejected_calls": 10,
+    "ledger": {
+      "balance_wei": "0",
+      "locked_wei": "0",
+      "payable_wei": "0",
+      "identity_holds": true,
+      "identity": "balance_wei == locked_wei + payable_wei"
+    },
+    "on_chain_balance_wei": "6900000000000000000",
+    "undelivered_wei": "6900000000000000000",
+    "totals": {
+      "deposited_wei": "5000000000000000000",
+      "allocations_paid_wei": "3799999999999999999",
+      "leftover_returned_wei": "1350000000000000001",
+      "bonds_forfeited_wei": "100000000000000000",
+      "claimed_wei": "6900000000000000000"
+    }
+  },
+  "drops": {
+    "C": {
+      "drop": {
+        "drop_id": 1,
+        "operator": "0x32e184e3dE5034b885B1fE8BE69a83cf8F3E1eE4",
+        "name": "Thin Reserve — pro-rata payout",
+        "chain": "base",
+        "protocol": "DemoQuest",
+        "protocol_contracts": [
+          "0x3c83ef6119eb05ca44144f05b331dbee60656d5b"
+        ],
+        "phase": "CLOSED",
+        "created_at": 1790594877,
+        "snapshot_ts": 1790595111,
+        "committed_before_snapshot_s": 234,
+        "lookback_days": 900,
+        "lookback_start": 1712835111,
+        "appeal_end_ts": 1790596611,
+        "reveal_end_ts": 1790599011,
+        "allocation_wei": "600000000000000000",
+        "bond_wei": "50000000000000000",
+        "contest_bond_wei": "30000000000000000",
+        "reserve_initial_wei": "1000000000000000000",
+        "reserve_wei": "0",
+        "held_bonds_wei": "0",
+        "rules_hash": "4222fc93cbade44a8807da48bdd17f35e38de14e7a889664fc18d10f1abf23d0",
+        "flagged_root": "9d64a50d2fb9c5b08a2815a2d13e09fda9f0d6df77b3413860412100ce405f4e",
+        "flagged_count": 3,
+        "flagged_at": 1790595121,
+        "revealed": true,
+        "rules_json": "{\"min_hits\":2,\"rules\":[{\"condition\":\"LT\",\"finding\":\"WALLET_AGE_DAYS\",\"threshold\":30},{\"condition\":\"EQ\",\"finding\":\"SCRIPTED_REPETITION\",\"threshold\":\"STRONG\"}]}",
+        "salt": "5fcc83f83882a77a1c3512a180ce512587c880f6fdda74ae55bc6d581c89a333",
+        "rules": {
+          "min_hits": 2,
+          "rules": [
+            {
+              "finding": "WALLET_AGE_DAYS",
+              "condition": "LT",
+              "threshold": 30
+            },
+            {
+              "finding": "SCRIPTED_REPETITION",
+              "condition": "EQ",
+              "threshold": "STRONG"
+            }
+          ]
+        },
+        "revealed_at": 1790598360,
+        "bad_reveals": 0,
+        "appeals": 3,
+        "open_appeals": 0,
+        "winners": 3,
+        "closed": true,
+        "closed_at": 1790599561,
+        "per_winner_wei": "333333333333333333",
+        "paid_winners_wei": "999999999999999999",
+        "leftover_wei": "1",
+        "pro_rata": true
+      },
+      "appeals": [
+        {
+          "appeal_id": 6,
+          "drop_id": 1,
+          "wallet": "0x0F2589542B6D5A506849e9425CD5C41f89b1d923",
+          "filer": "0x32e184e3dE5034b885B1fE8BE69a83cf8F3E1eE4",
+          "on_behalf": true,
+          "statement": "Demo appeal on a thin-reserve drop, filed while the contract is paused.",
+          "filed_at": 1790595198,
+          "bond_wei": "50000000000000000",
+          "status": "FINAL",
+          "outcome": "HUMAN_PATTERN",
+          "decided_by": "RULES",
+          "refile_of": 0,
+          "read_attempts": 11,
+          "read_at": 1790598618,
+          "last_read_status": "READ",
+          "snapshot": "wallet=0x0f2589542b6d5a506849e9425cd5c41f89b1d923 chain=base\nwindow_start=2024-04-11T11:31:51Z snapshot=2026-09-28T11:31:51Z outbound_in_window=6\nprotocol=DemoQuest protocol_contracts=0x3c83ef6119eb05ca44144f05b331dbee60656d5b\nfirst_seen=2024-03-21T23:26:21Z funder=0xfd92f4e91d54b9ef91cc3f97c011a6af0c2a7eda funding_value_wei=29600000000000000 funder_label=OKX_137 funder_contract=0\ntx 2024-04-15T07:55:47Z to=0x80c67432656d59144ceff962e8faf8926599bcf8 contract=0 label=Orbiter_Finance:_Bridge_1 method=- value_wei=300000000000009019 ok=1\ntx 2024-04-16T21:39:47Z to=0x992f1c91fa9a152aa1b68bbdd7d7a2a9faf852c0 contract=0 label=- method=- value_wei=301499969619233886 ok=1\ntx 2024-04-21T12:36:39Z to=0x80c67432656d59144ceff962e8faf8926599bcf8 contract=0 label=Orbiter_Finance:_Bridge_1 method=- value_wei=15000000000009030 ok=1\ntx 2024-05-15T20:54:25Z to=0x2626664c2603336e57b271c5c0b26f421741e481 contract=1 label=SwapRouter02 method=multicall value_wei=116472596769125 ok=1\ntx 2024-05-15T20:55:57Z to=0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca contract=1 label=Bridged_USDC_Base method=approve value_wei=0 ok=1\ntx 2026-09-28T10:25:07Z to=0xfe699a7698c44e55546ef15a8d4114ac5e3afc83 contract=0 label=- method=- value_wei=25265000000000000 ok=1",
+          "snapshot_hash": "288630d861edb2bdd33a2def5047c3ce297fc8f7775407280871bf92f7bd5b8a",
+          "features": {
+            "WALLET_AGE_DAYS": "920",
+            "OUTBOUND_TX_COUNT": "6",
+            "DISTINCT_CONTRACTS_TOUCHED": "2",
+            "ACTIVE_DAYS": "5"
+          },
+          "findings": {
+            "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE": "YES",
+            "SCRIPTED_REPETITION": "NONE",
+            "SINGLE_PURPOSE_FARMING": "NONE",
+            "ORGANIC_DIVERSITY": "HIGH"
+          },
+          "decided_at": 1790598765,
+          "provisional_outcome": "HUMAN_PATTERN",
+          "contest_until": 0,
+          "contested": false,
+          "contester": "0x0000000000000000000000000000000000000000",
+          "contest_bond_wei": "0",
+          "contest_evidence": "",
+          "contest_findings": {},
+          "contest_at": 0,
+          "final_at": 1790599552,
+          "payout_wei": "333333333333333333",
+          "in_flight": false,
+          "trace": {
+            "hits": 0,
+            "min_hits": 2,
+            "rules": [
+              {
+                "finding": "WALLET_AGE_DAYS",
+                "condition": "LT",
+                "threshold": 30,
+                "value": "920",
+                "fired": false,
+                "note": ""
+              },
+              {
+                "finding": "SCRIPTED_REPETITION",
+                "condition": "EQ",
+                "threshold": "STRONG",
+                "value": "NONE",
+                "fired": false,
+                "note": ""
+              }
+            ]
+          },
+          "contest_trace": null
+        },
+        {
+          "appeal_id": 8,
+          "drop_id": 1,
+          "wallet": "0x1c1fF5A779249371eC4862A1f88c187989A8983A",
+          "filer": "0x32e184e3dE5034b885B1fE8BE69a83cf8F3E1eE4",
+          "on_behalf": true,
+          "statement": "Demo appeal on a thin-reserve drop, filed while the contract is paused.",
+          "filed_at": 1790595212,
+          "bond_wei": "50000000000000000",
+          "status": "FINAL",
+          "outcome": "HUMAN_PATTERN",
+          "decided_by": "RULES",
+          "refile_of": 0,
+          "read_attempts": 7,
+          "read_at": 1790598213,
+          "last_read_status": "READ",
+          "snapshot": "wallet=0x1c1ff5a779249371ec4862a1f88c187989a8983a chain=base\nwindow_start=2024-04-11T11:31:51Z snapshot=2026-09-28T11:31:51Z outbound_in_window=13\nprotocol=DemoQuest protocol_contracts=0x3c83ef6119eb05ca44144f05b331dbee60656d5b\nfirst_seen=2024-03-22T00:52:41Z funder=0xfd92f4e91d54b9ef91cc3f97c011a6af0c2a7eda funding_value_wei=29600000000000000 funder_label=OKX_137 funder_contract=0\ntx 2024-04-17T22:12:49Z to=0x80c67432656d59144ceff962e8faf8926599bcf8 contract=0 label=Orbiter_Finance:_Bridge_1 method=- value_wei=300000000000009019 ok=1\ntx 2024-04-18T16:22:15Z to=0xfcb1822ea939daecef018d5fd3d5d8ad807d0c8d contract=0 label=- method=- value_wei=301499964357740280 ok=1\ntx 2024-04-21T17:33:39Z to=0x80c67432656d59144ceff962e8faf8926599bcf8 contract=0 label=Orbiter_Finance:_Bridge_1 method=- value_wei=15000000000009030 ok=1\ntx 2024-05-16T14:43:55Z to=0x0389879e0156033202c44bf784ac18fc02edee4f contract=1 label=RouteProcessor4 method=processRoute value_wei=116457161232826 ok=1\ntx 2024-05-16T14:46:09Z to=0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca contract=1 label=Bridged_USDC_Base method=approve value_wei=0 ok=1\ntx 2024-05-16T14:46:59Z to=0xa238dd80c259a72e81d7e4664a9801593f98d1c5 contract=1 label=InitializableImmutableAdminUpgradeabilit method=supply value_wei=0 ok=1\ntx 2024-05-16T14:48:19Z to=0xa238dd80c259a72e81d7e4664a9801593f98d1c5 contract=1 label=InitializableImmutableAdminUpgradeabilit method=withdraw value_wei=0 ok=1\ntx 2024-05-16T14:48:53Z to=0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca contract=1 label=Bridged_USDC_Base method=approve value_wei=0 ok=1\ntx 2024-05-16T14:49:45Z to=0x0389879e0156033202c44bf784ac18fc02edee4f contract=1 label=RouteProcessor4 method=processRoute value_wei=0 ok=1\ntx 2024-05-16T14:51:53Z to=0x2626664c2603336e57b271c5c0b26f421741e481 contract=1 label=SwapRouter02 method=multicall value_wei=57772620033354 ok=1\ntx 2024-05-16T14:54:27Z to=0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca contract=1 label=Bridged_USDC_Base method=approve value_wei=0 ok=1\ntx 2024-05-16T14:55:19Z to=0x03a520b32c04bf3beef7beb72e919cf822ed34f1 contract=1 label=Uniswap_V3_Positions_NFT-V1 method=multicall value_wei=57772620033354 ok=0\ntx 2026-09-28T10:27:43Z to=0xfe699a7698c44e55546ef15a8d4114ac5e3afc83 contract=0 label=- method=- value_wei=25252000000000000 ok=1",
+          "snapshot_hash": "bdd5c5493e2b7055e5fb6022defdc0048f48e7488e4aa67a4ea29fef9fcd906e",
+          "features": {
+            "WALLET_AGE_DAYS": "920",
+            "OUTBOUND_TX_COUNT": "13",
+            "DISTINCT_CONTRACTS_TOUCHED": "5",
+            "ACTIVE_DAYS": "5"
+          },
+          "findings": {
+            "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE": "YES",
+            "SCRIPTED_REPETITION": "NONE",
+            "SINGLE_PURPOSE_FARMING": "NONE",
+            "ORGANIC_DIVERSITY": "MEDIUM"
+          },
+          "decided_at": 1790598403,
+          "provisional_outcome": "HUMAN_PATTERN",
+          "contest_until": 0,
+          "contested": false,
+          "contester": "0x0000000000000000000000000000000000000000",
+          "contest_bond_wei": "0",
+          "contest_evidence": "",
+          "contest_findings": {},
+          "contest_at": 0,
+          "final_at": 1790599031,
+          "payout_wei": "333333333333333333",
+          "in_flight": false,
+          "trace": {
+            "hits": 0,
+            "min_hits": 2,
+            "rules": [
+              {
+                "finding": "WALLET_AGE_DAYS",
+                "condition": "LT",
+                "threshold": 30,
+                "value": "920",
+                "fired": false,
+                "note": ""
+              },
+              {
+                "finding": "SCRIPTED_REPETITION",
+                "condition": "EQ",
+                "threshold": "STRONG",
+                "value": "NONE",
+                "fired": false,
+                "note": ""
+              }
+            ]
+          },
+          "contest_trace": null
+        },
+        {
+          "appeal_id": 9,
+          "drop_id": 1,
+          "wallet": "0x35B4A50f63f4BeEe621A8E5e97AFcb2db0DE63d8",
+          "filer": "0x32e184e3dE5034b885B1fE8BE69a83cf8F3E1eE4",
+          "on_behalf": true,
+          "statement": "Demo appeal on a thin-reserve drop, filed while the contract is paused.",
+          "filed_at": 1790595230,
+          "bond_wei": "50000000000000000",
+          "status": "FINAL",
+          "outcome": "HUMAN_PATTERN",
+          "decided_by": "RULES",
+          "refile_of": 0,
+          "read_attempts": 1,
+          "read_at": 1790598308,
+          "last_read_status": "READ",
+          "snapshot": "wallet=0x35b4a50f63f4beee621a8e5e97afcb2db0de63d8 chain=base\nwindow_start=2024-04-11T11:31:51Z snapshot=2026-09-28T11:31:51Z outbound_in_window=13\nprotocol=DemoQuest protocol_contracts=0x3c83ef6119eb05ca44144f05b331dbee60656d5b\nfirst_seen=2025-10-15T14:04:33Z funder=0xf70da97812cb96acdf810712aa562db8dfa3dbef funding_value_wei=2928140623615617 funder_label=Relay:_Solver funder_contract=0\ntx 2025-10-15T14:04:51Z to=0x5f13b99497c3b2cf0e71cf4fc7b7eb167e30bb7e contract=1 label=TokenDistributor method=claim value_wei=0 ok=1\ntx 2025-10-15T14:05:29Z to=0x4e200fe2f3efb977d5fd9c430a41531fb04d97b8 contract=1 label=Orderly method=approve value_wei=0 ok=1\ntx 2025-10-15T14:05:43Z to=0x5e2f47bd7d4b357fcfd0bb224eb665773b1b9801 contract=1 label=DexRouter method=smartSwapByOrderId value_wei=0 ok=1\ntx 2025-10-23T13:02:41Z to=0xbdbef388227790be66a7470730f258c677e45426 contract=1 label=TokenDistributor method=claim value_wei=0 ok=1\ntx 2025-10-23T13:04:17Z to=0x2e6c4bd1c947e195645d2b920b827498cfaa6766 contract=1 label=Cygnus method=approve value_wei=0 ok=1\ntx 2025-10-23T13:04:27Z to=0x5e2f47bd7d4b357fcfd0bb224eb665773b1b9801 contract=1 label=DexRouter method=smartSwapByOrderId value_wei=0 ok=1\ntx 2025-10-24T10:14:19Z to=0x226f640090a2776a472675cdd43e3122c9a14782 contract=1 label=TokenDistributor method=claim value_wei=0 ok=1\ntx 2025-10-24T10:16:07Z to=0x1111111111166b7fe7bd91427724b487980afc69 contract=1 label=Zora method=approve value_wei=0 ok=1\ntx 2025-10-24T10:16:23Z to=0x5e2f47bd7d4b357fcfd0bb224eb665773b1b9801 contract=1 label=DexRouter method=smartSwapByOrderId value_wei=0 ok=1\ntx 2025-10-30T00:02:25Z to=0x54e93ec276a7983b8c7eae989a61f94c6e8a1922 contract=1 label=TokenDistributor method=claim value_wei=0 ok=1\ntx 2025-10-30T00:35:57Z to=0xf732a566121fa6362e9e0fbdd6d66e5c8c925e49 contract=1 label=OptimismMintableERC20 method=approve value_wei=0 ok=1\ntx 2025-10-30T00:36:07Z to=0x5e2f47bd7d4b357fcfd0bb224eb665773b1b9801 contract=1 label=DexRouter method=smartSwapByOrderId value_wei=0 ok=1\ntx 2026-09-28T10:27:41Z to=0xcaa44646cc12a2a23272631ecb4be93482550cb3 contract=0 label=- method=- value_wei=10588433677044309 ok=1",
+          "snapshot_hash": "5b65d1171d6e5982961eab4e7d5b62b82521895c11a208377a4ad9c5ec0134df",
+          "features": {
+            "WALLET_AGE_DAYS": "347",
+            "OUTBOUND_TX_COUNT": "13",
+            "DISTINCT_CONTRACTS_TOUCHED": "9",
+            "ACTIVE_DAYS": "5"
+          },
+          "findings": {
+            "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE": "UNCLEAR",
+            "SCRIPTED_REPETITION": "STRONG",
+            "SINGLE_PURPOSE_FARMING": "NONE",
+            "ORGANIC_DIVERSITY": "LOW"
+          },
+          "decided_at": 1790598413,
+          "provisional_outcome": "HUMAN_PATTERN",
+          "contest_until": 0,
+          "contested": false,
+          "contester": "0x0000000000000000000000000000000000000000",
+          "contest_bond_wei": "0",
+          "contest_evidence": "",
+          "contest_findings": {},
+          "contest_at": 0,
+          "final_at": 1790599038,
+          "payout_wei": "333333333333333333",
+          "in_flight": false,
+          "trace": {
+            "hits": 1,
+            "min_hits": 2,
+            "rules": [
+              {
+                "finding": "WALLET_AGE_DAYS",
+                "condition": "LT",
+                "threshold": 30,
+                "value": "347",
+                "fired": false,
+                "note": ""
+              },
+              {
+                "finding": "SCRIPTED_REPETITION",
+                "condition": "EQ",
+                "threshold": "STRONG",
+                "value": "STRONG",
+                "fired": true,
+                "note": ""
+              }
+            ]
+          },
+          "contest_trace": null
+        }
+      ]
+    },
+    "B": {
+      "drop": {
+        "drop_id": 2,
+        "operator": "0x6076668DeD3B21690F73f6Fd70B239450041af8c",
+        "name": "Silent Operator — never reveals",
+        "chain": "base",
+        "protocol": "DemoQuest",
+        "protocol_contracts": [
+          "0x3c83ef6119eb05ca44144f05b331dbee60656d5b"
+        ],
+        "phase": "CLOSED",
+        "created_at": 1790594877,
+        "snapshot_ts": 1790595111,
+        "committed_before_snapshot_s": 234,
+        "lookback_days": 900,
+        "lookback_start": 1712835111,
+        "appeal_end_ts": 1790596011,
+        "reveal_end_ts": 1790597511,
+        "allocation_wei": "400000000000000000",
+        "bond_wei": "50000000000000000",
+        "contest_bond_wei": "20000000000000000",
+        "reserve_initial_wei": "1000000000000000000",
+        "reserve_wei": "0",
+        "held_bonds_wei": "0",
+        "rules_hash": "bc651f5733eeabf24e5aa06a4a2e95bb5493e89fbe9e69b08957a4f0fba0b0c2",
+        "flagged_root": "9f9e3be82455d7ef27b109fdc9c881ba32a5652947ecf97ac1842258f736bb72",
+        "flagged_count": 2,
+        "flagged_at": 1790595121,
+        "revealed": false,
+        "rules_json": "",
+        "salt": "",
+        "rules": null,
+        "revealed_at": 0,
+        "bad_reveals": 0,
+        "appeals": 2,
+        "open_appeals": 0,
+        "winners": 2,
+        "closed": true,
+        "closed_at": 1790598570,
+        "per_winner_wei": "400000000000000000",
+        "paid_winners_wei": "800000000000000000",
+        "leftover_wei": "200000000000000000",
+        "pro_rata": false
+      },
+      "appeals": [
+        {
+          "appeal_id": 2,
+          "drop_id": 2,
+          "wallet": "0x8CD35fc08B003Fcd56377DBA2CDF2242952D6cd3",
+          "filer": "0x6076668DeD3B21690F73f6Fd70B239450041af8c",
+          "on_behalf": true,
+          "statement": "Demo appeal on a drop whose operator will never reveal.",
+          "filed_at": 1790595139,
+          "bond_wei": "50000000000000000",
+          "status": "FINAL",
+          "outcome": "HUMAN_PATTERN",
+          "decided_by": "NO_REVEAL",
+          "refile_of": 0,
+          "read_attempts": 1,
+          "read_at": 1790595200,
+          "last_read_status": "READ",
+          "snapshot": "wallet=0x8cd35fc08b003fcd56377dba2cdf2242952d6cd3 chain=base\nwindow_start=2024-04-11T11:31:51Z snapshot=2026-09-28T11:31:51Z outbound_in_window=6\nprotocol=DemoQuest protocol_contracts=0x3c83ef6119eb05ca44144f05b331dbee60656d5b\nfirst_seen=2026-09-16T20:31:55Z funder=unknown funding_value_wei=0 funder_label=- funder_contract=0\ntx 2026-09-16T20:31:55Z to=0x3c83ef6119eb05ca44144f05b331dbee60656d5b contract=1 label=TransparentUpgradeableProxy method=mintNFTs value_wei=0 ok=1\ntx 2026-09-17T20:35:37Z to=0x3c83ef6119eb05ca44144f05b331dbee60656d5b contract=1 label=TransparentUpgradeableProxy method=mintNFTs value_wei=0 ok=1\ntx 2026-09-23T14:52:05Z to=0x3c83ef6119eb05ca44144f05b331dbee60656d5b contract=1 label=TransparentUpgradeableProxy method=mintNFTs value_wei=0 ok=1\ntx 2026-09-25T22:35:41Z to=0x3c83ef6119eb05ca44144f05b331dbee60656d5b contract=1 label=TransparentUpgradeableProxy method=mintNFTs value_wei=0 ok=1\ntx 2026-09-27T07:29:21Z to=0x3c83ef6119eb05ca44144f05b331dbee60656d5b contract=1 label=TransparentUpgradeableProxy method=mintNFTs value_wei=0 ok=1\ntx 2026-09-28T10:27:41Z to=0x3c83ef6119eb05ca44144f05b331dbee60656d5b contract=1 label=TransparentUpgradeableProxy method=mintNFTs value_wei=0 ok=1",
+          "snapshot_hash": "ad058c014451747b42ad5302e12926d9ebd54a2bb03bbe347061701244462b23",
+          "features": {
+            "WALLET_AGE_DAYS": "11",
+            "OUTBOUND_TX_COUNT": "6",
+            "DISTINCT_CONTRACTS_TOUCHED": "1",
+            "ACTIVE_DAYS": "6"
+          },
+          "findings": {
+            "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE": "UNCLEAR",
+            "SCRIPTED_REPETITION": "STRONG",
+            "SINGLE_PURPOSE_FARMING": "STRONG",
+            "ORGANIC_DIVERSITY": "LOW"
+          },
+          "decided_at": 1790597520,
+          "provisional_outcome": "HUMAN_PATTERN",
+          "contest_until": 0,
+          "contested": false,
+          "contester": "0x0000000000000000000000000000000000000000",
+          "contest_bond_wei": "0",
+          "contest_evidence": "",
+          "contest_findings": {},
+          "contest_at": 0,
+          "final_at": 1790597520,
+          "payout_wei": "400000000000000000",
+          "in_flight": false,
+          "trace": null,
+          "contest_trace": null
+        },
+        {
+          "appeal_id": 4,
+          "drop_id": 2,
+          "wallet": "0x35B4A50f63f4BeEe621A8E5e97AFcb2db0DE63d8",
+          "filer": "0x6076668DeD3B21690F73f6Fd70B239450041af8c",
+          "on_behalf": true,
+          "statement": "Demo appeal on a drop whose operator will never reveal.",
+          "filed_at": 1790595190,
+          "bond_wei": "50000000000000000",
+          "status": "FINAL",
+          "outcome": "HUMAN_PATTERN",
+          "decided_by": "NO_REVEAL",
+          "refile_of": 0,
+          "read_attempts": 0,
+          "read_at": 0,
+          "last_read_status": "",
+          "snapshot": "",
+          "snapshot_hash": "",
+          "features": {},
+          "findings": {},
+          "decided_at": 1790597531,
+          "provisional_outcome": "HUMAN_PATTERN",
+          "contest_until": 0,
+          "contested": false,
+          "contester": "0x0000000000000000000000000000000000000000",
+          "contest_bond_wei": "0",
+          "contest_evidence": "",
+          "contest_findings": {},
+          "contest_at": 0,
+          "final_at": 1790597531,
+          "payout_wei": "400000000000000000",
+          "in_flight": false,
+          "trace": null,
+          "contest_trace": null
+        }
+      ]
+    },
+    "A": {
+      "drop": {
+        "drop_id": 3,
+        "operator": "0xdcD55df090a7F0A4DD353DC95f07daf6fF769f60",
+        "name": "Base Quest Season 1 — main",
+        "chain": "base",
+        "protocol": "DemoQuest",
+        "protocol_contracts": [
+          "0x3c83ef6119eb05ca44144f05b331dbee60656d5b",
+          "0xdc2d2a919df4f31dd407415d65bcbb74d36aac70"
+        ],
+        "phase": "CLOSED",
+        "created_at": 1790594877,
+        "snapshot_ts": 1790595111,
+        "committed_before_snapshot_s": 234,
+        "lookback_days": 900,
+        "lookback_start": 1712835111,
+        "appeal_end_ts": 1790596911,
+        "reveal_end_ts": 1790599311,
+        "allocation_wei": "1000000000000000000",
+        "bond_wei": "100000000000000000",
+        "contest_bond_wei": "50000000000000000",
+        "reserve_initial_wei": "3000000000000000000",
+        "reserve_wei": "0",
+        "held_bonds_wei": "0",
+        "rules_hash": "55c8f776116d770348264aaaa35cb26c3534fa086f2c0e8b2dda9323fc3e24f6",
+        "flagged_root": "f65bcccb019dddf377dcd1497cba7b10bfbf8966f6067c0072d95ac329b285dc",
+        "flagged_count": 4,
+        "flagged_at": 1790595121,
+        "revealed": true,
+        "rules_json": "{\"min_hits\":2,\"rules\":[{\"condition\":\"LT\",\"finding\":\"WALLET_AGE_DAYS\",\"threshold\":60},{\"condition\":\"LTE\",\"finding\":\"DISTINCT_CONTRACTS_TOUCHED\",\"threshold\":1},{\"condition\":\"GTE\",\"finding\":\"SCRIPTED_REPETITION\",\"threshold\":\"SOME\"},{\"condition\":\"GTE\",\"finding\":\"SINGLE_PURPOSE_FARMING\",\"threshold\":\"SOME\"}]}",
+        "salt": "502374e3c1ffdd7d531cd17d2a3edef43aad06793da0e10a8e117caad3fcdbd4",
+        "rules": {
+          "min_hits": 2,
+          "rules": [
+            {
+              "finding": "WALLET_AGE_DAYS",
+              "condition": "LT",
+              "threshold": 60
+            },
+            {
+              "finding": "DISTINCT_CONTRACTS_TOUCHED",
+              "condition": "LTE",
+              "threshold": 1
+            },
+            {
+              "finding": "SCRIPTED_REPETITION",
+              "condition": "GTE",
+              "threshold": "SOME"
+            },
+            {
+              "finding": "SINGLE_PURPOSE_FARMING",
+              "condition": "GTE",
+              "threshold": "SOME"
+            }
+          ]
+        },
+        "revealed_at": 1790598510,
+        "bad_reveals": 2,
+        "appeals": 5,
+        "open_appeals": 0,
+        "winners": 2,
+        "closed": true,
+        "closed_at": 1790599586,
+        "per_winner_wei": "1000000000000000000",
+        "paid_winners_wei": "2000000000000000000",
+        "leftover_wei": "1150000000000000000",
+        "pro_rata": false
+      },
+      "appeals": [
+        {
+          "appeal_id": 1,
+          "drop_id": 3,
+          "wallet": "0x0F2589542B6D5A506849e9425CD5C41f89b1d923",
+          "filer": "0xdcD55df090a7F0A4DD353DC95f07daf6fF769f60",
+          "on_behalf": true,
+          "statement": "I have used this wallet since 2024 for swaps and transfers.",
+          "filed_at": 1790595132,
+          "bond_wei": "100000000000000000",
+          "status": "FINAL",
+          "outcome": "HUMAN_PATTERN",
+          "decided_by": "RULES",
+          "refile_of": 0,
+          "read_attempts": 1,
+          "read_at": 1790595262,
+          "last_read_status": "READ",
+          "snapshot": "wallet=0x0f2589542b6d5a506849e9425cd5c41f89b1d923 chain=base\nwindow_start=2024-04-11T11:31:51Z snapshot=2026-09-28T11:31:51Z outbound_in_window=6\nprotocol=DemoQuest protocol_contracts=0x3c83ef6119eb05ca44144f05b331dbee60656d5b,0xdc2d2a919df4f31dd407415d65bcbb74d36aac70\nfirst_seen=2024-03-21T23:26:21Z funder=0xfd92f4e91d54b9ef91cc3f97c011a6af0c2a7eda funding_value_wei=29600000000000000 funder_label=OKX_137 funder_contract=0\ntx 2024-04-15T07:55:47Z to=0x80c67432656d59144ceff962e8faf8926599bcf8 contract=0 label=Orbiter_Finance:_Bridge_1 method=- value_wei=300000000000009019 ok=1\ntx 2024-04-16T21:39:47Z to=0x992f1c91fa9a152aa1b68bbdd7d7a2a9faf852c0 contract=0 label=- method=- value_wei=301499969619233886 ok=1\ntx 2024-04-21T12:36:39Z to=0x80c67432656d59144ceff962e8faf8926599bcf8 contract=0 label=Orbiter_Finance:_Bridge_1 method=- value_wei=15000000000009030 ok=1\ntx 2024-05-15T20:54:25Z to=0x2626664c2603336e57b271c5c0b26f421741e481 contract=1 label=SwapRouter02 method=multicall value_wei=116472596769125 ok=1\ntx 2024-05-15T20:55:57Z to=0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca contract=1 label=Bridged_USDC_Base method=approve value_wei=0 ok=1\ntx 2026-09-28T10:25:07Z to=0xfe699a7698c44e55546ef15a8d4114ac5e3afc83 contract=0 label=- method=- value_wei=25265000000000000 ok=1",
+          "snapshot_hash": "5b44c04487bccf367073f5ac2926eb595851e54311a895432793bd2edee66246",
+          "features": {
+            "WALLET_AGE_DAYS": "920",
+            "OUTBOUND_TX_COUNT": "6",
+            "DISTINCT_CONTRACTS_TOUCHED": "2",
+            "ACTIVE_DAYS": "5"
+          },
+          "findings": {
+            "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE": "YES",
+            "SCRIPTED_REPETITION": "NONE",
+            "SINGLE_PURPOSE_FARMING": "NONE",
+            "ORGANIC_DIVERSITY": "MEDIUM"
+          },
+          "decided_at": 1790598519,
+          "provisional_outcome": "HUMAN_PATTERN",
+          "contest_until": 0,
+          "contested": false,
+          "contester": "0x0000000000000000000000000000000000000000",
+          "contest_bond_wei": "0",
+          "contest_evidence": "",
+          "contest_findings": {},
+          "contest_at": 0,
+          "final_at": 1790599319,
+          "payout_wei": "1000000000000000000",
+          "in_flight": false,
+          "trace": {
+            "hits": 0,
+            "min_hits": 2,
+            "rules": [
+              {
+                "finding": "WALLET_AGE_DAYS",
+                "condition": "LT",
+                "threshold": 60,
+                "value": "920",
+                "fired": false,
+                "note": ""
+              },
+              {
+                "finding": "DISTINCT_CONTRACTS_TOUCHED",
+                "condition": "LTE",
+                "threshold": 1,
+                "value": "2",
+                "fired": false,
+                "note": ""
+              },
+              {
+                "finding": "SCRIPTED_REPETITION",
+                "condition": "GTE",
+                "threshold": "SOME",
+                "value": "NONE",
+                "fired": false,
+                "note": ""
+              },
+              {
+                "finding": "SINGLE_PURPOSE_FARMING",
+                "condition": "GTE",
+                "threshold": "SOME",
+                "value": "NONE",
+                "fired": false,
+                "note": ""
+              }
+            ]
+          },
+          "contest_trace": null
+        },
+        {
+          "appeal_id": 3,
+          "drop_id": 3,
+          "wallet": "0x8410115B7Ee1b359222d303B2Bcd363aF667eFa9",
+          "filer": "0xdcD55df090a7F0A4DD353DC95f07daf6fF769f60",
+          "on_behalf": true,
+          "statement": "Demo appeal filed on behalf of a public wallet.",
+          "filed_at": 1790595143,
+          "bond_wei": "100000000000000000",
+          "status": "FINAL",
+          "outcome": "SYBIL_PATTERN",
+          "decided_by": "RULES",
+          "refile_of": 0,
+          "read_attempts": 11,
+          "read_at": 1790598722,
+          "last_read_status": "READ",
+          "snapshot": "wallet=0x8410115b7ee1b359222d303b2bcd363af667efa9 chain=base\nwindow_start=2024-04-11T11:31:51Z snapshot=2026-09-28T11:31:51Z outbound_in_window=5\nprotocol=DemoQuest protocol_contracts=0x3c83ef6119eb05ca44144f05b331dbee60656d5b,0xdc2d2a919df4f31dd407415d65bcbb74d36aac70\nfirst_seen=2026-09-12T19:24:37Z funder=unknown funding_value_wei=0 funder_label=- funder_contract=0\ntx 2026-09-12T19:24:37Z to=0x3c83ef6119eb05ca44144f05b331dbee60656d5b contract=1 label=TransparentUpgradeableProxy method=mintNFTs value_wei=0 ok=1\ntx 2026-09-18T10:55:09Z to=0x3c83ef6119eb05ca44144f05b331dbee60656d5b contract=1 label=TransparentUpgradeableProxy method=mintNFTs value_wei=0 ok=1\ntx 2026-09-22T04:22:35Z to=0x3c83ef6119eb05ca44144f05b331dbee60656d5b contract=1 label=TransparentUpgradeableProxy method=mintNFTs value_wei=0 ok=1\ntx 2026-09-27T07:26:49Z to=0x3c83ef6119eb05ca44144f05b331dbee60656d5b contract=1 label=TransparentUpgradeableProxy method=mintNFTs value_wei=0 ok=1\ntx 2026-09-28T10:25:07Z to=0x3c83ef6119eb05ca44144f05b331dbee60656d5b contract=1 label=TransparentUpgradeableProxy method=mintNFTs value_wei=0 ok=1",
+          "snapshot_hash": "6fc3cf1d91b718b18ff81403386ecf35d0670f41ff027a2106a05876085a1665",
+          "features": {
+            "WALLET_AGE_DAYS": "15",
+            "OUTBOUND_TX_COUNT": "5",
+            "DISTINCT_CONTRACTS_TOUCHED": "1",
+            "ACTIVE_DAYS": "5"
+          },
+          "findings": {
+            "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE": "UNCLEAR",
+            "SCRIPTED_REPETITION": "STRONG",
+            "SINGLE_PURPOSE_FARMING": "STRONG",
+            "ORGANIC_DIVERSITY": "LOW"
+          },
+          "decided_at": 1790598757,
+          "provisional_outcome": "SYBIL_PATTERN",
+          "contest_until": 0,
+          "contested": false,
+          "contester": "0x0000000000000000000000000000000000000000",
+          "contest_bond_wei": "0",
+          "contest_evidence": "",
+          "contest_findings": {},
+          "contest_at": 0,
+          "final_at": 1790599572,
+          "payout_wei": "0",
+          "in_flight": false,
+          "trace": {
+            "hits": 4,
+            "min_hits": 2,
+            "rules": [
+              {
+                "finding": "WALLET_AGE_DAYS",
+                "condition": "LT",
+                "threshold": 60,
+                "value": "15",
+                "fired": true,
+                "note": ""
+              },
+              {
+                "finding": "DISTINCT_CONTRACTS_TOUCHED",
+                "condition": "LTE",
+                "threshold": 1,
+                "value": "1",
+                "fired": true,
+                "note": ""
+              },
+              {
+                "finding": "SCRIPTED_REPETITION",
+                "condition": "GTE",
+                "threshold": "SOME",
+                "value": "STRONG",
+                "fired": true,
+                "note": ""
+              },
+              {
+                "finding": "SINGLE_PURPOSE_FARMING",
+                "condition": "GTE",
+                "threshold": "SOME",
+                "value": "STRONG",
+                "fired": true,
+                "note": ""
+              }
+            ]
+          },
+          "contest_trace": null
+        },
+        {
+          "appeal_id": 5,
+          "drop_id": 3,
+          "wallet": "0xD5512d138ea203C528fCD8E339FA3C93A6650265",
+          "filer": "0xdcD55df090a7F0A4DD353DC95f07daf6fF769f60",
+          "on_behalf": true,
+          "statement": "Demo appeal filed on behalf of a public wallet.",
+          "filed_at": 1790595192,
+          "bond_wei": "100000000000000000",
+          "status": "FINAL",
+          "outcome": "INSUFFICIENT_HISTORY",
+          "decided_by": "COVERAGE",
+          "refile_of": 0,
+          "read_attempts": 1,
+          "read_at": 1790598262,
+          "last_read_status": "INSUFFICIENT",
+          "snapshot": "",
+          "snapshot_hash": "",
+          "features": {},
+          "findings": {},
+          "decided_at": 0,
+          "provisional_outcome": "",
+          "contest_until": 0,
+          "contested": false,
+          "contester": "0x0000000000000000000000000000000000000000",
+          "contest_bond_wei": "0",
+          "contest_evidence": "",
+          "contest_findings": {},
+          "contest_at": 0,
+          "final_at": 1790598262,
+          "payout_wei": "0",
+          "in_flight": false,
+          "trace": null,
+          "contest_trace": null
+        },
+        {
+          "appeal_id": 7,
+          "drop_id": 3,
+          "wallet": "0x1c1fF5A779249371eC4862A1f88c187989A8983A",
+          "filer": "0xdcD55df090a7F0A4DD353DC95f07daf6fF769f60",
+          "on_behalf": true,
+          "statement": "Demo appeal: a long-lived wallet with varied activity.",
+          "filed_at": 1790595205,
+          "bond_wei": "100000000000000000",
+          "status": "FINAL",
+          "outcome": "HUMAN_PATTERN",
+          "decided_by": "CONTEST",
+          "refile_of": 0,
+          "read_attempts": 1,
+          "read_at": 1790598358,
+          "last_read_status": "READ",
+          "snapshot": "wallet=0x1c1ff5a779249371ec4862a1f88c187989a8983a chain=base\nwindow_start=2024-04-11T11:31:51Z snapshot=2026-09-28T11:31:51Z outbound_in_window=13\nprotocol=DemoQuest protocol_contracts=0x3c83ef6119eb05ca44144f05b331dbee60656d5b,0xdc2d2a919df4f31dd407415d65bcbb74d36aac70\nfirst_seen=2024-03-22T00:52:41Z funder=0xfd92f4e91d54b9ef91cc3f97c011a6af0c2a7eda funding_value_wei=29600000000000000 funder_label=OKX_137 funder_contract=0\ntx 2024-04-17T22:12:49Z to=0x80c67432656d59144ceff962e8faf8926599bcf8 contract=0 label=Orbiter_Finance:_Bridge_1 method=- value_wei=300000000000009019 ok=1\ntx 2024-04-18T16:22:15Z to=0xfcb1822ea939daecef018d5fd3d5d8ad807d0c8d contract=0 label=- method=- value_wei=301499964357740280 ok=1\ntx 2024-04-21T17:33:39Z to=0x80c67432656d59144ceff962e8faf8926599bcf8 contract=0 label=Orbiter_Finance:_Bridge_1 method=- value_wei=15000000000009030 ok=1\ntx 2024-05-16T14:43:55Z to=0x0389879e0156033202c44bf784ac18fc02edee4f contract=1 label=RouteProcessor4 method=processRoute value_wei=116457161232826 ok=1\ntx 2024-05-16T14:46:09Z to=0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca contract=1 label=Bridged_USDC_Base method=approve value_wei=0 ok=1\ntx 2024-05-16T14:46:59Z to=0xa238dd80c259a72e81d7e4664a9801593f98d1c5 contract=1 label=InitializableImmutableAdminUpgradeabilit method=supply value_wei=0 ok=1\ntx 2024-05-16T14:48:19Z to=0xa238dd80c259a72e81d7e4664a9801593f98d1c5 contract=1 label=InitializableImmutableAdminUpgradeabilit method=withdraw value_wei=0 ok=1\ntx 2024-05-16T14:48:53Z to=0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca contract=1 label=Bridged_USDC_Base method=approve value_wei=0 ok=1\ntx 2024-05-16T14:49:45Z to=0x0389879e0156033202c44bf784ac18fc02edee4f contract=1 label=RouteProcessor4 method=processRoute value_wei=0 ok=1\ntx 2024-05-16T14:51:53Z to=0x2626664c2603336e57b271c5c0b26f421741e481 contract=1 label=SwapRouter02 method=multicall value_wei=57772620033354 ok=1\ntx 2024-05-16T14:54:27Z to=0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca contract=1 label=Bridged_USDC_Base method=approve value_wei=0 ok=1\ntx 2024-05-16T14:55:19Z to=0x03a520b32c04bf3beef7beb72e919cf822ed34f1 contract=1 label=Uniswap_V3_Positions_NFT-V1 method=multicall value_wei=57772620033354 ok=0\ntx 2026-09-28T10:27:43Z to=0xfe699a7698c44e55546ef15a8d4114ac5e3afc83 contract=0 label=- method=- value_wei=25252000000000000 ok=1",
+          "snapshot_hash": "168e8d24f2cc8a5ef9dfac1f71d6dfd291a786f53319ec4788cbf3a3be093341",
+          "features": {
+            "WALLET_AGE_DAYS": "920",
+            "OUTBOUND_TX_COUNT": "13",
+            "DISTINCT_CONTRACTS_TOUCHED": "5",
+            "ACTIVE_DAYS": "5"
+          },
+          "findings": {
+            "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE": "YES",
+            "SCRIPTED_REPETITION": "NONE",
+            "SINGLE_PURPOSE_FARMING": "NONE",
+            "ORGANIC_DIVERSITY": "LOW"
+          },
+          "decided_at": 1790598533,
+          "provisional_outcome": "HUMAN_PATTERN",
+          "contest_until": 0,
+          "contested": true,
+          "contester": "0xdcD55df090a7F0A4DD353DC95f07daf6fF769f60",
+          "contest_bond_wei": "50000000000000000",
+          "contest_evidence": "Our cluster analysis found this wallet shares a funding source with several flagged wallets.",
+          "contest_findings": {
+            "FIRST_FUNDER_IS_EXCHANGE_OR_BRIDGE": "YES",
+            "SCRIPTED_REPETITION": "NONE",
+            "SINGLE_PURPOSE_FARMING": "NONE",
+            "ORGANIC_DIVERSITY": "MEDIUM"
+          },
+          "contest_at": 1790598548,
+          "final_at": 1790598548,
+          "payout_wei": "1000000000000000000",
+          "in_flight": false,
+          "trace": {
+            "hits": 0,
+            "min_hits": 2,
+            "rules": [
+              {
+                "finding": "WALLET_AGE_DAYS",
+                "condition": "LT",
+                "threshold": 60,
+                "value": "920",
+                "fired": false,
+                "note": ""
+              },
+              {
+                "finding": "DISTINCT_CONTRACTS_TOUCHED",
+                "condition": "LTE",
+                "threshold": 1,
+                "value": "5",
+                "fired": false,
+                "note": ""
+              },
+              {
+                "finding": "SCRIPTED_REPETITION",
+                "condition": "GTE",
+                "threshold": "SOME",
+                "value": "NONE",
+                "fired": false,
+                "note": ""
+              },
+              {
+                "finding": "SINGLE_PURPOSE_FARMING",
+                "condition": "GTE",
+                "threshold": "SOME",
+                "value": "NONE",
+                "fired": false,
+                "note": ""
+              }
+            ]
+          },
+          "contest_trace": {
+            "hits": 0,
+            "min_hits": 2,
+            "rules": [
+              {
+                "finding": "WALLET_AGE_DAYS",
+                "condition": "LT",
+                "threshold": 60,
+                "value": "920",
+                "fired": false,
+                "note": ""
+              },
+              {
+                "finding": "DISTINCT_CONTRACTS_TOUCHED",
+                "condition": "LTE",
+                "threshold": 1,
+                "value": "5",
+                "fired": false,
+                "note": ""
+              },
+              {
+                "finding": "SCRIPTED_REPETITION",
+                "condition": "GTE",
+                "threshold": "SOME",
+                "value": "NONE",
+                "fired": false,
+                "note": ""
+              },
+              {
+                "finding": "SINGLE_PURPOSE_FARMING",
+                "condition": "GTE",
+                "threshold": "SOME",
+                "value": "NONE",
+                "fired": false,
+                "note": ""
+              }
+            ]
+          }
+        },
+        {
+          "appeal_id": 10,
+          "drop_id": 3,
+          "wallet": "0xD5512d138ea203C528fCD8E339FA3C93A6650265",
+          "filer": "0xdcD55df090a7F0A4DD353DC95f07daf6fF769f60",
+          "on_behalf": true,
+          "statement": "Refiled after an INSUFFICIENT_HISTORY outcome.",
+          "filed_at": 1790598433,
+          "bond_wei": "100000000000000000",
+          "status": "FINAL",
+          "outcome": "INSUFFICIENT_HISTORY",
+          "decided_by": "COVERAGE",
+          "refile_of": 5,
+          "read_attempts": 1,
+          "read_at": 1790598443,
+          "last_read_status": "INSUFFICIENT",
+          "snapshot": "",
+          "snapshot_hash": "",
+          "features": {},
+          "findings": {},
+          "decided_at": 0,
+          "provisional_outcome": "",
+          "contest_until": 0,
+          "contested": false,
+          "contester": "0x0000000000000000000000000000000000000000",
+          "contest_bond_wei": "0",
+          "contest_evidence": "",
+          "contest_findings": {},
+          "contest_at": 0,
+          "final_at": 1790598443,
+          "payout_wei": "0",
+          "in_flight": false,
+          "trace": null,
+          "contest_trace": null
+        }
+      ]
+    }
+  }
+}

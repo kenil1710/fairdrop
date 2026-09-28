@@ -1,0 +1,9 @@
+{
+  "human_long_tail": {"host": "base.blockscout.com", "address": "0x0f2589542b6d5a506849e9425cd5c41f89b1d923"},
+  "human_diverse": {"host": "base.blockscout.com", "address": "0x1c1ff5a779249371ec4862a1f88c187989a8983a"},
+  "human_swapper": {"host": "base.blockscout.com", "address": "0x35b4a50f63f4beee621a8e5e97afcb2db0de63d8"},
+  "farm_minter_a": {"host": "base.blockscout.com", "address": "0x8410115b7ee1b359222d303b2bcd363af667efa9"},
+  "farm_minter_b": {"host": "base.blockscout.com", "address": "0x8cd35fc08b003fcd56377dba2cdf2242952d6cd3"},
+  "farm_quester": {"host": "base.blockscout.com", "address": "0xe288ddad7a2fdd7cb9bdefc9bbe1ba90a47c3ac2"},
+  "too_active": {"host": "base.blockscout.com", "address": "0xd5512d138ea203c528fcd8e339fa3c93a6650265"}
+}

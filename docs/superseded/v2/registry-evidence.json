@@ -1,0 +1,67 @@
+{
+  "registry": "0x0CF59Bf0460A0eB6e5D0e12cf5e17D70e02eA0F9",
+  "reads": "0x532D02383eb1Ac2Fa10F00288F75D14F7d39641a",
+  "checks": [
+    {
+      "label": "A/human (won)",
+      "wallet": "0x0f2589542b6d5a506849e9425cd5c41f89b1d923",
+      "drop": 3,
+      "is_cleared": true,
+      "attest": {
+        "attestation_id": 1,
+        "cleared": true,
+        "outcome": "HUMAN_PATTERN",
+        "status": "OK"
+      },
+      "tx": "0x029f6b663a8619bdcdc2ecf5a03acc02fa472c68ca9be375ae2db6babb8e92c0"
+    },
+    {
+      "label": "A/farm (lost)",
+      "wallet": "0x8410115b7ee1b359222d303b2bcd363af667efa9",
+      "drop": 3,
+      "is_cleared": false,
+      "attest": {
+        "attestation_id": 2,
+        "cleared": false,
+        "outcome": "SYBIL_PATTERN",
+        "status": "OK"
+      },
+      "tx": "0xae334c5f306b17e92d788c448c4599e4d7aae6c767c89529ee25658a905b70b7"
+    },
+    {
+      "label": "A/too_active (insufficient)",
+      "wallet": "0xd5512d138ea203c528fcd8e339fa3c93a6650265",
+      "drop": 3,
+      "is_cleared": false,
+      "attest": {
+        "attestation_id": 3,
+        "cleared": false,
+        "outcome": "INSUFFICIENT_HISTORY",
+        "status": "OK"
+      },
+      "tx": "0x6aaa262fe2efc64175eb957e2c904f776dcb39e719a25825a1737432c26e620b"
+    },
+    {
+      "label": "B/minter (default win)",
+      "wallet": "0x8cd35fc08b003fcd56377dba2cdf2242952d6cd3",
+      "drop": 2,
+      "is_cleared": true,
+      "attest": {
+        "attestation_id": 4,
+        "cleared": true,
+        "outcome": "HUMAN_PATTERN",
+        "status": "OK"
+      },
+      "tx": "0x6cf80983a82616a19384d166def0c8d5d9cc5c25d6d4f7506d5d969a193ce7ff"
+    }
+  ],
+  "config": {
+    "fairdrop": "0x532D02383eb1Ac2Fa10F00288F75D14F7d39641a",
+    "custody": false,
+    "payable_methods": 0,
+    "attestations": 4,
+    "cleared": 2,
+    "refused": 2,
+    "cleared_means": "the wallet's FairDrop appeal is FINAL with outcome HUMAN_PATTERN"
+  }
+}

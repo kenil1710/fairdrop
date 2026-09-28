@@ -1,0 +1,9 @@
+[2026-09-28T12:48:26.661Z]   is_cleared(A/human (won)) = true
+[2026-09-28T12:48:38.927Z]   outsider attest(0x0f2589542b6d5a50, 3) → ACCEPTED OK [12s] attest A/human (won) tx=0x029f6b663a8619bdcdc2ecf5a03acc02fa472c68ca9be375ae2db6babb8e92c0
+[2026-09-28T12:48:40.103Z]   is_cleared(A/farm (lost)) = false
+[2026-09-28T12:48:49.249Z]   outsider attest(0x8410115b7ee1b359, 3) → ACCEPTED OK [9s] attest A/farm (lost) tx=0xae334c5f306b17e92d788c448c4599e4d7aae6c767c89529ee25658a905b70b7
+[2026-09-28T12:48:50.309Z]   is_cleared(A/too_active (insufficient)) = false
+[2026-09-28T12:49:01.150Z]   outsider attest(0xd5512d138ea203c5, 3) → ACCEPTED OK [11s] attest A/too_active (insufficient) tx=0x6aaa262fe2efc64175eb957e2c904f776dcb39e719a25825a1737432c26e620b
+[2026-09-28T12:49:02.193Z]   is_cleared(B/minter (default win)) = true
+[2026-09-28T12:49:16.285Z]   outsider attest(0x8cd35fc08b003fcd, 2) → ACCEPTED OK [14s] attest B/minter (default win) tx=0x6cf80983a82616a19384d166def0c8d5d9cc5c25d6d4f7506d5d969a193ce7ff
+[2026-09-28T12:49:17.356Z] wrote docs/registry-evidence.json
