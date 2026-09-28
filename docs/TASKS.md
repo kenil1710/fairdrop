@@ -83,4 +83,4 @@ Status: `[ ]` open · `[~]` in progress · `[x]` done and verified (evidence not
 | 18 | bond economics | FAIL (per-drop appeal cap could be filled) | [x] per-wallet cap (3); README "Bond economics" |
 - [x] v6 deployed + verified (0xecEe…1A58 / 0x4F34…c6dD / 0xA700…FBB4); Vercel env + prod on v6
 - [x] v6 reseed (A–D + E, F), drain (demo 0/0/0; canonical payable claimed, 1.05 GEN locked under its open 48 h window), registry demo, UI walk, audit 51/51, README fill
-- [ ] 7-point check, push
+- [x] 7-point check: all PASS (docs/FINAL_CHECK.md); pushed (no co-author trailers); live bundle on v6
